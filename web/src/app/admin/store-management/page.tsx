@@ -9,18 +9,24 @@ import { AdminStatCard } from '@/components/admin/AdminStatCard'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
-import {
-  formatEgp,
-  storeOrdersAdminData,
-  storeProductsAdminData,
-} from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 const tabs = ['Products', 'Orders'] as const
-const productStatusOptions = ['All', 'In Stock', 'Low Stock', 'Out of Stock'] as const
-const orderStatusOptions = ['All', 'Pending', 'Processing', 'Delivered', 'Cancelled'] as const
+const productStatusOptions = ['All', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'] as const
+const orderStatusOptions = ['All', 'PENDING', 'PROCESSING', 'DELIVERED', 'CANCELLED'] as const
 
 type StoreTab = (typeof tabs)[number]
+
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export default function AdminStoreManagementPage() {
   const [activeTab, setActiveTab] = useState<StoreTab>('Products')
@@ -29,58 +35,68 @@ export default function AdminStoreManagementPage() {
   const [orderSearch, setOrderSearch] = useState('')
   const [orderStatus, setOrderStatus] = useState<(typeof orderStatusOptions)[number]>('All')
 
+  const { data: productsResponse, loading: productsLoading, error: productsError } = useApiCall('/admin/store/products')
+  const { data: ordersResponse, loading: ordersLoading, error: ordersError } = useApiCall('/admin/store/orders')
+
+  const storeProductsAdminData = productsResponse?.data || productsResponse || []
+  const storeOrdersAdminData = ordersResponse?.data || ordersResponse || []
+
+  if (productsError) {
+    return <APIErrorFallback error={productsError} onRetry={() => window.location.reload()} />
+  }
+
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase()
 
-    return storeProductsAdminData.filter((product) => {
+    return storeProductsAdminData.filter((product: any) => {
       const matchesQuery =
         query.length === 0 ||
-        product.title.toLowerCase().includes(query) ||
-        product.id.toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query) ||
-        product.facility.toLowerCase().includes(query)
+        product.title?.toLowerCase()?.includes(query) ||
+        product.id?.toLowerCase()?.includes(query) ||
+        product.category?.toLowerCase()?.includes(query) ||
+        product.facility?.name?.toLowerCase()?.includes(query)
       const matchesStatus = productStatus === 'All' || product.status === productStatus
 
       return matchesQuery && matchesStatus
     })
-  }, [productSearch, productStatus])
+  }, [productSearch, productStatus, storeProductsAdminData])
 
   const filteredOrders = useMemo(() => {
     const query = orderSearch.trim().toLowerCase()
 
-    return storeOrdersAdminData.filter((order) => {
+    return storeOrdersAdminData.filter((order: any) => {
       const matchesQuery =
         query.length === 0 ||
-        order.id.toLowerCase().includes(query) ||
-        order.productTitle.toLowerCase().includes(query) ||
-        order.customer.toLowerCase().includes(query)
+        order.id?.toLowerCase()?.includes(query) ||
+        order.product?.title?.toLowerCase()?.includes(query) ||
+        order.user?.name?.toLowerCase()?.includes(query)
       const matchesStatus = orderStatus === 'All' || order.status === orderStatus
 
       return matchesQuery && matchesStatus
     })
-  }, [orderSearch, orderStatus])
+  }, [orderSearch, orderStatus, storeOrdersAdminData])
 
   const productMetrics = useMemo(() => {
     const totalProducts = storeProductsAdminData.length
-    const lowStock = storeProductsAdminData.filter((product) => product.status === 'Low Stock').length
-    const outOfStock = storeProductsAdminData.filter((product) => product.status === 'Out of Stock').length
+    const lowStock = storeProductsAdminData.filter((product: any) => product.status === 'LOW_STOCK').length
+    const outOfStock = storeProductsAdminData.filter((product: any) => product.status === 'OUT_OF_STOCK').length
     const inventoryValue = storeProductsAdminData.reduce(
-      (sum, product) => sum + product.price * product.quantity,
+      (sum: number, product: any) => sum + (product.price || 0) * (product.quantity || 0),
       0,
     )
 
     return { totalProducts, lowStock, outOfStock, inventoryValue }
-  }, [])
+  }, [storeProductsAdminData])
 
   const orderMetrics = useMemo(() => {
     const totalOrders = storeOrdersAdminData.length
-    const delivered = storeOrdersAdminData.filter((order) => order.status === 'Delivered').length
+    const delivered = storeOrdersAdminData.filter((order: any) => order.status === 'DELIVERED').length
     const pendingOrProcessing = storeOrdersAdminData.filter(
-      (order) => order.status === 'Pending' || order.status === 'Processing',
+      (order: any) => order.status === 'PENDING' || order.status === 'PROCESSING',
     ).length
     const grossSales = storeOrdersAdminData
-      .filter((order) => order.status !== 'Cancelled')
-      .reduce((sum, order) => sum + order.total, 0)
+      .filter((order: any) => order.status !== 'CANCELLED')
+      .reduce((sum: number, order: any) => sum + (order.total || 0), 0)
     const deliveredRate = totalOrders === 0 ? 0 : Math.round((delivered / totalOrders) * 100)
 
     return {
@@ -89,13 +105,13 @@ export default function AdminStoreManagementPage() {
       pendingOrProcessing,
       grossSales,
     }
-  }, [])
+  }, [storeOrdersAdminData])
 
   const orderTrendValues = useMemo(() => {
     const perDay = new Map<string, number>()
 
     for (const order of storeOrdersAdminData) {
-      const day = order.placedAt.slice(0, 10)
+      const day = new Date(order.createdAt).toISOString().slice(0, 10)
       perDay.set(day, (perDay.get(day) ?? 0) + 1)
     }
 
@@ -103,7 +119,7 @@ export default function AdminStoreManagementPage() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(-7)
       .map((entry) => entry[1])
-  }, [])
+  }, [storeOrdersAdminData])
 
   return (
     <div className="space-y-6">
@@ -249,65 +265,69 @@ export default function AdminStoreManagementPage() {
             />
 
             <div className="mt-4">
-              <AdminTable
-                items={filteredProducts}
-                getRowKey={(product) => product.id}
-                emptyMessage="No products match the current search and inventory filters."
-                columns={[
-                  {
-                    key: 'product',
-                    header: 'Product',
-                    render: (product) => (
-                      <div>
-                        <p className="font-bold text-primary">{product.title}</p>
-                        <p className="text-xs text-primary/60 mt-1">{product.id} • {product.category}</p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'facility',
-                    header: 'Facility',
-                    render: (product) => <p className="text-sm text-primary/75">{product.facility}</p>,
-                  },
-                  {
-                    key: 'quantity',
-                    header: 'Qty',
-                    render: (product) => <p className="text-sm font-semibold text-primary">{product.quantity}</p>,
-                  },
-                  {
-                    key: 'price',
-                    header: 'Price',
-                    render: (product) => <p className="text-sm font-semibold text-primary">{formatEgp(product.price)}</p>,
-                  },
-                  {
-                    key: 'status',
-                    header: 'Stock Status',
-                    render: (product) => (
-                      <AdminStatusPill label={product.status} tone={statusTone(product.status)} />
-                    ),
-                  },
-                  {
-                    key: 'actions',
-                    header: 'Actions',
-                    render: () => (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-primary/10 text-primary"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-red-500/15 text-red-700"
-                        >
-                          Archive
-                        </button>
-                      </div>
-                    ),
-                  },
-                ]}
-              />
+              {productsLoading ? (
+                <SkeletonTable rows={10} />
+              ) : (
+                <AdminTable
+                  items={filteredProducts}
+                  getRowKey={(product: any) => product.id}
+                  emptyMessage="No products match the current search and inventory filters."
+                  columns={[
+                    {
+                      key: 'product',
+                      header: 'Product',
+                      render: (product: any) => (
+                        <div>
+                          <p className="font-bold text-primary">{product.title || 'Unknown'}</p>
+                          <p className="text-xs text-primary/60 mt-1">{product.id || 'Unknown'} • {product.category || 'Unknown'}</p>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: 'facility',
+                      header: 'Facility',
+                      render: (product: any) => <p className="text-sm text-primary/75">{product.facility?.name || 'Unknown'}</p>,
+                    },
+                    {
+                      key: 'quantity',
+                      header: 'Qty',
+                      render: (product: any) => <p className="text-sm font-semibold text-primary">{product.quantity || 0}</p>,
+                    },
+                    {
+                      key: 'price',
+                      header: 'Price',
+                      render: (product: any) => <p className="text-sm font-semibold text-primary">{formatEgp(product.price || 0)}</p>,
+                    },
+                    {
+                      key: 'status',
+                      header: 'Stock Status',
+                      render: (product: any) => (
+                        <AdminStatusPill label={product.status || 'Unknown'} tone={statusTone(product.status || 'Unknown')} />
+                      ),
+                    },
+                    {
+                      key: 'actions',
+                      header: 'Actions',
+                      render: () => (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-primary/10 text-primary"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-red-500/15 text-red-700"
+                          >
+                            Archive
+                          </button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
+              )}
             </div>
           </>
         ) : (
@@ -332,63 +352,67 @@ export default function AdminStoreManagementPage() {
             />
 
             <div className="mt-4">
-              <AdminTable
-                items={filteredOrders}
-                getRowKey={(order) => order.id}
-                emptyMessage="No orders match the current search and status filters."
-                columns={[
-                  {
-                    key: 'order',
-                    header: 'Order',
-                    render: (order) => (
-                      <div>
-                        <p className="font-bold text-primary">{order.id}</p>
-                        <p className="text-xs text-primary/60 mt-1">{order.productId}</p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'product',
-                    header: 'Product',
-                    render: (order) => (
-                      <div>
-                        <p className="text-sm font-semibold text-primary">{order.productTitle}</p>
-                        <p className="text-xs text-primary/60 mt-1">{order.customer}</p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'quantity',
-                    header: 'Qty',
-                    render: (order) => <p className="text-sm font-semibold text-primary">{order.quantity}</p>,
-                  },
-                  {
-                    key: 'fulfillment',
-                    header: 'Fulfillment',
-                    render: (order) => (
-                      <AdminStatusPill
-                        label={order.fulfillment}
-                        tone={order.fulfillment === 'Delivery' ? 'blue' : 'violet'}
-                      />
-                    ),
-                  },
-                  {
-                    key: 'total',
-                    header: 'Total',
-                    render: (order) => <p className="text-sm font-semibold text-primary">{formatEgp(order.total)}</p>,
-                  },
-                  {
-                    key: 'status',
-                    header: 'Status',
-                    render: (order) => <AdminStatusPill label={order.status} tone={statusTone(order.status)} />,
-                  },
-                  {
-                    key: 'placedAt',
-                    header: 'Placed At',
-                    render: (order) => <p className="text-xs text-primary/65">{order.placedAt}</p>,
-                  },
-                ]}
-              />
+              {ordersLoading ? (
+                <SkeletonTable rows={10} />
+              ) : (
+                <AdminTable
+                  items={filteredOrders}
+                  getRowKey={(order: any) => order.id}
+                  emptyMessage="No orders match the current search and status filters."
+                  columns={[
+                    {
+                      key: 'order',
+                      header: 'Order',
+                      render: (order: any) => (
+                        <div>
+                          <p className="font-bold text-primary">{order.id || 'Unknown'}</p>
+                          <p className="text-xs text-primary/60 mt-1">{order.productId || 'Unknown'}</p>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: 'product',
+                      header: 'Product',
+                      render: (order: any) => (
+                        <div>
+                          <p className="text-sm font-semibold text-primary">{order.product?.title || order.productId || 'Unknown'}</p>
+                          <p className="text-xs text-primary/60 mt-1">{order.user?.name || order.userId || 'Unknown'}</p>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: 'quantity',
+                      header: 'Qty',
+                      render: (order: any) => <p className="text-sm font-semibold text-primary">{order.quantity || 0}</p>,
+                    },
+                    {
+                      key: 'fulfillment',
+                      header: 'Fulfillment',
+                      render: (order: any) => (
+                        <AdminStatusPill
+                          label={order.fulfillment || 'Pickup'}
+                          tone={order.fulfillment === 'DELIVERY' ? 'blue' : 'violet'}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'total',
+                      header: 'Total',
+                      render: (order: any) => <p className="text-sm font-semibold text-primary">{formatEgp(order.total || 0)}</p>,
+                    },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      render: (order: any) => <AdminStatusPill label={order.status || 'Unknown'} tone={statusTone(order.status || 'Unknown')} />,
+                    },
+                    {
+                      key: 'placedAt',
+                      header: 'Placed At',
+                      render: (order: any) => <p className="text-xs text-primary/65">{new Date(order.createdAt).toLocaleString()}</p>,
+                    },
+                  ]}
+                />
+              )}
             </div>
           </>
         )}

@@ -7,21 +7,42 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatCard } from '@/components/admin/AdminStatCard'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { branchesData, getBranchNameById, reportJobs } from '@/lib/operator/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const branchOptions = ['All', ...branchesData.map((branch) => branch.id)] as const
 const presetOptions = ['Revenue Heatmap', 'Utilization by Court', 'Cancellation Analysis', 'Staff Coverage'] as const
 
 export default function OperatorReportsPage() {
-  const [selectedBranch, setSelectedBranch] = useState<(typeof branchOptions)[number]>('All')
+  const [selectedBranch, setSelectedBranch] = useState<string>('All')
   const [selectedPreset, setSelectedPreset] = useState<(typeof presetOptions)[number]>('Revenue Heatmap')
   const [dateRange, setDateRange] = useState('Last 30 days')
 
+  const { data: reportsResponse, loading, error } = useApiCall('/operator/reports')
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+
+  const reportsData = reportsResponse?.data || reportsResponse || {}
+  const branchesData = branchesResponse?.data || branchesResponse || []
+  const reportJobs = reportsData.reportJobs || []
+  const metrics = reportsData.metrics || []
+
+  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const getBranchNameById = (id: string) => {
+    const branch = branchesData.find((b: any) => b.id === id)
+    return branch?.name || 'Unknown'
+  }
+
   const visibleJobs = useMemo(() => {
     if (selectedBranch === 'All') return reportJobs
-    return reportJobs.filter((job) => job.branchId === selectedBranch)
-  }, [selectedBranch])
+    return reportJobs.filter((job: any) => job.branchId === selectedBranch)
+  }, [reportJobs, selectedBranch])
 
   return (
     <div className="space-y-6">
@@ -31,9 +52,19 @@ export default function OperatorReportsPage() {
       />
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <AdminStatCard label="Healthy Jobs" value={String(reportJobs.filter((job) => job.status === 'Healthy').length)} delta="automations running" trend="up" />
-        <AdminStatCard label="Needs Review" value={String(reportJobs.filter((job) => job.status === 'Needs Review').length)} delta="requires intervention" trend="down" />
-        <AdminStatCard label="Delivery SLA" value="97.9%" delta="on-time report generation" trend="up" />
+        {loading ? (
+          <>
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+          </>
+        ) : (
+          <>
+            <AdminStatCard label="Healthy Jobs" value={String(reportJobs.filter((job: any) => job.status === 'HEALTHY').length)} delta="automations running" trend="up" />
+            <AdminStatCard label="Needs Review" value={String(reportJobs.filter((job: any) => job.status === 'NEEDS_REVIEW').length)} delta="requires intervention" trend="down" />
+            <AdminStatCard label="Delivery SLA" value="97.9%" delta="on-time report generation" trend="up" />
+          </>
+        )}
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-4">
@@ -58,10 +89,10 @@ export default function OperatorReportsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Branch scope</span>
               <select
                 value={selectedBranch}
-                onChange={(event) => setSelectedBranch(event.target.value as (typeof branchOptions)[number])}
+                onChange={(event) => setSelectedBranch(event.target.value)}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               >
-                {branchOptions.map((branchId) => (
+                {branchOptions.map((branchId: any) => (
                   <option key={branchId} value={branchId}>
                     {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
                   </option>
@@ -98,47 +129,51 @@ export default function OperatorReportsPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Automation" title="Scheduled Jobs">
-          <AdminTable
-            items={visibleJobs}
-            getRowKey={(job) => job.id}
-            columns={[
-              {
-                key: 'name',
-                header: 'Report',
-                render: (job) => (
-                  <div>
-                    <p className="font-bold text-primary">{job.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">Owner: {job.owner}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'branch',
-                header: 'Branch',
-                render: (job) => <p className="text-sm text-primary/75">{getBranchNameById(job.branchId)}</p>,
-              },
-              {
-                key: 'frequency',
-                header: 'Frequency',
-                render: (job) => <p className="text-sm text-primary/75">{job.frequency}</p>,
-              },
-              {
-                key: 'format',
-                header: 'Format',
-                render: (job) => <p className="text-sm text-primary/75">{job.format}</p>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (job) => <AdminStatusPill label={job.status} tone={statusTone(job.status)} />,
-              },
-              {
-                key: 'lastRun',
-                header: 'Last Run',
-                render: (job) => <p className="text-sm text-primary/70">{job.lastRun}</p>,
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleJobs}
+              getRowKey={(job: any) => job.id}
+              columns={[
+                {
+                  key: 'name',
+                  header: 'Report',
+                  render: (job: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{job.name || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">Owner: {job.owner || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'branch',
+                  header: 'Branch',
+                  render: (job: any) => <p className="text-sm text-primary/75">{getBranchNameById(job.branchId)}</p>,
+                },
+                {
+                  key: 'frequency',
+                  header: 'Frequency',
+                  render: (job: any) => <p className="text-sm text-primary/75">{job.frequency || 'Unknown'}</p>,
+                },
+                {
+                  key: 'format',
+                  header: 'Format',
+                  render: (job: any) => <p className="text-sm text-primary/75">{job.format || 'Unknown'}</p>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (job: any) => <AdminStatusPill label={job.status || 'Unknown'} tone={statusTone(job.status || 'Unknown')} />,
+                },
+                {
+                  key: 'lastRun',
+                  header: 'Last Run',
+                  render: (job: any) => <p className="text-sm text-primary/70">{job.lastRun || 'Never'}</p>,
+                },
+              ]}
+            />
+          )}
         </AdminPanel>
       </section>
     </div>

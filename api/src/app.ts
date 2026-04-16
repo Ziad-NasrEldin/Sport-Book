@@ -20,6 +20,7 @@ import { storeRoutes } from '@modules/store/routes'
 import { coachWorkspaceRoutes } from '@modules/coach-workspace/routes'
 import { operatorWorkspaceRoutes } from '@modules/operator-workspace/routes'
 import { adminWorkspaceRoutes } from '@modules/admin-workspace/routes'
+import { playerRoutes } from '@modules/player/routes'
 
 export async function createApp() {
   const app = fastify({
@@ -55,6 +56,7 @@ export async function createApp() {
   await app.register(coachWorkspaceRoutes, { prefix: '/api/v1/coach-workspace' })
   await app.register(operatorWorkspaceRoutes, { prefix: '/api/v1/operator-workspace' })
   await app.register(adminWorkspaceRoutes, { prefix: '/api/v1/admin-workspace' })
+  await app.register(playerRoutes, { prefix: '/api/v1/player' })
 
   return app
 }

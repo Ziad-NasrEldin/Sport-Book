@@ -39,8 +39,15 @@ export async function storeRoutes(app: FastifyInstance) {
   })
 
   // Authenticated routes
-  const authRoutes = async (request: FastifyRequest) => {
-    await request.jwtVerify()
+  const authRoutes = async (request: FastifyRequest, reply: any) => {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      return reply.status(401).send({
+        error: 'Unauthorized - Please log in',
+        code: 'UNAUTHORIZED'
+      })
+    }
   }
 
   // POST /store/orders - Create order

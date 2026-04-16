@@ -1,7 +1,43 @@
+"use client"
+
+import { FormEvent, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, UserRound, Mail, LockKeyhole } from 'lucide-react'
+import { api, setTokens } from '@/lib/api/client'
+import { APIError } from '@/lib/api/client'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 export default function SignUpPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    const formData = new FormData(event.currentTarget)
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    try {
+      const response = await api.post('/auth/register', { name, email, password })
+      const { accessToken, refreshToken, user } = response.data || response
+
+      setTokens(accessToken, refreshToken)
+
+      router.push('/')
+    } catch (err) {
+      const apiError = err as APIError
+      setError(apiError.message || 'Failed to create account. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="w-full min-h-screen bg-surface relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -23,14 +59,16 @@ export default function SignUpPage() {
           <h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight text-primary">Create Account</h1>
           <p className="mt-2 text-sm md:text-base text-primary/60">Sign up to unlock fast booking and wallet checkout.</p>
 
-          <form className="space-y-4 mt-6">
+          <form className="space-y-4 mt-6" onSubmit={handleSignUp}>
             <label className="block space-y-1.5">
               <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Full Name</span>
               <div className="relative">
                 <UserRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
+                  name="name"
                   type="text"
                   placeholder="Alex Rivera"
+                  required
                   className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />
               </div>
@@ -41,8 +79,10 @@ export default function SignUpPage() {
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
+                  name="email"
                   type="email"
                   placeholder="alex@example.com"
+                  required
                   className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />
               </div>
@@ -53,18 +93,34 @@ export default function SignUpPage() {
               <div className="relative">
                 <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
+                  name="password"
                   type="password"
                   placeholder="Create a password"
+                  required
                   className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />
               </div>
             </label>
 
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+                {error}
+              </div>
+            )}
+
             <button
-              type="button"
-              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all"
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign Up
+              {loading ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Creating account...
+                </>
+              ) : (
+                'Sign Up'
+              )}
             </button>
           </form>
 

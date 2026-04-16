@@ -9,20 +9,23 @@ import { CourtCard } from '@/components/home/CourtCard'
 import { DateSelector } from '@/components/home/DateSelector'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { NotificationsModal } from '@/components/modals/NotificationsModal'
-import {
-  NOTIFICATIONS_UPDATED_EVENT,
-  getUnreadInAppNotificationsCount,
-} from '@/lib/notifications'
-import { ACTIVE_USER_UPDATED_EVENT, getActiveUserId } from '@/lib/teams'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { hasCompletedOnboarding } from '@/lib/onboarding'
 
 export default function Home() {
   const router = useRouter()
+  const { data: categoriesResponse, loading: categoriesLoading, error: categoriesError } = useApiCall('/player/categories')
+  const { data: courtsResponse, loading: courtsLoading, error: courtsError } = useApiCall('/player/courts/nearby')
+  const { data: notificationsResponse } = useApiCall('/player/notifications/unread-count')
+
+  const categoriesData = categoriesResponse?.data || categoriesResponse || []
+  const courtsData = courtsResponse?.data || courtsResponse || []
+  const unreadCount = notificationsResponse?.count || 0
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isOnboardingGateReady, setIsOnboardingGateReady] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(() =>
-    getUnreadInAppNotificationsCount(getActiveUserId()),
-  )
 
   useEffect(() => {
     if (!hasCompletedOnboarding()) {
@@ -33,19 +36,9 @@ export default function Home() {
     setIsOnboardingGateReady(true)
   }, [router])
 
-  useEffect(() => {
-    const refreshUnread = () => {
-      setUnreadCount(getUnreadInAppNotificationsCount(getActiveUserId()))
-    }
-
-    window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshUnread)
-    window.addEventListener(ACTIVE_USER_UPDATED_EVENT, refreshUnread)
-
-    return () => {
-      window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshUnread)
-      window.removeEventListener(ACTIVE_USER_UPDATED_EVENT, refreshUnread)
-    }
-  }, [])
+  if (categoriesError || courtsError) {
+    return <APIErrorFallback error={categoriesError || courtsError as any} onRetry={() => window.location.reload()} />
+  }
 
   if (!isOnboardingGateReady) {
     return <main className="w-full flex-1 min-h-screen bg-surface" />
@@ -90,26 +83,21 @@ export default function Home() {
         </div>
 
         {/* Scrollable Categories - horizontal snap */}
-        <div className="flex overflow-x-auto snap-x hide-scrollbar px-5 gap-4 pb-4 md:px-10 md:grid md:grid-cols-3 md:overflow-visible md:snap-none lg:px-14">
-          <CategoryCard
-            title="Tennis"
-            courtsCount={124}
-            color="bg-primary-container text-white"
-            href="/courts?sport=Tennis"
-          />
-          <CategoryCard
-            title="Padel"
-            courtsCount={48}
-            color="bg-secondary-container text-primary"
-            href="/courts?sport=Padel"
-          />
-          <CategoryCard
-            title="Squash"
-            courtsCount={32}
-            color="bg-primary hover:bg-primary/90 text-white"
-            href="/courts?sport=Squash"
-          />
-        </div>
+        {categoriesLoading ? (
+          <SkeletonStat />
+        ) : (
+          <div className="flex overflow-x-auto snap-x hide-scrollbar px-5 gap-4 pb-4 md:px-10 md:grid md:grid-cols-3 md:overflow-visible md:snap-none lg:px-14">
+            {categoriesData.slice(0, 3).map((category: any) => (
+              <CategoryCard
+                key={category.id}
+                title={category.name}
+                courtsCount={category.courtsCount || 0}
+                color={category.color || 'bg-primary-container text-white'}
+                href={`/courts?sport=${category.name}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Date Selector component added between categories and courts */}
@@ -125,29 +113,21 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-7">
-          {/* Card 1 */}
-          <CourtCard
-            title="The Regent's Park"
-            image="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80"
-            rating={4.8}
-            distance="1.2 km away"
-            location="London NW1"
-            price={500}
-            status="AVAILABLE"
-            type="TENNIS • HARD COURT"
-          />
-
-          {/* Card 2 */}
-          <CourtCard
-            title="Elite Padel Club"
-            image="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80"
-            rating={4.9}
-            distance="2.5 km away"
-            location="Chelsea, London"
-            price={850}
-            status="BUSY"
-            type="PADEL • PANORAMIC"
-          />
+          {courtsLoading ? (
+            <SkeletonStat />
+          ) : courtsData.slice(0, 2).map((court: any) => (
+            <CourtCard
+              key={court.id}
+              title={court.title || court.name}
+              image={court.image}
+              rating={court.rating || 0}
+              distance={`${court.distance || 0} km away`}
+              location={court.location}
+              price={court.price || 0}
+              status={court.status || 'AVAILABLE'}
+              type={court.type || `${court.sportLabel || 'TENNIS'} • ${court.surface || 'HARD COURT'}`}
+            />
+          ))}
         </div>
 
         <div className="mt-5 md:mt-6 flex justify-center">

@@ -26,6 +26,14 @@ export async function registerErrorHandler(app: FastifyInstance) {
       })
     }
 
+    // Handle Fastify JWT errors
+    if (error.code && error.code.startsWith('FST_JWT')) {
+      return reply.status(401).send({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+      })
+    }
+
     request.log.error(error)
     return reply.status(500).send({
       error: 'Internal server error',

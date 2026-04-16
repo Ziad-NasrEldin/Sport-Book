@@ -1,27 +1,52 @@
+'use client'
+
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { ArrowLeft, MessageCircle, PencilLine, ShieldCheck, UserRound } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
-import { usersData } from '@/lib/admin/mockData'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
-
-type AdminUserDetailsPageProps = {
-  params: Promise<{ userId: string }>
-}
 
 function buildWhatsAppHref(userName: string, userId: string) {
   const message = `Hi ${userName}, this is the SportBook admin team regarding your account (${userId}).`
   return `https://wa.me/?text=${encodeURIComponent(message)}`
 }
 
-export default async function AdminUserDetailsPage({ params }: AdminUserDetailsPageProps) {
-  const { userId } = await params
-  const user = usersData.find((entry) => entry.id === userId)
+export default function AdminUserDetailsPage() {
+  const params = useParams<{ userId: string }>()
+  const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId
+
+  const { data: userResponse, loading, error } = useApiCall(`/admin/users/${userId}`)
+  const user = userResponse?.data || userResponse
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  if (loading) {
+    return <SkeletonStat />
+  }
 
   if (!user) {
-    notFound()
+    return (
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="User Not Found"
+          subtitle="This user id does not exist in the system."
+        />
+        <Link
+          href="/admin/users"
+          className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to User Directory
+        </Link>
+      </div>
+    )
   }
 
   return (

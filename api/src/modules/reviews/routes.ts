@@ -18,8 +18,15 @@ import { success } from '@common/response'
 
 export async function reviewRoutes(app: FastifyInstance) {
   // All routes require authentication
-  app.addHook('preHandler', async (request: FastifyRequest) => {
-    await request.jwtVerify()
+  app.addHook('preHandler', async (request: FastifyRequest, reply) => {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      return reply.status(401).send({
+        error: 'Unauthorized - Please log in',
+        code: 'UNAUTHORIZED'
+      })
+    }
   })
 
   // POST /reviews - Create review

@@ -1,23 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Save, ShieldCheck, UserCircle2 } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 export default function OperatorProfilePage() {
-  const [fullName, setFullName] = useState('Nouran Mostafa')
-  const [title, setTitle] = useState('Regional Facility Operator')
-  const [email, setEmail] = useState('nouran.mostafa@sportbook.app')
-  const [phone, setPhone] = useState('+20 100 321 8890')
-  const [notifyApprovals, setNotifyApprovals] = useState(true)
-  const [notifyIncidents, setNotifyIncidents] = useState(true)
+  const [fullName, setFullName] = useState('')
+  const [title, setTitle] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [notifyApprovals, setNotifyApprovals] = useState(false)
+  const [notifyIncidents, setNotifyIncidents] = useState(false)
   const [notifyReports, setNotifyReports] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1800)
+  const { data: profileResponse, loading, error, refetch } = useApiCall('/operator/profile')
+  const saveMutation = useApiMutation('/operator/profile', 'PUT')
+
+  const profileData = profileResponse?.data || profileResponse || {}
+
+  useEffect(() => {
+    if (profileData.fullName) setFullName(profileData.fullName)
+    if (profileData.title) setTitle(profileData.title)
+    if (profileData.email) setEmail(profileData.email)
+    if (profileData.phone) setPhone(profileData.phone)
+    if (profileData.notifyApprovals !== undefined) setNotifyApprovals(profileData.notifyApprovals)
+    if (profileData.notifyIncidents !== undefined) setNotifyIncidents(profileData.notifyIncidents)
+    if (profileData.notifyReports !== undefined) setNotifyReports(profileData.notifyReports)
+  }, [profileData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const handleSave = async () => {
+    try {
+      await saveMutation.mutate({
+        fullName,
+        title,
+        email,
+        phone,
+        notifyApprovals,
+        notifyIncidents,
+        notifyReports,
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1800)
+      refetch()
+    } catch (err) {
+      console.error('Failed to save profile:', err)
+    }
   }
 
   return (
@@ -29,7 +65,8 @@ export default function OperatorProfilePage() {
           <button
             type="button"
             onClick={handleSave}
-            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+            disabled={saveMutation.loading || loading}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Save Profile

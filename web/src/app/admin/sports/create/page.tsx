@@ -6,7 +6,9 @@ import { ArrowLeft, ClipboardList, Plus, RefreshCcw, Save, Sparkles, Upload } fr
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
-import { sportsData } from '@/lib/admin/mockData'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
 type SportStatus = 'Draft' | 'Enabled'
 
@@ -63,6 +65,10 @@ const templates: Record<TemplateName, SportTemplate> = {
 }
 
 export default function AdminCreateSportPage() {
+  const { data: sportsResponse } = useApiCall('/admin/sports')
+  const sportsData = sportsResponse?.data || sportsResponse || []
+  const createMutation = useApiMutation('/admin/sports', 'POST')
+
   const [name, setName] = useState('Pickleball')
   const [slug, setSlug] = useState('pickleball')
   const [description, setDescription] = useState('Fast-paced racket sport with doubles-heavy participation and high repeat bookings.')
@@ -91,11 +97,11 @@ export default function AdminCreateSportPage() {
     if (Number(sessionMinutes || 0) <= 0) return 'Session duration must be greater than zero.'
     if (categories.length === 0) return 'Add at least one category.'
 
-    const duplicate = sportsData.some((sport) => sport.name.toLowerCase() === name.trim().toLowerCase())
+    const duplicate = sportsData.some((sport: any) => sport.name.toLowerCase() === name.trim().toLowerCase())
     if (duplicate) return 'A sport with this name already exists in the catalog.'
 
     return ''
-  }, [categories.length, description, maxPlayers, minPlayers, name, sessionMinutes, slug])
+  }, [categories.length, description, maxPlayers, minPlayers, name, sessionMinutes, slug, sportsData])
 
   const applyTemplate = () => {
     const chosen = templates[template]
@@ -141,25 +147,31 @@ export default function AdminCreateSportPage() {
     setBanner(`Removed category ${target}.`)
   }
 
-  const saveSport = (status: SportStatus) => {
+  const saveSport = async (status: SportStatus) => {
     if (validationMessage) {
       setBanner(validationMessage)
       return
     }
 
-    const nextId = `S-MOCK-${String(createdSports.length + 1).padStart(2, '0')}`
-    const entry: MockSport = {
-      id: nextId,
-      name,
-      slug,
-      categoriesCount: categories.length,
-      sessionMinutes: Number(sessionMinutes),
-      status,
-      createdAt: new Date().toLocaleString(),
+    try {
+      await createMutation.mutate({
+        name,
+        slug,
+        description,
+        minPlayers: Number(minPlayers),
+        maxPlayers: Number(maxPlayers),
+        sessionMinutes: Number(sessionMinutes),
+        categories,
+        requiresEquipmentCheck,
+        requiresReferee,
+        supportsMixedTeams,
+        status,
+      })
+      setBanner(`${status === 'Draft' ? 'Saved draft for' : 'Published'} ${name}.`)
+      resetForm()
+    } catch (err) {
+      setBanner('Failed to save sport. Please try again.')
     }
-
-    setCreatedSports((prev) => [entry, ...prev])
-    setBanner(`${status === 'Draft' ? 'Saved draft for' : 'Published'} ${name}.`)
   }
 
   const resetForm = () => {

@@ -1,18 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Camera, Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
-import { coachProfile } from '@/lib/coach/mockData'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 export default function CoachProfilePage() {
-  const [displayName, setDisplayName] = useState(coachProfile.displayName)
-  const [headline, setHeadline] = useState(coachProfile.headline)
-  const [bio, setBio] = useState(coachProfile.bio)
-  const [city, setCity] = useState(coachProfile.city)
+  const { data: profileResponse, loading, error, refetch } = useApiCall('/coach/profile')
+  const updateMutation = useApiMutation('/coach/profile', 'PUT')
+
+  const profileData = profileResponse?.data || profileResponse || {}
+
+  const [displayName, setDisplayName] = useState('')
+  const [headline, setHeadline] = useState('')
+  const [bio, setBio] = useState('')
+  const [city, setCity] = useState('')
   const [isPublicProfileVisible, setIsPublicProfileVisible] = useState(true)
+
+  useEffect(() => {
+    if (profileData.displayName) {
+      setDisplayName(profileData.displayName)
+      setHeadline(profileData.headline || '')
+      setBio(profileData.bio || '')
+      setCity(profileData.city || '')
+      setIsPublicProfileVisible(profileData.isPublicProfileVisible !== false)
+    }
+  }, [profileData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const handleSave = async () => {
+    try {
+      await updateMutation.mutate({
+        displayName,
+        headline,
+        bio,
+        city,
+        isPublicProfileVisible,
+      })
+      refetch()
+    } catch (err) {
+      console.error('Failed to save profile:', err)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -22,7 +57,9 @@ export default function CoachProfilePage() {
         actions={
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+            onClick={handleSave}
+            disabled={updateMutation.loading}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Save Profile
@@ -121,7 +158,7 @@ export default function CoachProfilePage() {
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <AdminPanel eyebrow="Sports" title="Specialties">
           <div className="flex flex-wrap gap-2">
-            {coachProfile.sports.map((sport) => (
+            {(profileData.sports || []).map((sport: any) => (
               <span
                 key={sport}
                 className="px-3 py-1.5 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.12em] bg-primary-container text-surface-container-lowest"
@@ -134,7 +171,7 @@ export default function CoachProfilePage() {
 
         <AdminPanel eyebrow="Proof" title="Certifications">
           <ul className="space-y-2 text-sm text-primary">
-            {coachProfile.certifications.map((certification) => (
+            {(profileData.certifications || []).map((certification: any) => (
               <li key={certification} className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5 font-semibold">
                 {certification}
               </li>
@@ -144,7 +181,7 @@ export default function CoachProfilePage() {
 
         <AdminPanel eyebrow="Language" title="Communication">
           <ul className="space-y-2 text-sm text-primary">
-            {coachProfile.languages.map((language) => (
+            {(profileData.languages || []).map((language: any) => (
               <li key={language} className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5 font-semibold">
                 {language}
               </li>

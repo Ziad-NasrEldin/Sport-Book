@@ -6,10 +6,12 @@ import { useParams } from 'next/navigation'
 import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw, Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
-import { usersData, type UserRecord } from '@/lib/admin/mockData'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
-const roleOptions: Array<UserRecord['role']> = ['Player', 'Coach', 'Facility', 'Admin']
-const statusOptions: Array<UserRecord['status']> = ['Active', 'Pending', 'Suspended', 'Archived']
+const roleOptions = ['Player', 'Coach', 'Facility', 'Admin'] as const
+const statusOptions = ['Active', 'Pending', 'Suspended', 'Archived'] as const
 
 type ToastState = {
   tone: 'success' | 'error' | 'info'
@@ -33,12 +35,17 @@ function isValidEmail(value: string) {
 
 export default function AdminUserEditPage() {
   const params = useParams<{ userId: string }>()
-  const user = useMemo(() => usersData.find((entry) => entry.id === params.userId), [params.userId])
+  const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId
+
+  const { data: userResponse, loading, error } = useApiCall(`/admin/users/${userId}`)
+  const saveMutation = useApiMutation(`/admin/users/${userId}`, 'PUT')
+
+  const user = userResponse?.data || userResponse
 
   const [name, setName] = useState(user?.name ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
-  const [role, setRole] = useState<UserRecord['role']>(user?.role ?? 'Player')
-  const [status, setStatus] = useState<UserRecord['status']>(user?.status ?? 'Pending')
+  const [role, setRole] = useState<typeof roleOptions[number]>(user?.role ?? 'Player')
+  const [status, setStatus] = useState<typeof statusOptions[number]>(user?.status ?? 'Pending')
   const [country, setCountry] = useState(user?.country ?? '')
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -50,6 +57,14 @@ export default function AdminUserEditPage() {
       summary: 'Opened account editor.',
     },
   ])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  if (loading) {
+    return <SkeletonStat />
+  }
 
   if (!user) {
     return (
@@ -118,7 +133,7 @@ export default function AdminUserEditPage() {
     addHistory('Reverted unsaved changes to last saved snapshot.')
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isSaving) return
 
     if (name.trim().length < 2) {
@@ -147,11 +162,22 @@ export default function AdminUserEditPage() {
     setIsSaving(true)
     setToast({ tone: 'info', message: 'Saving account changes...' })
 
-    window.setTimeout(() => {
+    try {
+      await saveMutation.mutate({
+        name: name.trim(),
+        email: email.trim(),
+        role,
+        status,
+        country: country.trim(),
+      })
       setIsSaving(false)
-      setToast({ tone: 'success', message: 'Account changes saved successfully (mock).' })
+      setToast({ tone: 'success', message: 'Account changes saved successfully.' })
       addHistory(`Saved changes: ${changedFields.join(', ')}.`)
-    }, 650)
+    } catch (err) {
+      setIsSaving(false)
+      setToast({ tone: 'error', message: 'Failed to save account changes.' })
+      addHistory('Save failed: API error.')
+    }
   }
 
   useEffect(() => {
@@ -233,7 +259,7 @@ export default function AdminUserEditPage() {
             <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Role</span>
             <select
               value={role}
-              onChange={(event) => setRole(event.target.value as UserRecord['role'])}
+              onChange={(event) => setRole(event.target.value as typeof roleOptions[number])}
               className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
             >
               {roleOptions.map((option) => (
@@ -246,7 +272,7 @@ export default function AdminUserEditPage() {
             <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Status</span>
             <select
               value={status}
-              onChange={(event) => setStatus(event.target.value as UserRecord['status'])}
+              onChange={(event) => setStatus(event.target.value as typeof statusOptions[number])}
               className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
             >
               {statusOptions.map((option) => (

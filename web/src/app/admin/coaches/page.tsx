@@ -7,28 +7,37 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { coachesData } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
-
-const sportOptions = ['All', ...new Set(coachesData.map((item) => item.sport))] as const
 
 export default function AdminCoachesPage() {
   const [search, setSearch] = useState('')
-  const [sportFilter, setSportFilter] = useState<(typeof sportOptions)[number]>('All')
+  const [sportFilter, setSportFilter] = useState<string>('All')
+
+  const { data: coachesResponse, loading, error } = useApiCall('/admin-workspace/coaches')
+  const coachesData = coachesResponse?.data || coachesResponse || []
+
+  const sportOptions = ['All', ...new Set(coachesData.map((item: any) => item.sport || '').filter(Boolean))]
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const filteredCoaches = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return coachesData.filter((coach) => {
+    return coachesData.filter((coach: any) => {
       const matchesSearch =
         query.length === 0 ||
-        coach.name.toLowerCase().includes(query) ||
-        coach.id.toLowerCase().includes(query)
+        coach.name?.toLowerCase()?.includes(query) ||
+        coach.id?.toLowerCase()?.includes(query)
       const matchesSport = sportFilter === 'All' || coach.sport === sportFilter
 
       return matchesSearch && matchesSport
     })
-  }, [search, sportFilter])
+  }, [search, sportFilter, coachesData])
 
   return (
     <div className="space-y-6">
@@ -63,10 +72,10 @@ export default function AdminCoachesPage() {
           controls={
             <select
               value={sportFilter}
-              onChange={(event) => setSportFilter(event.target.value as (typeof sportOptions)[number])}
+              onChange={(event) => setSportFilter(event.target.value)}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
-              {sportOptions.map((sport) => (
+              {sportOptions.map((sport: any) => (
                 <option key={sport} value={sport}>
                   {sport}
                 </option>
@@ -76,47 +85,51 @@ export default function AdminCoachesPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={filteredCoaches}
-            getRowKey={(coach) => coach.id}
-            columns={[
-              {
-                key: 'coach',
-                header: 'Coach',
-                render: (coach) => (
-                  <div>
-                    <p className="font-bold text-primary">{coach.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">{coach.id}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'sport',
-                header: 'Sport',
-                render: (coach) => <p className="text-sm text-primary/75">{coach.sport}</p>,
-              },
-              {
-                key: 'sessions',
-                header: 'Sessions (month)',
-                render: (coach) => <p className="text-sm font-semibold text-primary">{coach.sessionsThisMonth}</p>,
-              },
-              {
-                key: 'commission',
-                header: 'Commission',
-                render: (coach) => <p className="text-sm text-primary/75">{coach.commissionRate}%</p>,
-              },
-              {
-                key: 'rating',
-                header: 'Rating',
-                render: (coach) => <p className="text-sm font-semibold text-primary">{coach.rating.toFixed(1)}</p>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (coach) => <AdminStatusPill label={coach.status} tone={statusTone(coach.status)} />,
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={filteredCoaches}
+              getRowKey={(coach: any) => coach.id}
+              columns={[
+                {
+                  key: 'coach',
+                  header: 'Coach',
+                  render: (coach: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{coach.name || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{coach.id || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'sport',
+                  header: 'Sport',
+                  render: (coach: any) => <p className="text-sm text-primary/75">{coach.sport || 'Unknown'}</p>,
+                },
+                {
+                  key: 'sessions',
+                  header: 'Sessions (month)',
+                  render: (coach: any) => <p className="text-sm font-semibold text-primary">{coach.sessionsThisMonth || 0}</p>,
+                },
+                {
+                  key: 'commission',
+                  header: 'Commission',
+                  render: (coach: any) => <p className="text-sm text-primary/75">{coach.commissionRate || 0}%</p>,
+                },
+                {
+                  key: 'rating',
+                  header: 'Rating',
+                  render: (coach: any) => <p className="text-sm font-semibold text-primary">{(coach.rating || 0).toFixed(1)}</p>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (coach: any) => <AdminStatusPill label={coach.status || 'Unknown'} tone={statusTone(coach.status || 'Unknown')} />,
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

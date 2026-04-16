@@ -7,52 +7,64 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import {
-  branchesData,
-  formatEgp,
-  getBranchNameById,
-  getCourtNameById,
-  operatorBookingsData,
-} from '@/lib/operator/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const statusOptions = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'] as const
-const branchOptions = ['All', ...branchesData.map((branch) => branch.id)] as const
+const statusOptions = ['All', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as const
 
 type BookingStatusFilter = (typeof statusOptions)[number]
 type BookingStatus = Exclude<BookingStatusFilter, 'All'>
 
-type BookingOverride = {
-  id: string
-  status: BookingStatus
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 export default function OperatorBookingsPage() {
   const [search, setSearch] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<BookingStatusFilter>('All')
-  const [selectedBranch, setSelectedBranch] = useState<(typeof branchOptions)[number]>('All')
-  const [overrides, setOverrides] = useState<BookingOverride[]>([])
+  const [selectedBranch, setSelectedBranch] = useState<string>('All')
 
-  const withStatus = useMemo(() => {
-    return operatorBookingsData.map((booking) => {
-      const override = overrides.find((entry) => entry.id === booking.id)
-      if (!override) return booking
+  const { data: bookingsResponse, loading, error, refetch } = useApiCall('/operator/bookings')
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+  const { data: courtsResponse } = useApiCall('/operator/courts')
 
-      return {
-        ...booking,
-        status: override.status,
-      }
-    })
-  }, [overrides])
+  const operatorBookingsData = bookingsResponse?.data || bookingsResponse || []
+  const branchesData = branchesResponse?.data || branchesResponse || []
+  const courtsData = courtsResponse?.data || courtsResponse || []
+
+  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
+
+  const advanceStatusMutation = useApiMutation('/operator/bookings/:id/status', 'PUT')
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const getBranchNameById = (id: string) => {
+    const branch = branchesData.find((b: any) => b.id === id)
+    return branch?.name || 'Unknown'
+  }
+
+  const getCourtNameById = (id: string) => {
+    const court = courtsData.find((c: any) => c.id === id)
+    return court?.name || 'Unknown'
+  }
 
   const visibleBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return withStatus.filter((booking) => {
+    return operatorBookingsData.filter((booking: any) => {
       const matchesSearch =
         query.length === 0 ||
-        booking.id.toLowerCase().includes(query) ||
-        booking.customer.toLowerCase().includes(query) ||
+        booking.id?.toLowerCase()?.includes(query) ||
+        booking.customer?.toLowerCase()?.includes(query) ||
+        booking.user?.name?.toLowerCase()?.includes(query) ||
         getCourtNameById(booking.courtId).toLowerCase().includes(query)
 
       const matchesStatus = selectedStatus === 'All' || booking.status === selectedStatus
@@ -60,19 +72,18 @@ export default function OperatorBookingsPage() {
 
       return matchesSearch && matchesStatus && matchesBranch
     })
-  }, [search, selectedStatus, selectedBranch, withStatus])
+  }, [operatorBookingsData, search, selectedStatus, selectedBranch, branchesData, courtsData])
 
-  const advanceStatus = (id: string, status: BookingStatus) => {
+  const advanceStatus = async (id: string, status: BookingStatus) => {
     const nextStatus: BookingStatus =
-      status === 'Pending' ? 'Confirmed' : status === 'Confirmed' ? 'Completed' : status
+      status === 'PENDING' ? 'CONFIRMED' : status === 'CONFIRMED' ? 'COMPLETED' : status
 
-    setOverrides((prev) => {
-      const existing = prev.find((entry) => entry.id === id)
-      if (existing) {
-        return prev.map((entry) => (entry.id === id ? { ...entry, status: nextStatus } : entry))
-      }
-      return [...prev, { id, status: nextStatus }]
-    })
+    try {
+      await advanceStatusMutation.mutate({ id, status: nextStatus })
+      refetch()
+    } catch (err) {
+      console.error('Failed to advance status:', err)
+    }
   }
 
   return (
@@ -126,66 +137,71 @@ export default function OperatorBookingsPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleBookings}
-            getRowKey={(booking) => booking.id}
-            columns={[
-              {
-                key: 'booking',
-                header: 'Booking',
-                render: (booking) => (
-                  <div>
-                    <p className="font-bold text-primary">{booking.id}</p>
-                    <p className="text-xs text-primary/60 mt-1">{booking.customer}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'schedule',
-                header: 'Schedule',
-                render: (booking) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{booking.date} • {booking.slot}</p>
-                    <p className="text-xs text-primary/55 mt-1">{getCourtNameById(booking.courtId)}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'branch',
-                header: 'Branch',
-                render: (booking) => <p className="text-sm text-primary/75">{getBranchNameById(booking.branchId)}</p>,
-              },
-              {
-                key: 'payment',
-                header: 'Payment',
-                render: (booking) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{formatEgp(booking.amount)}</p>
-                    <p className="text-xs text-primary/55 mt-1">{booking.paymentMethod}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (booking) => <AdminStatusPill label={booking.status} tone={statusTone(booking.status)} />,
-              },
-              {
-                key: 'action',
-                header: 'Action',
-                render: (booking) => (
-                  <button
-                    type="button"
-                    onClick={() => advanceStatus(booking.id, booking.status)}
-                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
-                  >
-                    <Repeat2 className="w-3.5 h-3.5" />
-                    Advance
-                  </button>
-                ),
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleBookings}
+              getRowKey={(booking: any) => booking.id}
+              columns={[
+                {
+                  key: 'booking',
+                  header: 'Booking',
+                  render: (booking: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{booking.id || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{booking.customer || booking.user?.name || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'schedule',
+                  header: 'Schedule',
+                  render: (booking: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{new Date(booking.date).toLocaleDateString()} • {booking.slot || 'TBD'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{getCourtNameById(booking.courtId)}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'branch',
+                  header: 'Branch',
+                  render: (booking: any) => <p className="text-sm text-primary/75">{getBranchNameById(booking.branchId)}</p>,
+                },
+                {
+                  key: 'payment',
+                  header: 'Payment',
+                  render: (booking: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{formatEgp(booking.amount || 0)}</p>
+                      <p className="text-xs text-primary/55 mt-1">{booking.paymentMethod || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (booking: any) => <AdminStatusPill label={booking.status || 'Unknown'} tone={statusTone(booking.status || 'Unknown')} />,
+                },
+                {
+                  key: 'action',
+                  header: 'Action',
+                  render: (booking: any) => (
+                    <button
+                      type="button"
+                      onClick={() => advanceStatus(booking.id, booking.status)}
+                      disabled={advanceStatusMutation.loading}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary disabled:opacity-50"
+                    >
+                      <Repeat2 className="w-3.5 h-3.5" />
+                      Advance
+                    </button>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

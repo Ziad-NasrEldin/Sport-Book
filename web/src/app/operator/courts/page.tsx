@@ -8,27 +8,53 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { branchesData, courtsData, formatEgp, getBranchNameById } from '@/lib/operator/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const branchOptions = ['All', ...branchesData.map((branch) => branch.id)] as const
-const sportOptions = ['All', ...new Set(courtsData.map((court) => court.sport))] as const
-const statusOptions = ['All', 'Active', 'Maintenance', 'Paused'] as const
+const statusOptions = ['All', 'ACTIVE', 'MAINTENANCE', 'PAUSED'] as const
+
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export default function OperatorCourtsPage() {
   const [search, setSearch] = useState('')
-  const [selectedBranch, setSelectedBranch] = useState<(typeof branchOptions)[number]>('All')
-  const [selectedSport, setSelectedSport] = useState<(typeof sportOptions)[number]>('All')
+  const [selectedBranch, setSelectedBranch] = useState<string>('All')
+  const [selectedSport, setSelectedSport] = useState<string>('All')
   const [selectedStatus, setSelectedStatus] = useState<(typeof statusOptions)[number]>('All')
+
+  const { data: courtsResponse, loading, error } = useApiCall('/operator/courts')
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+
+  const courtsData = courtsResponse?.data || courtsResponse || []
+  const branchesData = branchesResponse?.data || branchesResponse || []
+
+  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
+  const sportOptions = ['All', ...new Set(courtsData.map((court: any) => court.sport))]
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const getBranchNameById = (id: string) => {
+    const branch = branchesData.find((b: any) => b.id === id)
+    return branch?.name || 'Unknown'
+  }
 
   const filteredCourts = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return courtsData.filter((court) => {
+    return courtsData.filter((court: any) => {
       const matchesSearch =
         query.length === 0 ||
-        court.name.toLowerCase().includes(query) ||
-        court.id.toLowerCase().includes(query) ||
+        court.name?.toLowerCase()?.includes(query) ||
+        court.id?.toLowerCase()?.includes(query) ||
         getBranchNameById(court.branchId).toLowerCase().includes(query)
 
       const matchesBranch = selectedBranch === 'All' || court.branchId === selectedBranch
@@ -37,7 +63,7 @@ export default function OperatorCourtsPage() {
 
       return matchesSearch && matchesBranch && matchesSport && matchesStatus
     })
-  }, [search, selectedBranch, selectedSport, selectedStatus])
+  }, [courtsData, search, selectedBranch, selectedSport, selectedStatus, branchesData])
 
   return (
     <div className="space-y-6">
@@ -73,10 +99,10 @@ export default function OperatorCourtsPage() {
             <>
               <select
                 value={selectedBranch}
-                onChange={(event) => setSelectedBranch(event.target.value as (typeof branchOptions)[number])}
+                onChange={(event) => setSelectedBranch(event.target.value)}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
-                {branchOptions.map((branchId) => (
+                {branchOptions.map((branchId: any) => (
                   <option key={branchId} value={branchId}>
                     {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
                   </option>
@@ -85,10 +111,10 @@ export default function OperatorCourtsPage() {
 
               <select
                 value={selectedSport}
-                onChange={(event) => setSelectedSport(event.target.value as (typeof sportOptions)[number])}
+                onChange={(event) => setSelectedSport(event.target.value)}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
-                {sportOptions.map((sport) => (
+                {sportOptions.map((sport: any) => (
                   <option key={sport} value={sport}>
                     {sport}
                   </option>
@@ -111,64 +137,68 @@ export default function OperatorCourtsPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={filteredCourts}
-            getRowKey={(court) => court.id}
-            columns={[
-              {
-                key: 'court',
-                header: 'Court',
-                render: (court) => (
-                  <div>
-                    <p className="font-bold text-primary">{court.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">{court.id}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'branch',
-                header: 'Branch',
-                render: (court) => <p className="text-sm font-semibold text-primary">{getBranchNameById(court.branchId)}</p>,
-              },
-              {
-                key: 'sport',
-                header: 'Sport & Surface',
-                render: (court) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{court.sport}</p>
-                    <p className="text-xs text-primary/55 mt-1">{court.surface}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'pricing',
-                header: 'Price / Hour',
-                render: (court) => <p className="text-sm font-semibold text-primary">{formatEgp(court.pricePerHour)}</p>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (court) => <AdminStatusPill label={court.status} tone={statusTone(court.status)} />,
-              },
-              {
-                key: 'maintenance',
-                header: 'Maintenance',
-                render: (court) => <p className="text-sm text-primary/70">{court.nextMaintenance}</p>,
-              },
-              {
-                key: 'action',
-                header: 'Edit',
-                render: (court) => (
-                  <Link
-                    href={`/operator/courts/${court.id}`}
-                    className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
-                  >
-                    Configure
-                  </Link>
-                ),
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={filteredCourts}
+              getRowKey={(court: any) => court.id}
+              columns={[
+                {
+                  key: 'court',
+                  header: 'Court',
+                  render: (court: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{court.name || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{court.id || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'branch',
+                  header: 'Branch',
+                  render: (court: any) => <p className="text-sm font-semibold text-primary">{getBranchNameById(court.branchId)}</p>,
+                },
+                {
+                  key: 'sport',
+                  header: 'Sport & Surface',
+                  render: (court: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{court.sport || 'Unknown'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{court.surface || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'pricing',
+                  header: 'Price / Hour',
+                  render: (court: any) => <p className="text-sm font-semibold text-primary">{formatEgp(court.pricePerHour || 0)}</p>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (court: any) => <AdminStatusPill label={court.status || 'Unknown'} tone={statusTone(court.status || 'Unknown')} />,
+                },
+                {
+                  key: 'maintenance',
+                  header: 'Maintenance',
+                  render: (court: any) => <p className="text-sm text-primary/70">{court.nextMaintenance || 'TBD'}</p>,
+                },
+                {
+                  key: 'action',
+                  header: 'Edit',
+                  render: (court: any) => (
+                    <Link
+                      href={`/operator/courts/${court.id}`}
+                      className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
+                    >
+                      Configure
+                    </Link>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

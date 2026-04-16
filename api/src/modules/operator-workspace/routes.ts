@@ -23,10 +23,20 @@ import { success } from '@common/response'
 
 export async function operatorWorkspaceRoutes(app: FastifyInstance) {
   // All routes require authentication and operator role
-  app.addHook('preHandler', async (request: FastifyRequest) => {
-    await request.jwtVerify()
+  app.addHook('preHandler', async (request: FastifyRequest, reply) => {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      return reply.status(401).send({
+        error: 'Unauthorized - Please log in',
+        code: 'UNAUTHORIZED'
+      })
+    }
     if (request.user!.role !== 'OPERATOR') {
-      throw new Error('Unauthorized: Operator role required')
+      return reply.status(403).send({
+        error: 'Forbidden: Operator role required',
+        code: 'FORBIDDEN'
+      })
     }
   })
 

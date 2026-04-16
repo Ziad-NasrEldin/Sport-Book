@@ -1,24 +1,52 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
-import { settingsGroups } from '@/lib/coach/mockData'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 export default function CoachSettingsPage() {
-  const notificationDefaults = useMemo(
-    () => Object.fromEntries(settingsGroups.notifications.map((item) => [item.key, item.enabled])),
-    [],
-  )
-  const policyDefaults = useMemo(
-    () => Object.fromEntries(settingsGroups.policies.map((item) => [item.key, item.enabled])),
-    [],
-  )
+  const { data: settingsResponse, loading, error, refetch } = useApiCall('/coach/settings')
+  const saveMutation = useApiMutation('/coach/settings', 'PUT')
 
-  const [notifications, setNotifications] = useState<Record<string, boolean>>(notificationDefaults)
-  const [policies, setPolicies] = useState<Record<string, boolean>>(policyDefaults)
+  const settingsData = settingsResponse?.data || settingsResponse || {}
+
+  const [notifications, setNotifications] = useState<Record<string, boolean>>({})
+  const [policies, setPolicies] = useState<Record<string, boolean>>({})
   const [payoutCycle, setPayoutCycle] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly')
+
+  useEffect(() => {
+    if (settingsData.notifications) {
+      const notificationDefaults = Object.fromEntries(settingsData.notifications.map((item: any) => [item.key, item.enabled]))
+      setNotifications(notificationDefaults)
+    }
+    if (settingsData.policies) {
+      const policyDefaults = Object.fromEntries(settingsData.policies.map((item: any) => [item.key, item.enabled]))
+      setPolicies(policyDefaults)
+    }
+    if (settingsData.payoutCycle) {
+      setPayoutCycle(settingsData.payoutCycle)
+    }
+  }, [settingsData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const handleSave = async () => {
+    try {
+      await saveMutation.mutate({
+        notifications,
+        policies,
+        payoutCycle,
+      })
+      refetch()
+    } catch (err) {
+      console.error('Failed to save settings:', err)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -28,7 +56,9 @@ export default function CoachSettingsPage() {
         actions={
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+            onClick={handleSave}
+            disabled={saveMutation.loading}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Save Settings
@@ -39,7 +69,7 @@ export default function CoachSettingsPage() {
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <AdminPanel eyebrow="Notifications" title="Communication Preferences">
           <div className="space-y-3">
-            {settingsGroups.notifications.map((item) => (
+            {(settingsData.notifications || []).map((item: any) => (
               <ToggleRow
                 key={item.key}
                 label={item.label}
@@ -58,7 +88,7 @@ export default function CoachSettingsPage() {
 
         <AdminPanel eyebrow="Policies" title="Booking Rules">
           <div className="space-y-3">
-            {settingsGroups.policies.map((item) => (
+            {(settingsData.policies || []).map((item: any) => (
               <ToggleRow
                 key={item.key}
                 label={item.label}

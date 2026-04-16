@@ -10,6 +10,9 @@ import {
   getPostLoginRouteForAccountType,
   setActiveAccountType,
 } from '@/lib/accountType'
+import { api, setTokens } from '@/lib/api/client'
+import { APIError } from '@/lib/api/client'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 const loginAccountTypeOptions = accountTypeOptions.filter((option) => option.value !== 'facility')
 type LoginAccountType = (typeof loginAccountTypeOptions)[number]['value']
@@ -28,6 +31,8 @@ function getInitialLoginAccountType(): LoginAccountType {
 export default function SignInPage() {
   const router = useRouter()
   const [accountType, setAccountTypeState] = useState<LoginAccountType>(getInitialLoginAccountType)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const selectedAccountLabel =
     loginAccountTypeOptions.find((option) => option.value === accountType)?.label ?? 'Player'
@@ -37,9 +42,29 @@ export default function SignInPage() {
     setActiveAccountType(nextType)
   }
 
-  const handleSignIn = (event: FormEvent<HTMLFormElement>) => {
+  const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    router.push(getPostLoginRouteForAccountType(accountType))
+    setLoading(true)
+    setError(null)
+
+    const formData = new FormData(event.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    try {
+      const response = await api.post('/auth/login', { email, password })
+      const { accessToken, refreshToken, user } = response.data || response
+
+      setTokens(accessToken, refreshToken)
+      setActiveAccountType(user.role.toLowerCase() as LoginAccountType)
+
+      router.push(getPostLoginRouteForAccountType(user.role.toLowerCase() as LoginAccountType))
+    } catch (err) {
+      const apiError = err as APIError
+      setError(apiError.message || 'Failed to sign in. Please check your credentials.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -123,11 +148,25 @@ export default function SignInPage() {
               </Link>
             </div>
 
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all"
+              disabled={loading}
+              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign In as {selectedAccountLabel}
+              {loading ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Signing in...
+                </>
+              ) : (
+                `Sign In as ${selectedAccountLabel}`
+              )}
             </button>
 
             {accountType === 'admin' ? (

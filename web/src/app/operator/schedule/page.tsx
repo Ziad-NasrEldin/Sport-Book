@@ -6,41 +6,61 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import {
-  branchesData,
-  getBranchNameById,
-  getCourtNameById,
-  scheduleSlotsData,
-} from '@/lib/operator/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const branchOptions = ['All', ...branchesData.map((branch) => branch.id)] as const
-const statusOptions = ['All', 'Open', 'Booked', 'Blocked'] as const
+const statusOptions = ['All', 'OPEN', 'BOOKED', 'BLOCKED'] as const
 const weekOptions = ['This Week', 'Next Week', 'Following Week'] as const
 
 export default function OperatorSchedulePage() {
-  const [selectedBranch, setSelectedBranch] = useState<(typeof branchOptions)[number]>('All')
+  const [selectedBranch, setSelectedBranch] = useState<string>('All')
   const [selectedStatus, setSelectedStatus] = useState<(typeof statusOptions)[number]>('All')
   const [selectedWeek, setSelectedWeek] = useState<(typeof weekOptions)[number]>('This Week')
 
+  const { data: scheduleResponse, loading, error } = useApiCall('/operator/schedule')
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+  const { data: courtsResponse } = useApiCall('/operator/courts')
+
+  const scheduleSlotsData = scheduleResponse?.data || scheduleResponse || []
+  const branchesData = branchesResponse?.data || branchesResponse || []
+  const courtsData = courtsResponse?.data || courtsResponse || []
+
+  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const getBranchNameById = (id: string) => {
+    const branch = branchesData.find((b: any) => b.id === id)
+    return branch?.name || 'Unknown'
+  }
+
+  const getCourtNameById = (id: string) => {
+    const court = courtsData.find((c: any) => c.id === id)
+    return court?.name || 'Unknown'
+  }
+
   const visibleSlots = useMemo(() => {
-    return scheduleSlotsData.filter((slot) => {
+    return scheduleSlotsData.filter((slot: any) => {
       const matchesBranch = selectedBranch === 'All' || slot.branchId === selectedBranch
       const matchesStatus = selectedStatus === 'All' || slot.status === selectedStatus
       return matchesBranch && matchesStatus
     })
-  }, [selectedBranch, selectedStatus])
+  }, [scheduleSlotsData, selectedBranch, selectedStatus])
 
   const daySummary = useMemo(() => {
     const orderedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
     return orderedDays.map((day) => {
-      const daySlots = visibleSlots.filter((slot) => slot.day === day)
+      const daySlots = visibleSlots.filter((slot: any) => slot.day === day)
       return {
         day,
         total: daySlots.length,
-        booked: daySlots.filter((slot) => slot.status === 'Booked').length,
-        blocked: daySlots.filter((slot) => slot.status === 'Blocked').length,
+        booked: daySlots.filter((slot: any) => slot.status === 'BOOKED').length,
+        blocked: daySlots.filter((slot: any) => slot.status === 'BLOCKED').length,
       }
     })
   }, [visibleSlots])
@@ -74,10 +94,10 @@ export default function OperatorSchedulePage() {
         <div className="flex flex-wrap gap-2">
           <select
             value={selectedBranch}
-            onChange={(event) => setSelectedBranch(event.target.value as (typeof branchOptions)[number])}
+            onChange={(event) => setSelectedBranch(event.target.value)}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
           >
-            {branchOptions.map((branchId) => (
+            {branchOptions.map((branchId: any) => (
               <option key={branchId} value={branchId}>
                 {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
               </option>
@@ -110,42 +130,46 @@ export default function OperatorSchedulePage() {
         </div>
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleSlots}
-            getRowKey={(slot) => slot.id}
-            columns={[
-              {
-                key: 'day',
-                header: 'Day',
-                render: (slot) => <p className="text-sm font-semibold text-primary">{slot.day}</p>,
-              },
-              {
-                key: 'slot',
-                header: 'Time Slot',
-                render: (slot) => <p className="text-sm text-primary/75">{slot.slot}</p>,
-              },
-              {
-                key: 'court',
-                header: 'Court',
-                render: (slot) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{getCourtNameById(slot.courtId)}</p>
-                    <p className="text-xs text-primary/55 mt-1">{getBranchNameById(slot.branchId)}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (slot) => <AdminStatusPill label={slot.status} tone={statusTone(slot.status)} />,
-              },
-              {
-                key: 'reference',
-                header: 'Reference',
-                render: (slot) => <p className="text-sm text-primary/70">{slot.reference ?? 'None'}</p>,
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleSlots}
+              getRowKey={(slot: any) => slot.id}
+              columns={[
+                {
+                  key: 'day',
+                  header: 'Day',
+                  render: (slot: any) => <p className="text-sm font-semibold text-primary">{slot.day || 'Unknown'}</p>,
+                },
+                {
+                  key: 'slot',
+                  header: 'Time Slot',
+                  render: (slot: any) => <p className="text-sm text-primary/75">{slot.slot || 'Unknown'}</p>,
+                },
+                {
+                  key: 'court',
+                  header: 'Court',
+                  render: (slot: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{getCourtNameById(slot.courtId)}</p>
+                      <p className="text-xs text-primary/55 mt-1">{getBranchNameById(slot.branchId)}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (slot: any) => <AdminStatusPill label={slot.status || 'Unknown'} tone={statusTone(slot.status || 'Unknown')} />,
+                },
+                {
+                  key: 'reference',
+                  header: 'Reference',
+                  render: (slot: any) => <p className="text-sm text-primary/70">{slot.reference || 'None'}</p>,
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
 

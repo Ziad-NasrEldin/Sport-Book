@@ -5,19 +5,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock3, MapPin, Plus, Users } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { CourtSport, courts } from '@/lib/courts'
-import {
-  ACTIVE_USER_UPDATED_EVENT,
-  TEAM_POSTS_UPDATED_EVENT,
-  TeamPost,
-  createTeamPost,
-  getActiveUserId,
-  getAvailableTeamSports,
-  getMockUsers,
-  getTeamPosts,
-  getUserNameById,
-  requestJoinTeamPost,
-  setActiveUserId,
-} from '@/lib/teams'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
 type CreateFormState = {
   sport: CourtSport
@@ -52,11 +42,21 @@ function getNoticeFeedbackFromUrl() {
 }
 
 export default function TeamsPage() {
-  const availableSports = useMemo(() => getAvailableTeamSports(), [])
-  const users = useMemo(() => getMockUsers(), [])
+  const { data: teamsResponse, loading, error, refetch } = useApiCall('/player/teams')
+  const { data: usersResponse } = useApiCall('/player/users')
+  const createMutation = useApiMutation('/player/teams', 'POST')
+  const joinMutation = useApiMutation('/player/teams/join', 'POST')
 
-  const [activeUserId, setActiveUserState] = useState(getActiveUserId)
-  const [teamPosts, setTeamPosts] = useState<TeamPost[]>(() => getTeamPosts())
+  const teamsData = teamsResponse?.data || teamsResponse || []
+  const usersData = usersResponse?.data || usersResponse || []
+
+  const availableSports = useMemo(() => {
+    const sports = new Set(teamsData.map((team: any) => team.sport))
+    return Array.from(sports) as CourtSport[]
+  }, [teamsData])
+
+  const [activeUserId, setActiveUserState] = useState('')
+  const [teamPosts, setTeamPosts] = useState<any[]>(teamsData)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [feedback, setFeedback] = useState(getNoticeFeedbackFromUrl)
   const [selectedSportFilter, setSelectedSportFilter] = useState<'All' | CourtSport>('All')
@@ -75,22 +75,16 @@ export default function TeamsPage() {
   })
 
   useEffect(() => {
-    const refreshPosts = () => {
-      setTeamPosts(getTeamPosts())
+    if (teamsData.length > 0) {
+      setTeamPosts(teamsData)
     }
+  }, [teamsData])
 
-    const refreshActiveUser = () => {
-      setActiveUserState(getActiveUserId())
+  useEffect(() => {
+    if (usersData.length > 0 && !activeUserId) {
+      setActiveUserState(usersData[0]?.id || '')
     }
-
-    window.addEventListener(TEAM_POSTS_UPDATED_EVENT, refreshPosts)
-    window.addEventListener(ACTIVE_USER_UPDATED_EVENT, refreshActiveUser)
-
-    return () => {
-      window.removeEventListener(TEAM_POSTS_UPDATED_EVENT, refreshPosts)
-      window.removeEventListener(ACTIVE_USER_UPDATED_EVENT, refreshActiveUser)
-    }
-  }, [])
+  }, [usersData, activeUserId])
 
   useEffect(() => {
     const currentUrl = new URL(window.location.href)
@@ -117,44 +111,54 @@ export default function TeamsPage() {
     [createForm.sport],
   )
 
-  const handleCreatePost = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreatePost = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const result = createTeamPost({
-      createdByUserId: activeUserId,
-      sport: createForm.sport,
-      courtId: createForm.courtId,
-      date: createForm.date,
-      startHour: createForm.startHour,
-      durationHours: createForm.durationHours,
-      neededPlayers: createForm.neededPlayers,
-    })
-
-    if (!result.ok) {
-      setFeedback(result.error ?? 'Could not create your team post.')
-      return
+    try {
+      await createMutation.mutate({
+        createdByUserId: activeUserId,
+        sport: createForm.sport,
+        courtId: createForm.courtId,
+        date: createForm.date,
+        startHour: createForm.startHour,
+        durationHours: createForm.durationHours,
+        neededPlayers: createForm.neededPlayers,
+      })
+      setFeedback('Team post published successfully.')
+      setCreateForm((prev) => ({
+        ...prev,
+        neededPlayers: 3,
+      }))
+      setIsCreateOpen(false)
+      refetch()
+    } catch (err) {
+      setFeedback('Could not create your team post.')
     }
-
-    setFeedback('Team post published successfully.')
-    setCreateForm((prev) => ({
-      ...prev,
-      neededPlayers: 3,
-    }))
-    setIsCreateOpen(false)
   }
 
-  const handleJoinTeam = (postId: string) => {
-    const result = requestJoinTeamPost(postId, activeUserId)
-
-    if (!result.ok) {
-      setFeedback(result.error ?? 'Could not join this team.')
-      return
+  const handleJoinTeam = async (postId: string) => {
+    try {
+      await joinMutation.mutate({
+        postId,
+        userId: activeUserId,
+      })
+      setFeedback('Join request sent. Waiting for creator approval.')
+      refetch()
+    } catch (err) {
+      setFeedback('Could not join this team.')
     }
-
-    setFeedback('Join request sent. Waiting for creator approval.')
   }
 
-  const activeUserName = getUserNameById(activeUserId)
+  const activeUserName = usersData.find((u: any) => u.id === activeUserId)?.name || 'You'
+
+  const getUserNameById = (userId: string) => {
+    const user = usersData.find((u: any) => u.id === userId)
+    return user?.name || 'Unknown'
+  }
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
@@ -183,11 +187,10 @@ export default function TeamsPage() {
               value={activeUserId}
               onChange={(event) => {
                 const nextUserId = event.target.value
-                setActiveUserId(nextUserId)
                 setActiveUserState(nextUserId)
               }}
             >
-              {users.map((user) => (
+              {usersData.map((user: any) => (
                 <option key={user.id} value={user.id}>
                   {user.name}
                 </option>
@@ -361,7 +364,7 @@ export default function TeamsPage() {
                 className="bg-surface-container-high rounded-full px-4 py-2.5 text-sm font-semibold text-primary outline-none"
               >
                 <option value="All">All Sports</option>
-                {availableSports.map((sport) => (
+                {availableSports.map((sport: any) => (
                   <option key={sport} value={sport}>
                     {sport}
                   </option>
@@ -377,14 +380,15 @@ export default function TeamsPage() {
             </div>
           </div>
 
-          {filteredPosts.length === 0 && (
+          {loading ? (
+            <SkeletonStat />
+          ) : filteredPosts.length === 0 ? (
             <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-6 text-center">
               <p className="text-lg font-bold text-primary">No teams found</p>
               <p className="text-sm text-primary/70 mt-1">Try another sport/date filter or create a new post.</p>
             </div>
-          )}
-
-          {filteredPosts.map((post) => {
+          ) : (
+            filteredPosts.map((post: any) => {
             const court = courts.find((item) => item.id === post.courtId)
             const joinedPlayers = 1 + post.memberUserIds.length
             const totalPlayers = 1 + post.neededPlayers
@@ -476,7 +480,8 @@ export default function TeamsPage() {
                 </div>
               </article>
             )
-          })}
+            })
+          )}
         </section>
       </section>
 

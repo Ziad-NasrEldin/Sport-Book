@@ -8,11 +8,13 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { usersData } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const roleOptions = ['All', 'Player', 'Coach', 'Facility', 'Admin'] as const
-const statusOptions = ['All', 'Active', 'Pending', 'Suspended', 'Archived'] as const
+const roleOptions = ['All', 'PLAYER', 'COACH', 'OPERATOR', 'ADMIN'] as const
+const statusOptions = ['All', 'ACTIVE', 'PENDING', 'SUSPENDED', 'ARCHIVED'] as const
 
 function buildWhatsAppHref(userName: string, userId: string) {
   const message = `Hi ${userName}, this is the SportBook admin team regarding your account (${userId}).`
@@ -24,21 +26,29 @@ export default function AdminUsersPage() {
   const [selectedRole, setSelectedRole] = useState<(typeof roleOptions)[number]>('All')
   const [selectedStatus, setSelectedStatus] = useState<(typeof statusOptions)[number]>('All')
 
+  const { data: usersResponse, loading, error } = useApiCall('/admin-workspace/users')
+
+  const usersData = usersResponse?.data || usersResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return usersData.filter((user) => {
+    return usersData.filter((user: any) => {
       const matchSearch =
         query.length === 0 ||
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.id.toLowerCase().includes(query)
+        user.name?.toLowerCase()?.includes(query) ||
+        user.email?.toLowerCase()?.includes(query) ||
+        user.id?.toLowerCase()?.includes(query)
       const matchRole = selectedRole === 'All' || user.role === selectedRole
       const matchStatus = selectedStatus === 'All' || user.status === selectedStatus
 
       return matchSearch && matchRole && matchStatus
     })
-  }, [search, selectedRole, selectedStatus])
+  }, [search, selectedRole, selectedStatus, usersData])
 
   return (
     <div className="space-y-6">
@@ -106,77 +116,81 @@ export default function AdminUsersPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={filteredUsers}
-            getRowKey={(user) => user.id}
-            columns={[
-              {
-                key: 'identity',
-                header: 'User',
-                render: (user) => (
-                  <div>
-                    <p className="font-bold text-primary">{user.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">{user.email}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'meta',
-                header: 'Role & Region',
-                render: (user) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{user.role}</p>
-                    <p className="text-xs text-primary/55 mt-1">{user.country}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (user) => <AdminStatusPill label={user.status} tone={statusTone(user.status)} />,
-              },
-              {
-                key: 'joined',
-                header: 'Joined',
-                render: (user) => <p className="text-sm text-primary/70">{user.joinedAt}</p>,
-              },
-              {
-                key: 'id',
-                header: 'ID',
-                render: (user) => <p className="font-lexend text-xs uppercase tracking-[0.12em] text-primary/55">{user.id}</p>,
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                render: (user) => (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/admin/users/${encodeURIComponent(user.id)}`}
-                      className="inline-flex items-center rounded-full bg-surface-container-high px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
-                    >
-                      View Account Details
-                    </Link>
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={filteredUsers}
+              getRowKey={(user: any) => user.id}
+              columns={[
+                {
+                  key: 'identity',
+                  header: 'User',
+                  render: (user: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{user.name || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{user.email || 'No email'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'meta',
+                  header: 'Role & Region',
+                  render: (user: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{user.role || 'Unknown'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{user.country || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (user: any) => <AdminStatusPill label={user.status || 'Unknown'} tone={statusTone(user.status || 'Unknown')} />,
+                },
+                {
+                  key: 'joined',
+                  header: 'Joined',
+                  render: (user: any) => <p className="text-sm text-primary/70">{user.createdAt || 'Unknown'}</p>,
+                },
+                {
+                  key: 'id',
+                  header: 'ID',
+                  render: (user: any) => <p className="font-lexend text-xs uppercase tracking-[0.12em] text-primary/55">{user.id || 'Unknown'}</p>,
+                },
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  render: (user: any) => (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/admin/users/${encodeURIComponent(user.id)}`}
+                        className="inline-flex items-center rounded-full bg-surface-container-high px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
+                      >
+                        View Account Details
+                      </Link>
 
-                    <Link
-                      href={`/admin/users/${encodeURIComponent(user.id)}/edit`}
-                      className="inline-flex items-center rounded-full bg-primary-container px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-surface-container-lowest"
-                    >
-                      Edit Account
-                    </Link>
+                      <Link
+                        href={`/admin/users/${encodeURIComponent(user.id)}/edit`}
+                        className="inline-flex items-center rounded-full bg-primary-container px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-surface-container-lowest"
+                      >
+                        Edit Account
+                      </Link>
 
-                    <a
-                      href={buildWhatsAppHref(user.name, user.id)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center rounded-full bg-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-[#128C7E]"
-                    >
-                      Quick Chat on WhatsApp
-                    </a>
-                  </div>
-                ),
-              },
-            ]}
-          />
+                      <a
+                        href={buildWhatsAppHref(user.name || 'User', user.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center rounded-full bg-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-[#128C7E]"
+                      >
+                        Quick Chat on WhatsApp
+                      </a>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

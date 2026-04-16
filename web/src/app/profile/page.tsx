@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
   Settings, 
@@ -16,8 +16,37 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { FloatingNav } from '@/components/layout/FloatingNav';
+import { useApiCall } from '@/lib/api/hooks';
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary';
+import { SkeletonStat } from '@/components/ui/SkeletonLoader';
+import {
+  FAVORITES_UPDATED_EVENT,
+  getFavorites,
+} from '@/lib/favorites';
 
 export default function ProfilePage() {
+  const { data: profileResponse, loading, error } = useApiCall('/player/profile')
+  const profileData = profileResponse?.data || profileResponse || {}
+  const [favorites, setFavorites] = useState(getFavorites())
+
+  useEffect(() => {
+    const refreshFavorites = () => {
+      setFavorites(getFavorites())
+    }
+    window.addEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    return () => {
+      window.removeEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    }
+  }, [])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const user = profileData.user || {}
+  const wallet = profileData.wallet || {}
+  const nextBooking = profileData.nextBooking || {}
+
   return (
     <main className="min-h-screen bg-surface-container-low pb-32 font-sans">
       {/* Editorial Header with Hero Background */}
@@ -39,7 +68,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-surface-container-lowest flex-shrink-0">
               <Image 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1064&auto=format&fit=crop" 
+                src={user.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1064&auto=format&fit=crop"} 
                 alt="User Avatar"
                 width={112}
                 height={112}
@@ -47,9 +76,9 @@ export default function ProfilePage() {
               />
             </div>
             <div className="text-surface-container-lowest">
-              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Alex Rivera</h1>
-              <p className="text-sm md:text-base font-lexend opacity-90 mt-1">alex.rivera@example.com</p>
-              <p className="text-xs md:text-sm font-lexend opacity-80 mt-1">+1 (555) 123-4567</p>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">{user.fullName || 'Loading...'}</h1>
+              <p className="text-sm md:text-base font-lexend opacity-90 mt-1">{user.email || ''}</p>
+              <p className="text-xs md:text-sm font-lexend opacity-80 mt-1">{user.phone || ''}</p>
             </div>
           </div>
           <Link
@@ -79,14 +108,22 @@ export default function ProfilePage() {
             </div>
             
             <div>
-              <p className="text-sm font-lexend text-primary opacity-60 uppercase tracking-widest mb-1">Current Balance</p>
-              <h3 className="text-5xl md:text-6xl font-bold text-primary tracking-tighter mb-4">$240<span className="text-2xl text-primary/50">.00</span></h3>
-              <Link
-                href="/profile/wallet/topup"
-                className="block w-full py-4 text-center bg-gradient-to-br from-secondary to-secondary-container text-on-secondary-container font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:opacity-90"
-              >
-                Top Up Balance
-              </Link>
+              {loading ? (
+                <SkeletonStat />
+              ) : (
+                <>
+                  <p className="text-sm font-lexend text-primary opacity-60 uppercase tracking-widest mb-1">Current Balance</p>
+                  <h3 className="text-5xl md:text-6xl font-bold text-primary tracking-tighter mb-4">
+                    {wallet.balance || 0}<span className="text-2xl text-primary/50"> EGP</span>
+                  </h3>
+                  <Link
+                    href="/profile/wallet/topup"
+                    className="block w-full py-4 text-center bg-gradient-to-br from-secondary to-secondary-container text-on-secondary-container font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:opacity-90"
+                  >
+                    Top Up Balance
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -103,29 +140,45 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex-1 flex flex-col justify-center">
-              <div className="flex items-start gap-4 p-4 bg-surface-container-low rounded-[var(--radius-default)] mb-4">
-                <div className="w-16 h-16 rounded-[var(--radius-default)] overflow-hidden flex-shrink-0 relative">
-                  <Image 
-                    src="https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=200&h=200&fit=crop"
-                    alt="Court"
-                    fill
-                    className="object-cover"
-                  />
+              {loading ? (
+                <SkeletonStat />
+              ) : nextBooking.id ? (
+                <>
+                  <div className="flex items-start gap-4 p-4 bg-surface-container-low rounded-[var(--radius-default)] mb-4">
+                    <div className="w-16 h-16 rounded-[var(--radius-default)] overflow-hidden flex-shrink-0 relative">
+                      <Image 
+                        src={nextBooking.courtImage || "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=200&h=200&fit=crop"}
+                        alt="Court"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-primary">{nextBooking.courtName || 'Unknown'}</h4>
+                      <p className="text-sm font-lexend text-primary opacity-70 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" /> {nextBooking.courtDetails || 'Court'}
+                      </p>
+                      <p className="text-xs font-lexend font-bold text-secondary-container mt-2">{nextBooking.date || ''} • {nextBooking.time || ''}</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/profile/bookings"
+                    className="w-full py-4 bg-primary-container text-surface-container-lowest font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:bg-primary text-center"
+                  >
+                    Open My Bookings
+                  </Link>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-primary/60">No upcoming bookings</p>
+                  <Link
+                    href="/book"
+                    className="inline-block mt-4 py-3 px-6 bg-primary-container text-surface-container-lowest font-bold rounded-full"
+                  >
+                    Book a Court
+                  </Link>
                 </div>
-                <div>
-                  <h4 className="font-bold text-primary">Downtown Tennis Club</h4>
-                  <p className="text-sm font-lexend text-primary opacity-70 flex items-center gap-1 mt-1">
-                    <MapPin className="w-3 h-3" /> Court 4 (Clay)
-                  </p>
-                  <p className="text-xs font-lexend font-bold text-secondary-container mt-2">Tommorow • 18:00 - 20:00</p>
-                </div>
-              </div>
-              <Link
-                href="/profile/bookings"
-                className="w-full py-4 bg-primary-container text-surface-container-lowest font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:bg-primary text-center"
-              >
-                Open My Bookings
-              </Link>
+              )}
             </div>
           </div>
         </div>
@@ -144,7 +197,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-primary group-hover:text-secondary-container transition-colors">Saved Favorites</h3>
-                  <p className="text-sm font-lexend text-primary opacity-60 mt-1">2 Facilities, 1 Coach</p>
+                  <p className="text-sm font-lexend text-primary opacity-60 mt-1">{favorites.courts.length} Facilities, {favorites.coaches.length} Coach</p>
                 </div>
               </div>
               <ChevronRight className="w-6 h-6 text-primary opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -163,7 +216,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-primary group-hover:text-secondary-container transition-colors">Preferences</h3>
-                  <p className="text-sm font-lexend text-primary opacity-60 mt-1">English • Tennis, Padel</p>
+                  <p className="text-sm font-lexend text-primary opacity-60 mt-1">{user.language || 'English'} • {user.favoriteSports?.join(', ') || 'Tennis, Padel'}</p>
                 </div>
               </div>
               <ChevronRight className="w-6 h-6 text-primary opacity-50 group-hover:opacity-100 transition-opacity" />

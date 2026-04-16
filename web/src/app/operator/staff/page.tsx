@@ -7,14 +7,23 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { branchesData, getBranchNameById, staffData } from '@/lib/operator/mockData'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
 
 const roleOptions = ['All', 'Branch Manager', 'Front Desk', 'Maintenance', 'Coach Coordinator'] as const
 const statusOptions = ['All', 'Active', 'Pending', 'On Leave', 'Suspended'] as const
-const branchOptions = ['All', ...branchesData.map((branch) => branch.id)] as const
 
 export default function OperatorStaffPage() {
+  const { data: staffResponse, loading, error } = useApiCall('/operator/staff')
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+
+  const staffData = staffResponse?.data || staffResponse || []
+  const branchesData = branchesResponse?.data || branchesResponse || []
+
+  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)] as const
+
   const [search, setSearch] = useState('')
   const [selectedRole, setSelectedRole] = useState<(typeof roleOptions)[number]>('All')
   const [selectedStatus, setSelectedStatus] = useState<(typeof statusOptions)[number]>('All')
@@ -23,7 +32,7 @@ export default function OperatorStaffPage() {
   const visibleStaff = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return staffData.filter((member) => {
+    return staffData.filter((member: any) => {
       const matchesSearch =
         query.length === 0 ||
         member.name.toLowerCase().includes(query) ||
@@ -35,7 +44,16 @@ export default function OperatorStaffPage() {
 
       return matchesSearch && matchesRole && matchesStatus && matchesBranch
     })
-  }, [search, selectedRole, selectedStatus, selectedBranch])
+  }, [search, selectedRole, selectedStatus, selectedBranch, staffData])
+
+  const getBranchNameById = (branchId: string) => {
+    const found = branchesData.find((b: any) => b.id === branchId)
+    return found?.name || 'Unknown Branch'
+  }
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">
@@ -109,14 +127,17 @@ export default function OperatorStaffPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleStaff}
-            getRowKey={(member) => member.id}
+          {loading ? (
+            <SkeletonTable />
+          ) : (
+            <AdminTable
+              items={visibleStaff}
+              getRowKey={(member) => member.id}
             columns={[
               {
                 key: 'identity',
                 header: 'Member',
-                render: (member) => (
+                render: (member: any) => (
                   <div>
                     <p className="font-bold text-primary">{member.name}</p>
                     <p className="text-xs text-primary/60 mt-1">{member.id}</p>
@@ -126,7 +147,7 @@ export default function OperatorStaffPage() {
               {
                 key: 'role',
                 header: 'Role',
-                render: (member) => (
+                render: (member: any) => (
                   <div>
                     <p className="text-sm font-semibold text-primary">{member.role}</p>
                     <p className="text-xs text-primary/55 mt-1">Shift: {member.shift}</p>
@@ -136,12 +157,12 @@ export default function OperatorStaffPage() {
               {
                 key: 'branch',
                 header: 'Branch',
-                render: (member) => <p className="text-sm text-primary/75">{getBranchNameById(member.branchId)}</p>,
+                render: (member: any) => <p className="text-sm text-primary/75">{getBranchNameById(member.branchId)}</p>,
               },
               {
                 key: 'contact',
                 header: 'Contact',
-                render: (member) => (
+                render: (member: any) => (
                   <div>
                     <p className="text-sm text-primary/75">{member.email}</p>
                     <p className="text-xs text-primary/55 mt-1">{member.phone}</p>
@@ -151,10 +172,11 @@ export default function OperatorStaffPage() {
               {
                 key: 'status',
                 header: 'Status',
-                render: (member) => <AdminStatusPill label={member.status} tone={statusTone(member.status)} />,
+                render: (member: any) => <AdminStatusPill label={member.status} tone={statusTone(member.status)} />,
               },
             ]}
           />
+          )}
         </div>
       </AdminPanel>
     </div>

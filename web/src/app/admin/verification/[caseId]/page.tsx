@@ -7,16 +7,10 @@ import { ArrowLeft, Check, FileWarning, UserPlus2, X } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
-import { verificationQueue } from '@/lib/admin/mockData'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { riskTone, statusTone } from '@/lib/admin/ui'
-import {
-  getRoleUpgradeRequests,
-  roleRequestIdFromCaseId,
-  ROLE_UPGRADE_REQUESTS_UPDATED_EVENT,
-  RoleUpgradeRequest,
-  RoleUpgradeRequestStatus,
-  setRoleUpgradeRequestStatus,
-} from '@/lib/roleUpgradeRequests'
 
 type CaseStatus = 'Pending Review' | 'Approved' | 'Rejected' | 'Needs Info'
 
@@ -32,20 +26,6 @@ type TimelineItem = {
   at: string
 }
 
-function roleRequestStatusToCaseStatus(status: RoleUpgradeRequestStatus): CaseStatus {
-  if (status === 'approved') return 'Approved'
-  if (status === 'rejected') return 'Rejected'
-  if (status === 'needs-info') return 'Needs Info'
-  return 'Pending Review'
-}
-
-function caseStatusToRoleRequestStatus(status: CaseStatus): RoleUpgradeRequestStatus {
-  if (status === 'Approved') return 'approved'
-  if (status === 'Rejected') return 'rejected'
-  if (status === 'Needs Info') return 'needs-info'
-  return 'pending'
-}
-
 function nowStamp() {
   return new Date().toLocaleString('en-GB', { hour12: false })
 }
@@ -53,67 +33,31 @@ function nowStamp() {
 export default function AdminVerificationCasePage() {
   const params = useParams<{ caseId: string }>()
   const caseId = params.caseId
-  const [roleUpgradeRequests, setRoleUpgradeRequests] = useState<RoleUpgradeRequest[]>([])
 
-  useEffect(() => {
-    const syncRoleRequests = () => {
-      setRoleUpgradeRequests(getRoleUpgradeRequests())
-    }
+  const { data: caseResponse, loading, error } = useApiCall(`/admin/verification/${caseId}`)
+  const updateStatusMutation = useApiMutation(`/admin/verification/${caseId}/status`, 'PUT')
 
-    syncRoleRequests()
-    window.addEventListener(ROLE_UPGRADE_REQUESTS_UPDATED_EVENT, syncRoleRequests)
-    window.addEventListener('storage', syncRoleRequests)
+  const verificationCase = caseResponse?.data || caseResponse
 
-    return () => {
-      window.removeEventListener(ROLE_UPGRADE_REQUESTS_UPDATED_EVENT, syncRoleRequests)
-      window.removeEventListener('storage', syncRoleRequests)
-    }
-  }, [])
-
-  const roleRequestId = useMemo(() => roleRequestIdFromCaseId(caseId), [caseId])
-  const roleRequest = useMemo(
-    () => (roleRequestId ? roleUpgradeRequests.find((entry) => entry.id === roleRequestId) : null),
-    [roleRequestId, roleUpgradeRequests],
-  )
-
-  const verificationCase = useMemo(
-    () => {
-      if (roleRequest) {
-        return {
-          id: caseId,
-          entity: roleRequest.requestedRole === 'facility' ? roleRequest.facilityName || roleRequest.fullName : roleRequest.fullName,
-          type: roleRequest.requestedRole === 'coach' ? 'Coach ID' : 'Business Registration',
-          submittedAt: new Date(roleRequest.submittedAt).toLocaleString(),
-          riskLevel: 'Medium' as const,
-          region: roleRequest.city,
-        }
-      }
-
-      return verificationQueue.find((entry) => entry.id === caseId) ?? null
-    },
-    [caseId, roleRequest],
-  )
-
-  const [status, setStatus] = useState<CaseStatus>(
-    roleRequest ? roleRequestStatusToCaseStatus(roleRequest.status) : 'Pending Review',
-  )
-  const [assignee, setAssignee] = useState<string | null>('Compliance Team')
+  const [status, setStatus] = useState<CaseStatus>(verificationCase?.status || 'Pending Review')
+  const [assignee, setAssignee] = useState<string | null>(verificationCase?.assignee || 'Compliance Team')
   const [adminNote, setAdminNote] = useState('')
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(verificationCase?.checklist || [
     { id: 'doc-id', label: 'National ID / Passport validation', verified: true },
     { id: 'doc-face', label: 'Face match and selfie confidence', verified: false },
     { id: 'doc-license', label: 'Business or coaching license authenticity', verified: true },
     { id: 'doc-bank', label: 'Bank account ownership proof', verified: false },
   ])
-  const [timeline, setTimeline] = useState<TimelineItem[]>([
+  const [timeline, setTimeline] = useState<TimelineItem[]>(verificationCase?.timeline || [
     { id: 'seed-1', message: 'Case created and queued for review.', at: '2026-04-16 09:14' },
     { id: 'seed-2', message: 'Automated risk scoring completed.', at: '2026-04-16 09:15' },
   ])
 
   useEffect(() => {
-    if (!roleRequest) return
-    setStatus(roleRequestStatusToCaseStatus(roleRequest.status))
-  }, [roleRequest])
+    if (verificationCase?.status) {
+      setStatus(verificationCase.status as CaseStatus)
+    }
+  }, [verificationCase])
 
   const addTimeline = (message: string) => {
     setTimeline((prev) => [
@@ -126,17 +70,14 @@ export default function AdminVerificationCasePage() {
     ])
   }
 
-  const updateStatus = (nextStatus: CaseStatus) => {
-    if (roleRequest) {
-      const result = setRoleUpgradeRequestStatus(roleRequest.id, caseStatusToRoleRequestStatus(nextStatus))
-      if (!result.ok) {
-        addTimeline(`Could not persist decision: ${result.error}`)
-        return
-      }
+  const updateStatus = async (nextStatus: CaseStatus) => {
+    try {
+      await updateStatusMutation.mutate({ status: nextStatus })
+      setStatus(nextStatus)
+      addTimeline(`Status changed to ${nextStatus}.`)
+    } catch (err) {
+      addTimeline(`Could not persist decision.`)
     }
-
-    setStatus(nextStatus)
-    addTimeline(`Status changed to ${nextStatus}.`)
   }
 
   const toggleChecklist = (id: string) => {
@@ -165,6 +106,14 @@ export default function AdminVerificationCasePage() {
     setAdminNote('')
   }
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  if (loading) {
+    return <SkeletonStat />
+  }
+
   if (!verificationCase) {
     return (
       <div className="space-y-6">
@@ -189,7 +138,7 @@ export default function AdminVerificationCasePage() {
     <div className="space-y-6">
       <AdminPageHeader
         title={`Case ${verificationCase.id}`}
-        subtitle={`Detailed review page for ${verificationCase.entity}. Validate documents and finalize a decision.${roleRequest ? ' (Source: auth request submission)' : ''}`}
+        subtitle={`Detailed review page for ${verificationCase.entity}. Validate documents and finalize a decision.`}
         actions={
           <>
             <Link
@@ -235,7 +184,6 @@ export default function AdminVerificationCasePage() {
           <div className="mt-4 flex items-center gap-2.5">
             <AdminStatusPill label={verificationCase.riskLevel} tone={riskTone(verificationCase.riskLevel)} />
             <AdminStatusPill label={status} tone={status === 'Approved' ? 'green' : status === 'Rejected' ? 'red' : 'amber'} />
-            {roleRequest ? <AdminStatusPill label="Auth Request" tone={statusTone('pending')} /> : null}
             <span className="text-xs text-primary/60">{verifiedCount} / {checklist.length} checks verified</span>
           </div>
         </AdminPanel>

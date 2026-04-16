@@ -7,29 +7,38 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { auditData } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const severityOptions = ['All', 'Info', 'Warning', 'Critical'] as const
+const severityOptions = ['All', 'INFO', 'WARNING', 'CRITICAL'] as const
 
 export default function AdminAuditPage() {
   const [search, setSearch] = useState('')
   const [severity, setSeverity] = useState<(typeof severityOptions)[number]>('All')
 
+  const { data: auditResponse, loading, error } = useApiCall('/admin/audit-logs')
+  const auditData = auditResponse?.data || auditResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return auditData.filter((row) => {
+    return auditData.filter((row: any) => {
       const matchesSearch =
         query.length === 0 ||
-        row.actor.toLowerCase().includes(query) ||
-        row.action.toLowerCase().includes(query) ||
-        row.id.toLowerCase().includes(query)
+        row.actor?.toLowerCase()?.includes(query) ||
+        row.action?.toLowerCase()?.includes(query) ||
+        row.id?.toLowerCase()?.includes(query)
       const matchesSeverity = severity === 'All' || row.severity === severity
 
       return matchesSearch && matchesSeverity
     })
-  }, [search, severity])
+  }, [auditData, search, severity])
 
   return (
     <div className="space-y-6">
@@ -68,47 +77,51 @@ export default function AdminAuditPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleRows}
-            getRowKey={(row) => row.id}
-            columns={[
-              {
-                key: 'event',
-                header: 'Event',
-                render: (row) => (
-                  <div>
-                    <p className="font-bold text-primary">{row.action}</p>
-                    <p className="text-xs text-primary/60 mt-1">{row.id}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'actor',
-                header: 'Actor',
-                render: (row) => (
-                  <div>
-                    <p className="text-sm text-primary/75">{row.actor}</p>
-                    <p className="text-xs text-primary/55 mt-1">{row.ip}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'object',
-                header: 'Object',
-                render: (row) => <p className="text-sm text-primary/75">{row.object}</p>,
-              },
-              {
-                key: 'severity',
-                header: 'Severity',
-                render: (row) => <AdminStatusPill label={row.severity} tone={statusTone(row.severity)} />,
-              },
-              {
-                key: 'timestamp',
-                header: 'Timestamp',
-                render: (row) => <p className="text-sm text-primary/70">{row.createdAt}</p>,
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleRows}
+              getRowKey={(row: any) => row.id}
+              columns={[
+                {
+                  key: 'event',
+                  header: 'Event',
+                  render: (row: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{row.action || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{row.id || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'actor',
+                  header: 'Actor',
+                  render: (row: any) => (
+                    <div>
+                      <p className="text-sm text-primary/75">{row.actor || 'Unknown'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{row.ip || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'object',
+                  header: 'Object',
+                  render: (row: any) => <p className="text-sm text-primary/75">{row.object || 'Unknown'}</p>,
+                },
+                {
+                  key: 'severity',
+                  header: 'Severity',
+                  render: (row: any) => <AdminStatusPill label={row.severity || 'Unknown'} tone={statusTone(row.severity || 'Unknown')} />,
+                },
+                {
+                  key: 'timestamp',
+                  header: 'Timestamp',
+                  render: (row: any) => <p className="text-sm text-primary/70">{new Date(row.createdAt).toLocaleString()}</p>,
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

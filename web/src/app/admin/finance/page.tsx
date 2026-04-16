@@ -1,18 +1,37 @@
+'use client'
+
 import { Download } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
-import { formatEgp, transactionsData } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 const financeBars = [22, 24, 27, 30, 29, 31, 33, 37, 36, 40, 39, 43]
 
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
 export default function AdminFinancePage() {
+  const { data: transactionsResponse, loading, error } = useApiCall('/admin/finance')
+  const transactionsData = transactionsResponse?.data || transactionsResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   const totalSettled = transactionsData
-    .filter((item) => item.status === 'Settled')
-    .reduce((sum, item) => sum + item.amount, 0)
+    .filter((item: any) => item.status === 'SETTLED')
+    .reduce((sum: number, item: any) => sum + (item.amount || 0), 0)
 
   return (
     <div className="space-y-6">
@@ -64,47 +83,51 @@ export default function AdminFinancePage() {
       </section>
 
       <AdminPanel eyebrow="Ledger" title="Recent Transactions">
-        <AdminTable
-          items={transactionsData}
-          getRowKey={(row) => row.id}
-          columns={[
-            {
-              key: 'id',
-              header: 'Transaction',
-              render: (row) => (
-                <div>
-                  <p className="font-bold text-primary">{row.id}</p>
-                  <p className="text-xs text-primary/60 mt-1">{row.source}</p>
-                </div>
-              ),
-            },
-            {
-              key: 'type',
-              header: 'Type',
-              render: (row) => <p className="text-sm text-primary/75">{row.type}</p>,
-            },
-            {
-              key: 'amount',
-              header: 'Amount',
-              render: (row) => <p className="text-sm font-semibold text-primary">{formatEgp(row.amount)}</p>,
-            },
-            {
-              key: 'method',
-              header: 'Method',
-              render: (row) => <p className="text-sm text-primary/75">{row.method}</p>,
-            },
-            {
-              key: 'status',
-              header: 'Status',
-              render: (row) => <AdminStatusPill label={row.status} tone={statusTone(row.status)} />,
-            },
-            {
-              key: 'time',
-              header: 'Timestamp',
-              render: (row) => <p className="text-sm text-primary/70">{row.createdAt}</p>,
-            },
-          ]}
-        />
+        {loading ? (
+          <SkeletonTable rows={10} />
+        ) : (
+          <AdminTable
+            items={transactionsData}
+            getRowKey={(row: any) => row.id}
+            columns={[
+              {
+                key: 'id',
+                header: 'Transaction',
+                render: (row: any) => (
+                  <div>
+                    <p className="font-bold text-primary">{row.id || 'Unknown'}</p>
+                    <p className="text-xs text-primary/60 mt-1">{row.source || row.bookingId || 'Unknown'}</p>
+                  </div>
+                ),
+              },
+              {
+                key: 'type',
+                header: 'Type',
+                render: (row: any) => <p className="text-sm text-primary/75">{row.type || 'Unknown'}</p>,
+              },
+              {
+                key: 'amount',
+                header: 'Amount',
+                render: (row: any) => <p className="text-sm font-semibold text-primary">{formatEgp(row.amount || 0)}</p>,
+              },
+              {
+                key: 'method',
+                header: 'Method',
+                render: (row: any) => <p className="text-sm text-primary/75">{row.method || 'Unknown'}</p>,
+              },
+              {
+                key: 'status',
+                header: 'Status',
+                render: (row: any) => <AdminStatusPill label={row.status || 'Unknown'} tone={statusTone(row.status || 'Unknown')} />,
+              },
+              {
+                key: 'time',
+                header: 'Timestamp',
+                render: (row: any) => <p className="text-sm text-primary/70">{new Date(row.createdAt).toLocaleString()}</p>,
+              },
+            ]}
+          />
+        )}
       </AdminPanel>
     </div>
   )

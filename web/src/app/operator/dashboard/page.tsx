@@ -1,3 +1,5 @@
+'use client'
+
 import { AlertTriangle, Download, RefreshCw } from 'lucide-react'
 import { AdminDonut } from '@/components/admin/AdminDonut'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -5,16 +7,10 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatCard } from '@/components/admin/AdminStatCard'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
-import {
-  approvalsData,
-  courtsData,
-  formatEgp,
-  operatorBookingsData,
-  operatorMetrics,
-} from '@/lib/operator/mockData'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
-
-const utilizationVelocity = [62, 68, 71, 66, 73, 79, 76, 82, 84, 80, 86, 88]
 
 const colorMap: Record<string, string> = {
   Padel: '#002366',
@@ -23,20 +19,41 @@ const colorMap: Record<string, string> = {
   Basketball: '#4f46e5',
 }
 
-export default function OperatorDashboardPage() {
-  const pendingApprovals = approvalsData.filter((item) => item.status === 'Pending')
-  const todayRevenue = operatorBookingsData
-    .filter((booking) => booking.status === 'Confirmed' || booking.status === 'Completed')
-    .reduce((total, booking) => total + booking.amount, 0)
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
-  const bySport = courtsData.reduce<Record<string, number>>((acc, court) => {
+export default function OperatorDashboardPage() {
+  const { data: dashboardResponse, loading, error } = useApiCall('/operator/dashboard')
+  const dashboardData = dashboardResponse?.data || dashboardResponse || {}
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const operatorMetrics = dashboardData.metrics || []
+  const approvalsData = dashboardData.approvals || []
+  const courtsData = dashboardData.courts || []
+  const operatorBookingsData = dashboardData.bookings || []
+  const utilizationVelocity = dashboardData.utilizationVelocity || []
+
+  const pendingApprovals = approvalsData.filter((item: any) => item.status === 'PENDING')
+  const todayRevenue = operatorBookingsData
+    .filter((booking: any) => booking.status === 'CONFIRMED' || booking.status === 'COMPLETED')
+    .reduce((total: number, booking: any) => total + (booking.amount || 0), 0)
+
+  const bySport = courtsData.reduce((acc: Record<string, number>, court: any) => {
     acc[court.sport] = (acc[court.sport] ?? 0) + 1
     return acc
-  }, {})
+  }, {} as Record<string, number>)
 
   const sportDistribution = Object.entries(bySport).map(([label, value]) => ({
     label,
-    value,
+    value: value as number,
     color: colorMap[label] ?? '#64748b',
   }))
 
@@ -66,15 +83,24 @@ export default function OperatorDashboardPage() {
       />
 
       <section className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
-        {operatorMetrics.map((metric) => (
-          <AdminStatCard
-            key={metric.id}
-            label={metric.label}
-            value={metric.value}
-            delta={metric.delta}
-            trend={metric.trend}
-          />
-        ))}
+        {loading ? (
+          <>
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+          </>
+        ) : (
+          operatorMetrics.map((metric: any) => (
+            <AdminStatCard
+              key={metric.id}
+              label={metric.label}
+              value={metric.value}
+              delta={metric.delta}
+              trend={metric.trend}
+            />
+          ))
+        )}
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-4">
@@ -92,7 +118,7 @@ export default function OperatorDashboardPage() {
             <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Live Courts</p>
               <p className="mt-1 text-lg font-extrabold text-primary">
-                {courtsData.filter((court) => court.status === 'Active').length}
+                {courtsData.filter((court: any) => court.status === 'ACTIVE').length}
               </p>
             </div>
             <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
@@ -119,16 +145,16 @@ export default function OperatorDashboardPage() {
                 <p className="text-sm font-semibold text-primary">No pending approvals right now.</p>
               </article>
             ) : (
-              pendingApprovals.map((request) => (
+              pendingApprovals.map((request: any) => (
                 <article key={request.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-bold text-primary">{request.subject}</p>
-                      <p className="text-xs text-primary/60 mt-1">{request.type} • {request.requestedBy}</p>
+                      <p className="text-sm font-bold text-primary">{request.subject || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{request.type || 'Unknown'} • {request.requestedBy || 'Unknown'}</p>
                     </div>
-                    <AdminStatusPill label={request.status} tone={statusTone(request.status)} />
+                    <AdminStatusPill label={request.status || 'Unknown'} tone={statusTone(request.status || 'Unknown')} />
                   </div>
-                  <p className="text-xs text-primary/55 mt-2">Submitted {request.submittedAt}</p>
+                  <p className="text-xs text-primary/55 mt-2">Submitted {new Date(request.submittedAt).toLocaleString()}</p>
                 </article>
               ))
             )}

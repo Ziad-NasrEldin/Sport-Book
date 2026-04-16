@@ -7,62 +7,60 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { bookingsData, formatEgp } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const statusOptions = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'] as const
+const statusOptions = ['All', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as const
 
 type BookingStatus = (typeof statusOptions)[number]
 
-type BookingState = {
-  id: string
-  status: BookingStatus
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 export default function AdminBookingsPage() {
   const [search, setSearch] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<BookingStatus>('All')
-  const [statusOverrides, setStatusOverrides] = useState<BookingState[]>([])
 
-  const withStatus = useMemo(() => {
-    return bookingsData.map((booking) => {
-      const override = statusOverrides.find((entry) => entry.id === booking.id)
+  const { data: bookingsResponse, loading, error, refetch } = useApiCall('/admin-workspace/bookings')
+  const updateMutation = useApiMutation('/admin-workspace/bookings/:id/status', 'PATCH')
 
-      if (!override || override.status === 'All') {
-        return booking
-      }
+  const bookingsData = bookingsResponse?.data || bookingsResponse || []
 
-      return {
-        ...booking,
-        status: override.status,
-      }
-    })
-  }, [statusOverrides])
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const visibleBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return withStatus.filter((booking) => {
+    return bookingsData.filter((booking: any) => {
+      const customerName = booking.user?.name || booking.userId || ''
+      const facilityName = booking.facility?.name || booking.facilityId || ''
       const matchSearch =
         query.length === 0 ||
-        booking.id.toLowerCase().includes(query) ||
-        booking.customer.toLowerCase().includes(query) ||
-        booking.facility.toLowerCase().includes(query)
+        booking.id?.toLowerCase()?.includes(query) ||
+        customerName.toLowerCase().includes(query) ||
+        facilityName.toLowerCase().includes(query)
       const matchStatus = selectedStatus === 'All' || booking.status === selectedStatus
 
       return matchSearch && matchStatus
     })
-  }, [search, selectedStatus, withStatus])
+  }, [search, selectedStatus, bookingsData])
 
-  const updateStatus = (id: string, status: BookingStatus) => {
-    setStatusOverrides((prev) => {
-      const existing = prev.find((entry) => entry.id === id)
-      if (existing) {
-        return prev.map((entry) => (entry.id === id ? { ...entry, status } : entry))
-      }
-
-      return [...prev, { id, status }]
-    })
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      await updateMutation.mutate({ id, status })
+      refetch()
+    } catch (err) {
+      console.error('Failed to update booking status:', err)
+    }
   }
 
   return (
@@ -102,65 +100,64 @@ export default function AdminBookingsPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleBookings}
-            getRowKey={(booking) => booking.id}
-            columns={[
-              {
-                key: 'booking',
-                header: 'Booking',
-                render: (booking) => (
-                  <div>
-                    <p className="font-bold text-primary">{booking.id}</p>
-                    <p className="text-xs text-primary/60 mt-1">{booking.date}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'customer',
-                header: 'Customer',
-                render: (booking) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{booking.customer}</p>
-                    <p className="text-xs text-primary/55 mt-1">{booking.facility}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'amount',
-                header: 'Amount',
-                render: (booking) => <p className="text-sm font-semibold text-primary">{formatEgp(booking.amount)}</p>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (booking) => <AdminStatusPill label={booking.status} tone={statusTone(booking.status)} />,
-              },
-              {
-                key: 'actions',
-                header: 'Action',
-                render: (booking) => (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateStatus(
-                        booking.id,
-                        booking.status === 'Pending'
-                          ? 'Confirmed'
-                          : booking.status === 'Confirmed'
-                            ? 'Completed'
-                            : booking.status,
-                      )
-                    }
-                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
-                  >
-                    <Repeat2 className="w-3.5 h-3.5" />
-                    Advance
-                  </button>
-                ),
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleBookings}
+              getRowKey={(booking: any) => booking.id}
+              columns={[
+                {
+                  key: 'booking',
+                  header: 'Booking',
+                  render: (booking: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{booking.id || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{booking.date || new Date(booking.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'customer',
+                  header: 'Customer',
+                  render: (booking: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{booking.user?.name || booking.userId || 'Unknown'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{booking.facility?.name || booking.facilityId || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'amount',
+                  header: 'Amount',
+                  render: (booking: any) => <p className="text-sm font-semibold text-primary">{formatEgp(booking.totalPrice || 0)}</p>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (booking: any) => <AdminStatusPill label={booking.status || 'Unknown'} tone={statusTone(booking.status || 'Unknown')} />,
+                },
+                {
+                  key: 'actions',
+                  header: 'Action',
+                  render: (booking: any) => (
+                    <button
+                      type="button"
+                      disabled={updateMutation.loading}
+                      onClick={() => {
+                        const nextStatus = booking.status === 'PENDING' ? 'CONFIRMED' : booking.status === 'CONFIRMED' ? 'COMPLETED' : booking.status
+                        updateStatus(booking.id, nextStatus)
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary disabled:opacity-50"
+                    >
+                      <Repeat2 className="w-3.5 h-3.5" />
+                      Advance
+                    </button>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

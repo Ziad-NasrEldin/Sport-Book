@@ -6,7 +6,9 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { reportsData } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 const presets = ['Revenue', 'User Growth', 'Peak Hours', 'Sports Popularity'] as const
@@ -14,6 +16,13 @@ const presets = ['Revenue', 'User Growth', 'Peak Hours', 'Sports Popularity'] as
 export default function AdminReportsPage() {
   const [selectedPreset, setSelectedPreset] = useState<(typeof presets)[number]>('Revenue')
   const [dateRange, setDateRange] = useState('Last 30 days')
+
+  const { data: reportsResponse, loading, error } = useApiCall('/admin/reports')
+  const reportsData = reportsResponse?.data || reportsResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">
@@ -69,42 +78,46 @@ export default function AdminReportsPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Automation" title="Saved Report Jobs">
-          <AdminTable
-            items={reportsData}
-            getRowKey={(row) => row.id}
-            columns={[
-              {
-                key: 'name',
-                header: 'Report',
-                render: (row) => (
-                  <div>
-                    <p className="font-bold text-primary">{row.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">Owner: {row.owner}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'frequency',
-                header: 'Frequency',
-                render: (row) => <p className="text-sm text-primary/75">{row.frequency}</p>,
-              },
-              {
-                key: 'format',
-                header: 'Format',
-                render: (row) => <p className="text-sm text-primary/75">{row.format}</p>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (row) => <AdminStatusPill label={row.status} tone={statusTone(row.status)} />,
-              },
-              {
-                key: 'lastRun',
-                header: 'Last Run',
-                render: (row) => <p className="text-sm text-primary/70">{row.lastRun}</p>,
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={reportsData}
+              getRowKey={(row: any) => row.id}
+              columns={[
+                {
+                  key: 'name',
+                  header: 'Report',
+                  render: (row: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{row.name || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">Owner: {row.owner || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'frequency',
+                  header: 'Frequency',
+                  render: (row: any) => <p className="text-sm text-primary/75">{row.frequency || 'Unknown'}</p>,
+                },
+                {
+                  key: 'format',
+                  header: 'Format',
+                  render: (row: any) => <p className="text-sm text-primary/75">{row.format || 'Unknown'}</p>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (row: any) => <AdminStatusPill label={row.status || 'Unknown'} tone={statusTone(row.status || 'Unknown')} />,
+                },
+                {
+                  key: 'lastRun',
+                  header: 'Last Run',
+                  render: (row: any) => <p className="text-sm text-primary/70">{new Date(row.lastRun).toLocaleString()}</p>,
+                },
+              ]}
+            />
+          )}
         </AdminPanel>
       </section>
     </div>

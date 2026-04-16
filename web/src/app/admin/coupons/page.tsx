@@ -8,42 +8,56 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { couponsData, type CouponRecord } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const statusOptions = ['All', 'Active', 'Expired', 'Draft'] as const
+const statusOptions = ['All', 'ACTIVE', 'EXPIRED', 'DRAFT'] as const
+
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export default function AdminCouponsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('All')
-  const [rows, setRows] = useState<CouponRecord[]>(couponsData)
+
+  const { data: couponsResponse, loading, error, refetch } = useApiCall('/admin/coupons')
+  const toggleMutation = useApiMutation('/admin/coupons/:id', 'PATCH')
+
+  const couponsData = couponsResponse?.data || couponsResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const visibleCoupons = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return rows.filter((coupon) => {
+    return couponsData.filter((coupon: any) => {
       const matchesSearch =
         query.length === 0 ||
-        coupon.code.toLowerCase().includes(query) ||
-        coupon.id.toLowerCase().includes(query)
+        coupon.code?.toLowerCase()?.includes(query) ||
+        coupon.id?.toLowerCase()?.includes(query)
       const matchesStatus = statusFilter === 'All' || coupon.status === statusFilter
 
       return matchesSearch && matchesStatus
     })
-  }, [rows, search, statusFilter])
+  }, [couponsData, search, statusFilter])
 
-  const toggleCoupon = (id: string) => {
-    setRows((prev) =>
-      prev.map((coupon) => {
-        if (coupon.id !== id) return coupon
-
-        if (coupon.status === 'Active') {
-          return { ...coupon, status: 'Draft' }
-        }
-
-        return { ...coupon, status: 'Active' }
-      }),
-    )
+  const toggleCoupon = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE'
+      await toggleMutation.mutate({ id, status: newStatus })
+      refetch()
+    } catch (err) {
+      console.error('Failed to toggle coupon:', err)
+    }
   }
 
   return (
@@ -83,55 +97,64 @@ export default function AdminCouponsPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleCoupons}
-            getRowKey={(coupon) => coupon.id}
-            columns={[
-              {
-                key: 'coupon',
-                header: 'Coupon',
-                render: (coupon) => (
-                  <div>
-                    <p className="font-bold text-primary">{coupon.code}</p>
-                    <p className="text-xs text-primary/60 mt-1">{coupon.id}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'discount',
-                header: 'Discount',
-                render: (coupon) => <p className="text-sm font-semibold text-primary">{coupon.discount}</p>,
-              },
-              {
-                key: 'usage',
-                header: 'Usage',
-                render: (coupon) => <p className="text-sm text-primary/75">{coupon.usage}</p>,
-              },
-              {
-                key: 'expires',
-                header: 'Expires',
-                render: (coupon) => <p className="text-sm text-primary/75">{coupon.expiresAt}</p>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (coupon) => <AdminStatusPill label={coupon.status} tone={statusTone(coupon.status)} />,
-              },
-              {
-                key: 'action',
-                header: 'Action',
-                render: (coupon) => (
-                  <button
-                    type="button"
-                    onClick={() => toggleCoupon(coupon.id)}
-                    className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
-                  >
-                    Toggle
-                  </button>
-                ),
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleCoupons}
+              getRowKey={(coupon: any) => coupon.id}
+              columns={[
+                {
+                  key: 'coupon',
+                  header: 'Coupon',
+                  render: (coupon: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{coupon.code || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{coupon.id || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'discount',
+                  header: 'Discount',
+                  render: (coupon: any) => (
+                    <p className="text-sm font-semibold text-primary">
+                      {coupon.type === 'PERCENTAGE' ? `${coupon.value}%` : formatEgp(coupon.value)}
+                    </p>
+                  ),
+                },
+                {
+                  key: 'usage',
+                  header: 'Usage',
+                  render: (coupon: any) => <p className="text-sm text-primary/75">{coupon.usesCount || 0} / {coupon.maxUses || 'Unlimited'}</p>,
+                },
+                {
+                  key: 'expires',
+                  header: 'Expires',
+                  render: (coupon: any) => <p className="text-sm text-primary/75">{new Date(coupon.expiresAt).toLocaleDateString()}</p>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (coupon: any) => <AdminStatusPill label={coupon.status || 'Unknown'} tone={statusTone(coupon.status || 'Unknown')} />,
+                },
+                {
+                  key: 'action',
+                  header: 'Action',
+                  render: (coupon: any) => (
+                    <button
+                      type="button"
+                      disabled={toggleMutation.loading}
+                      onClick={() => toggleCoupon(coupon.id, coupon.status)}
+                      className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary disabled:opacity-50"
+                    >
+                      Toggle
+                    </button>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

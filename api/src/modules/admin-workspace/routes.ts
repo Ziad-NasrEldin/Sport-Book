@@ -22,10 +22,20 @@ import { success } from '@common/response'
 
 export async function adminWorkspaceRoutes(app: FastifyInstance) {
   // All routes require authentication and admin role
-  app.addHook('preHandler', async (request: FastifyRequest) => {
-    await request.jwtVerify()
+  app.addHook('preHandler', async (request: FastifyRequest, reply) => {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      return reply.status(401).send({
+        error: 'Unauthorized - Please log in',
+        code: 'UNAUTHORIZED'
+      })
+    }
     if (request.user!.role !== 'ADMIN') {
-      throw new Error('Unauthorized: Admin role required')
+      return reply.status(403).send({
+        error: 'Forbidden: Admin role required',
+        code: 'FORBIDDEN'
+      })
     }
   })
 

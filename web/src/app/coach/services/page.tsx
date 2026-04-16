@@ -7,36 +7,52 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import {
-  coachServices,
-  formatEgp,
-  sessionTypes,
-} from '@/lib/coach/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export default function CoachServicesPage() {
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Paused' | 'Draft'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'PAUSED' | 'DRAFT'>('all')
+
+  const { data: servicesResponse, loading: servicesLoading, error: servicesError } = useApiCall('/coach/services')
+  const { data: sessionTypesResponse, loading: sessionTypesLoading, error: sessionTypesError } = useApiCall('/coach/session-types')
+
+  const coachServices = servicesResponse?.data || servicesResponse || []
+  const sessionTypes = sessionTypesResponse?.data || sessionTypesResponse || []
+
+  if (servicesError) {
+    return <APIErrorFallback error={servicesError} onRetry={() => window.location.reload()} />
+  }
 
   const sessionTypeMap = useMemo(() => {
-    return new Map(sessionTypes.map((sessionType) => [sessionType.id, sessionType]))
-  }, [])
+    return new Map(sessionTypes.map((sessionType: any) => [sessionType.id, sessionType]))
+  }, [sessionTypes])
 
   const filteredServices = useMemo(() => {
-    return coachServices.filter((service) => {
+    return coachServices.filter((service: any) => {
       const matchesStatus = statusFilter === 'all' || service.status === statusFilter
       const query = search.trim().toLowerCase()
-      const sessionType = sessionTypeMap.get(service.sessionTypeId)
+      const sessionType = sessionTypeMap.get(service.sessionTypeId) as any
 
       const matchesSearch =
         query.length === 0 ||
-        service.title.toLowerCase().includes(query) ||
-        service.sport.toLowerCase().includes(query) ||
-        (sessionType?.name.toLowerCase().includes(query) ?? false)
+        service.title?.toLowerCase()?.includes(query) ||
+        service.sport?.toLowerCase()?.includes(query) ||
+        (sessionType?.name?.toLowerCase()?.includes(query) ?? false)
 
       return matchesStatus && matchesSearch
     })
-  }, [search, sessionTypeMap, statusFilter])
+  }, [coachServices, search, sessionTypeMap, statusFilter])
 
   return (
     <div className="space-y-6">
@@ -68,43 +84,47 @@ export default function CoachServicesPage() {
         }
       >
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-          {sessionTypes.map((sessionType) => (
-            <article key={sessionType.id} className="rounded-[var(--radius-default)] bg-surface-container-low p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-primary">{sessionType.name}</p>
-                  <p className="text-xs text-primary/60 mt-1">{sessionType.description}</p>
+          {sessionTypesLoading ? (
+            <p className="text-sm text-primary/60">Loading session types...</p>
+          ) : (
+            sessionTypes.map((sessionType: any) => (
+              <article key={sessionType.id} className="rounded-[var(--radius-default)] bg-surface-container-low p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-primary">{sessionType.name || 'Unknown'}</p>
+                    <p className="text-xs text-primary/60 mt-1">{sessionType.description || 'No description'}</p>
+                  </div>
+                  <AdminStatusPill label={sessionType.status || 'Unknown'} tone={statusTone(sessionType.status || 'Unknown')} />
                 </div>
-                <AdminStatusPill label={sessionType.status} tone={statusTone(sessionType.status)} />
-              </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-[var(--radius-default)] bg-surface-container-lowest px-2.5 py-2">
-                  <p className="font-lexend uppercase tracking-[0.14em] text-primary/45">Participants</p>
-                  <p className="text-primary font-bold mt-1">{sessionType.minParticipants}-{sessionType.maxParticipants}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-[var(--radius-default)] bg-surface-container-lowest px-2.5 py-2">
+                    <p className="font-lexend uppercase tracking-[0.14em] text-primary/45">Participants</p>
+                    <p className="text-primary font-bold mt-1">{sessionType.minParticipants || 1}-{sessionType.maxParticipants || 10}</p>
+                  </div>
+                  <div className="rounded-[var(--radius-default)] bg-surface-container-lowest px-2.5 py-2">
+                    <p className="font-lexend uppercase tracking-[0.14em] text-primary/45">Base Rate</p>
+                    <p className="text-primary font-bold mt-1">{formatEgp(sessionType.baseRate || 0)}</p>
+                  </div>
                 </div>
-                <div className="rounded-[var(--radius-default)] bg-surface-container-lowest px-2.5 py-2">
-                  <p className="font-lexend uppercase tracking-[0.14em] text-primary/45">Base Rate</p>
-                  <p className="text-primary font-bold mt-1">{formatEgp(sessionType.baseRate)}</p>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {(sessionType.durationOptions || []).map((duration: any) => (
+                    <span
+                      key={duration}
+                      className="px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-surface-container-lowest text-primary/75"
+                    >
+                      {duration}m
+                    </span>
+                  ))}
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-1.5">
-                {sessionType.durationOptions.map((duration) => (
-                  <span
-                    key={duration}
-                    className="px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-surface-container-lowest text-primary/75"
-                  >
-                    {duration}m
-                  </span>
-                ))}
-              </div>
-
-              <p className="text-xs text-primary/60">
-                Visibility: <span className="font-bold text-primary">{sessionType.visibility}</span> • Multiplier {sessionType.multiplier}x
-              </p>
-            </article>
-          ))}
+                <p className="text-xs text-primary/60">
+                  Visibility: <span className="font-bold text-primary">{sessionType.visibility || 'Public'}</span> • Multiplier {sessionType.multiplier || 1}x
+                </p>
+              </article>
+            ))
+          )}
         </div>
       </AdminPanel>
 
@@ -114,7 +134,7 @@ export default function CoachServicesPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search services, sports, or session format"
           controls={
-            ['all', 'Active', 'Paused', 'Draft'].map((status) => {
+            ['all', 'ACTIVE', 'PAUSED', 'DRAFT'].map((status) => {
               const isActive = statusFilter === status
 
               return (
@@ -136,49 +156,53 @@ export default function CoachServicesPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={filteredServices}
-            getRowKey={(service) => service.id}
-            columns={[
-              {
-                key: 'service',
-                header: 'Service',
-                render: (service) => (
-                  <div>
-                    <p className="font-bold text-primary">{service.title}</p>
-                    <p className="text-xs text-primary/60 mt-1">{service.sport}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'sessionType',
-                header: 'Session Type',
-                render: (service) => (
-                  <span className="font-semibold text-primary">{sessionTypeMap.get(service.sessionTypeId)?.name ?? 'N/A'}</span>
-                ),
-              },
-              {
-                key: 'duration',
-                header: 'Duration',
-                render: (service) => <span className="font-semibold text-primary">{service.duration} min</span>,
-              },
-              {
-                key: 'price',
-                header: 'Price',
-                render: (service) => <span className="font-bold text-primary">{formatEgp(service.price)}</span>,
-              },
-              {
-                key: 'bookings',
-                header: 'Bookings (Month)',
-                render: (service) => <span className="font-semibold text-primary">{service.bookingsThisMonth}</span>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (service) => <AdminStatusPill label={service.status} tone={statusTone(service.status)} />,
-              },
-            ]}
-          />
+          {servicesLoading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={filteredServices}
+              getRowKey={(service: any) => service.id}
+              columns={[
+                {
+                  key: 'service',
+                  header: 'Service',
+                  render: (service: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{service.title || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{service.sport || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'sessionType',
+                  header: 'Session Type',
+                  render: (service: any) => (
+                    <span className="font-semibold text-primary">{(sessionTypeMap.get(service.sessionTypeId) as any)?.name || 'N/A'}</span>
+                  ),
+                },
+                {
+                  key: 'duration',
+                  header: 'Duration',
+                  render: (service: any) => <span className="font-semibold text-primary">{service.duration || 60} min</span>,
+                },
+                {
+                  key: 'price',
+                  header: 'Price',
+                  render: (service: any) => <span className="font-bold text-primary">{formatEgp(service.price || 0)}</span>,
+                },
+                {
+                  key: 'bookings',
+                  header: 'Bookings (Month)',
+                  render: (service: any) => <span className="font-semibold text-primary">{service.bookingsThisMonth || 0}</span>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (service: any) => <AdminStatusPill label={service.status || 'Unknown'} tone={statusTone(service.status || 'Unknown')} />,
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

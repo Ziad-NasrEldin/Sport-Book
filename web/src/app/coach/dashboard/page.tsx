@@ -1,3 +1,5 @@
+'use client'
+
 import { Download, Plus, RefreshCw } from 'lucide-react'
 import { AdminDonut } from '@/components/admin/AdminDonut'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -5,18 +7,34 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatCard } from '@/components/admin/AdminStatCard'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
-import {
-  coachBookings,
-  coachMetrics,
-  coachRevenueTrend,
-  coachSessionMix,
-  formatEgp,
-} from '@/lib/coach/mockData'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
+function formatEgp(value: number) {
+  return new Intl.NumberFormat('en-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
 export default function CoachDashboardPage() {
-  const pendingRequests = coachBookings.filter((booking) => booking.status === 'Pending').length
-  const confirmedToday = coachBookings.filter((booking) => booking.status === 'Confirmed').length
+  const { data: dashboardResponse, loading, error } = useApiCall('/coach/dashboard')
+  const dashboardData = dashboardResponse?.data || dashboardResponse || {}
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const coachMetrics = dashboardData.metrics || []
+  const coachRevenueTrend = dashboardData.revenueTrend || []
+  const coachSessionMix = dashboardData.sessionMix || []
+  const coachBookings = dashboardData.bookings || []
+
+  const pendingRequests = coachBookings.filter((booking: any) => booking.status === 'PENDING').length
+  const confirmedToday = coachBookings.filter((booking: any) => booking.status === 'CONFIRMED').length
 
   return (
     <div className="space-y-6">
@@ -44,15 +62,24 @@ export default function CoachDashboardPage() {
       />
 
       <section className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
-        {coachMetrics.map((metric) => (
-          <AdminStatCard
-            key={metric.id}
-            label={metric.label}
-            value={metric.value}
-            delta={metric.delta}
-            trend={metric.trend}
-          />
-        ))}
+        {loading ? (
+          <>
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+          </>
+        ) : (
+          coachMetrics.map((metric: any) => (
+            <AdminStatCard
+              key={metric.id}
+              label={metric.label}
+              value={metric.value}
+              delta={metric.delta}
+              trend={metric.trend}
+            />
+          ))
+        )}
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-4">
@@ -99,21 +126,21 @@ export default function CoachDashboardPage() {
       <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
         <AdminPanel eyebrow="Today" title="Session Pipeline">
           <div className="space-y-3">
-            {coachBookings.map((booking) => (
+            {coachBookings.map((booking: any) => (
               <article key={booking.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-primary">{booking.athlete}</p>
-                    <p className="text-xs text-primary/60 mt-1">{booking.sessionType} • {booking.duration} min</p>
+                    <p className="text-sm font-bold text-primary">{booking.athlete || booking.user?.name || 'Unknown'}</p>
+                    <p className="text-xs text-primary/60 mt-1">{booking.sessionType || booking.service?.name || 'Unknown'} • {booking.duration || 60} min</p>
                   </div>
-                  <AdminStatusPill label={booking.status} tone={statusTone(booking.status)} />
+                  <AdminStatusPill label={booking.status || 'Unknown'} tone={statusTone(booking.status || 'Unknown')} />
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-primary/60">
-                  <span>{booking.dateTime}</span>
+                  <span>{new Date(booking.dateTime).toLocaleString()}</span>
                   <span>•</span>
-                  <span>{booking.location}</span>
+                  <span>{booking.location || 'TBD'}</span>
                   <span>•</span>
-                  <span className="font-bold text-primary">{formatEgp(booking.payout)}</span>
+                  <span className="font-bold text-primary">{formatEgp(booking.payout || 0)}</span>
                 </div>
               </article>
             ))}

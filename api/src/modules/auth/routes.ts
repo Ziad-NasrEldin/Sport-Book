@@ -136,7 +136,16 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // POST /auth/send-request (role upgrade request)
-  app.post('/send-request', { preHandler: async (request: FastifyRequest) => { await request.jwtVerify() } }, async (request: FastifyRequest) => {
+  app.post('/send-request', { preHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      return reply.status(401).send({
+        error: 'Unauthorized - Please log in',
+        code: 'UNAUTHORIZED'
+      })
+    }
+  } }, async (request: FastifyRequest) => {
     const data = roleUpgradeRequestSchema.parse(request.body)
 
     if (!request.user) {

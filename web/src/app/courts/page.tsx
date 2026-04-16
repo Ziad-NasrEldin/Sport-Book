@@ -13,7 +13,8 @@ import {
   Star,
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { CourtSport, courtSports, courts } from '@/lib/courts'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import {
   FAVORITES_UPDATED_EVENT,
   getFavorites,
@@ -25,17 +26,28 @@ function CourtsPageContent() {
   const searchParams = useSearchParams()
   const initialSport = searchParams.get('sport')
 
-  const defaultSport: CourtSport = courtSports.includes((initialSport as CourtSport) ?? 'Tennis')
-    ? (initialSport as CourtSport)
-    : 'Tennis'
+  const { data: courtsResponse, loading, error } = useApiCall('/player/courts')
+  const courtsData = courtsResponse?.data || courtsResponse || []
+  const courtSports = useMemo(() => {
+    const sports = new Set(courtsData.map((court: any) => court.sport))
+    return Array.from(sports) as string[]
+  }, [courtsData])
 
-  const [selectedSport, setSelectedSport] = useState<CourtSport>(defaultSport)
+  const defaultSport = courtSports.includes((initialSport as string) ?? 'Tennis')
+    ? (initialSport as string)
+    : courtSports[0] || 'Tennis'
+
+  const [selectedSport, setSelectedSport] = useState<string>(defaultSport)
   const [query, setQuery] = useState('')
   const [priceFilter, setPriceFilter] = useState<'all' | 'lt500' | '500to1000'>('all')
   const [distanceFilter, setDistanceFilter] = useState<'all' | 'lt5'>('all')
   const [favoriteCourtIds, setFavoriteCourtIds] = useState<string[]>(() =>
     getFavorites().courts.map((court) => court.id),
   )
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   useEffect(() => {
     const refreshFavorites = () => {
@@ -50,19 +62,19 @@ function CourtsPageContent() {
   }, [])
 
   const filteredCourts = useMemo(() => {
-    return courts
-      .filter((court) => court.sport === selectedSport)
-      .filter((court) => {
+    return courtsData
+      .filter((court: any) => court.sport === selectedSport)
+      .filter((court: any) => {
         if (priceFilter === 'lt500') return court.price < 500
         if (priceFilter === '500to1000') return court.price >= 500 && court.price <= 1000
         return true
       })
-      .filter((court) => (distanceFilter === 'lt5' ? court.distance < 5 : true))
-      .filter((court) => {
-        const text = `${court.title} ${court.location} ${court.sportLabel}`.toLowerCase()
+      .filter((court: any) => (distanceFilter === 'lt5' ? court.distance < 5 : true))
+      .filter((court: any) => {
+        const text = `${court.title || ''} ${court.location || ''} ${court.sportLabel || ''}`.toLowerCase()
         return text.includes(query.toLowerCase())
       })
-  }, [distanceFilter, priceFilter, query, selectedSport])
+  }, [courtsData, distanceFilter, priceFilter, query, selectedSport])
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -73,7 +85,7 @@ function CourtsPageContent() {
     router.push('/categories')
   }
 
-  const handleToggleCourtFavorite = (court: (typeof courts)[number]) => {
+  const handleToggleCourtFavorite = (court: any) => {
     toggleCourtFavorite({
       id: court.id,
       name: court.title,
@@ -178,7 +190,7 @@ function CourtsPageContent() {
         </div>
 
         <div className="space-y-6">
-          {filteredCourts.map((court) => (
+          {filteredCourts.map((court: any) => (
             <article
               key={court.id}
               className="bg-surface-container-lowest rounded-[var(--radius-xl)] overflow-hidden shadow-ambient"

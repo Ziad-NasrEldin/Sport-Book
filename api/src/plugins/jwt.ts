@@ -1,6 +1,7 @@
 import jwt from '@fastify/jwt'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { env } from '@config/env'
+import { UnauthorizedError, ForbiddenError } from '@common/errors'
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
@@ -42,8 +43,8 @@ export async function registerJwt(app: FastifyInstance) {
   app.decorate('authenticate', async (request: FastifyRequest) => {
     try {
       await request.jwtVerify()
-    } catch {
-      throw new Error('Unauthorized')
+    } catch (err) {
+      throw new UnauthorizedError()
     }
   })
 }
@@ -53,7 +54,7 @@ export const authDecorators = {
     try {
       await request.jwtVerify()
     } catch {
-      throw new Error('Unauthorized')
+      throw new UnauthorizedError()
     }
   },
 
@@ -62,10 +63,10 @@ export const authDecorators = {
       try {
         await request.jwtVerify()
       } catch {
-        throw new Error('Unauthorized')
+        throw new UnauthorizedError()
       }
       if (!allowedRoles.includes(request.user.role)) {
-        throw new Error('Forbidden')
+        throw new ForbiddenError()
       }
     }
   },

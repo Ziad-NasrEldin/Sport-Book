@@ -7,70 +7,71 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill, type Tone } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { approvalsData, getBranchNameById } from '@/lib/operator/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const statusOptions = ['All', 'Pending', 'Approved', 'Rejected'] as const
-const priorityOptions = ['All', 'High', 'Medium', 'Low'] as const
+const statusOptions = ['All', 'PENDING', 'APPROVED', 'REJECTED'] as const
+const priorityOptions = ['All', 'HIGH', 'MEDIUM', 'LOW'] as const
 
 type StatusFilter = (typeof statusOptions)[number]
 type PriorityFilter = (typeof priorityOptions)[number]
 type ApprovalDecision = Exclude<StatusFilter, 'All'>
 
 function priorityTone(priority: PriorityFilter): Tone {
-  if (priority === 'High') return 'red'
-  if (priority === 'Medium') return 'amber'
-  if (priority === 'Low') return 'blue'
+  if (priority === 'HIGH') return 'red'
+  if (priority === 'MEDIUM') return 'amber'
+  if (priority === 'LOW') return 'blue'
   return 'violet'
-}
-
-type ApprovalOverride = {
-  id: string
-  status: ApprovalDecision
 }
 
 export default function OperatorApprovalsPage() {
   const [search, setSearch] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All')
   const [selectedPriority, setSelectedPriority] = useState<PriorityFilter>('All')
-  const [overrides, setOverrides] = useState<ApprovalOverride[]>([])
 
-  const withStatus = useMemo(() => {
-    return approvalsData.map((request) => {
-      const override = overrides.find((entry) => entry.id === request.id)
-      if (!override) return request
-      return {
-        ...request,
-        status: override.status,
-      }
-    })
-  }, [overrides])
+  const { data: approvalsResponse, loading, error, refetch } = useApiCall('/operator/approvals')
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+
+  const approvalsData = approvalsResponse?.data || approvalsResponse || []
+  const branchesData = branchesResponse?.data || branchesResponse || []
+
+  const updateStatusMutation = useApiMutation('/operator/approvals/:id/status', 'PUT')
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const getBranchNameById = (id: string) => {
+    const branch = branchesData.find((b: any) => b.id === id)
+    return branch?.name || 'Unknown'
+  }
 
   const visibleRequests = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return withStatus.filter((request) => {
+    return approvalsData.filter((request: any) => {
       const matchesSearch =
         query.length === 0 ||
-        request.id.toLowerCase().includes(query) ||
-        request.subject.toLowerCase().includes(query) ||
-        request.requestedBy.toLowerCase().includes(query)
+        request.id?.toLowerCase()?.includes(query) ||
+        request.subject?.toLowerCase()?.includes(query) ||
+        request.requestedBy?.toLowerCase()?.includes(query)
 
       const matchesStatus = selectedStatus === 'All' || request.status === selectedStatus
       const matchesPriority = selectedPriority === 'All' || request.priority === selectedPriority
 
       return matchesSearch && matchesStatus && matchesPriority
     })
-  }, [search, selectedStatus, selectedPriority, withStatus])
+  }, [approvalsData, search, selectedStatus, selectedPriority])
 
-  const updateStatus = (id: string, status: ApprovalDecision) => {
-    setOverrides((prev) => {
-      const existing = prev.find((entry) => entry.id === id)
-      if (existing) {
-        return prev.map((entry) => (entry.id === id ? { ...entry, status } : entry))
-      }
-      return [...prev, { id, status }]
-    })
+  const updateStatus = async (id: string, status: ApprovalDecision) => {
+    try {
+      await updateStatusMutation.mutate({ id, status })
+      refetch()
+    } catch (err) {
+      console.error('Failed to update status:', err)
+    }
   }
 
   return (
@@ -124,71 +125,77 @@ export default function OperatorApprovalsPage() {
         />
 
         <div className="mt-4">
-          <AdminTable
-            items={visibleRequests}
-            getRowKey={(request) => request.id}
-            columns={[
-              {
-                key: 'request',
-                header: 'Request',
-                render: (request) => (
-                  <div>
-                    <p className="font-bold text-primary">{request.subject}</p>
-                    <p className="text-xs text-primary/60 mt-1">{request.id} • {request.type}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'requester',
-                header: 'Requested By',
-                render: (request) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{request.requestedBy}</p>
-                    <p className="text-xs text-primary/55 mt-1">{request.submittedAt}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'branch',
-                header: 'Branch',
-                render: (request) => <p className="text-sm text-primary/75">{getBranchNameById(request.branchId)}</p>,
-              },
-              {
-                key: 'priority',
-                header: 'Priority',
-                render: (request) => <AdminStatusPill label={request.priority} tone={priorityTone(request.priority)} />,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (request) => <AdminStatusPill label={request.status} tone={statusTone(request.status)} />,
-              },
-              {
-                key: 'action',
-                header: 'Action',
-                render: (request) => (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => updateStatus(request.id, 'Approved')}
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-emerald-700"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateStatus(request.id, 'Rejected')}
-                      className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-rose-700"
-                    >
-                      <XCircle className="w-3.5 h-3.5" />
-                      Reject
-                    </button>
-                  </div>
-                ),
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={visibleRequests}
+              getRowKey={(request: any) => request.id}
+              columns={[
+                {
+                  key: 'request',
+                  header: 'Request',
+                  render: (request: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{request.subject || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{request.id || 'Unknown'} • {request.type || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'requester',
+                  header: 'Requested By',
+                  render: (request: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{request.requestedBy || 'Unknown'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{new Date(request.submittedAt).toLocaleString()}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'branch',
+                  header: 'Branch',
+                  render: (request: any) => <p className="text-sm text-primary/75">{getBranchNameById(request.branchId)}</p>,
+                },
+                {
+                  key: 'priority',
+                  header: 'Priority',
+                  render: (request: any) => <AdminStatusPill label={request.priority || 'Unknown'} tone={priorityTone(request.priority || 'Low')} />,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (request: any) => <AdminStatusPill label={request.status || 'Unknown'} tone={statusTone(request.status || 'Unknown')} />,
+                },
+                {
+                  key: 'action',
+                  header: 'Action',
+                  render: (request: any) => (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateStatus(request.id, 'APPROVED')}
+                        disabled={updateStatusMutation.loading}
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-emerald-700 disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateStatus(request.id, 'REJECTED')}
+                        disabled={updateStatusMutation.loading}
+                        className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-rose-700 disabled:opacity-50"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        Reject
+                      </button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </AdminPanel>
     </div>

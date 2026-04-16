@@ -5,7 +5,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Medal, Clock3, ChevronRight, Search, ChevronDown, ChevronUp, Heart } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { coaches } from '@/lib/coaches'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import {
   FAVORITES_UPDATED_EVENT,
   getFavorites,
@@ -13,6 +15,8 @@ import {
 } from '@/lib/favorites'
 
 export default function CoachesPage() {
+  const { data: coachesResponse, loading, error } = useApiCall('/player/coaches')
+  const coachesData = coachesResponse?.data || coachesResponse || []
   const [searchQuery, setSearchQuery] = useState('')
   const [activeSport, setActiveSport] = useState('All')
   const [minExperience, setMinExperience] = useState(0)
@@ -21,7 +25,11 @@ export default function CoachesPage() {
     getFavorites().coaches.map((coach) => coach.slug),
   )
 
-  const sports = useMemo(() => ['All', ...new Set(coaches.map((coach) => coach.sport))], [])
+  const sports = useMemo(() => ['All', ...new Set(coachesData.map((coach: any) => coach.sport))], [coachesData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   useEffect(() => {
     const refreshFavorites = () => {
@@ -38,7 +46,7 @@ export default function CoachesPage() {
   const filteredCoaches = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
 
-    return coaches.filter((coach) => {
+    return coachesData.filter((coach: any) => {
       const matchesSearch =
         query.length === 0 ||
         coach.name.toLowerCase().includes(query) ||
@@ -48,13 +56,13 @@ export default function CoachesPage() {
 
       return matchesSearch && matchesSport && matchesExperience
     })
-  }, [searchQuery, activeSport, minExperience])
+  }, [searchQuery, activeSport, minExperience, coachesData])
 
   const getCoachRating = (experienceYears: number) => {
     return Math.min(5, Number((4.4 + experienceYears / 20).toFixed(1)))
   }
 
-  const handleToggleCoachFavorite = (coach: (typeof coaches)[number]) => {
+  const handleToggleCoachFavorite = (coach: any) => {
     toggleCoachFavorite({
       slug: coach.slug,
       name: coach.name,
@@ -122,21 +130,21 @@ export default function CoachesPage() {
             <div className="space-y-2.5">
               <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Sport</p>
               <div className="flex flex-wrap gap-2">
-                {sports.map((sport) => {
+                {sports.map((sport: any) => {
                   const isActive = activeSport === sport
 
                   return (
                     <button
                       key={sport}
                       type="button"
-                      onClick={() => setActiveSport(sport)}
+                      onClick={() => setActiveSport(sport as string)}
                       className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-colors ${
                         isActive
                           ? 'bg-primary-container text-surface-container-lowest'
                           : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high'
                       }`}
                     >
-                      {sport}
+                      {sport as string}
                     </button>
                   )
                 })}
@@ -173,7 +181,9 @@ export default function CoachesPage() {
           </p>
         </article>
 
-        {filteredCoaches.map((coach) => (
+        {loading ? (
+          <SkeletonStat />
+        ) : filteredCoaches.map((coach: any) => (
           <article key={coach.slug} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient">
             <div className="flex gap-3 md:gap-4 items-start">
               <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
@@ -222,7 +232,7 @@ export default function CoachesPage() {
           </article>
         ))}
 
-        {filteredCoaches.length === 0 && (
+        {filteredCoaches.length === 0 && !loading && (
           <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center">
             <h2 className="text-lg font-extrabold text-primary">No coaches found</h2>
             <p className="text-sm text-primary/60 mt-2">Try clearing filters or using a broader search term.</p>

@@ -6,10 +6,19 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import { localizationData } from '@/lib/admin/mockData'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 export default function AdminLocalizationPage() {
   const [defaultLocale, setDefaultLocale] = useState('en-EG')
+
+  const { data: localizationResponse, loading, error } = useApiCall('/admin/localization')
+  const localizationData = localizationResponse?.data || localizationResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">
@@ -29,39 +38,43 @@ export default function AdminLocalizationPage() {
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
         <AdminPanel eyebrow="Regional presets" title="Locale Registry">
-          <AdminTable
-            items={localizationData}
-            getRowKey={(row) => row.id}
-            columns={[
-              {
-                key: 'locale',
-                header: 'Locale',
-                render: (row) => (
-                  <div>
-                    <p className="font-bold text-primary">{row.locale}</p>
-                    <p className="text-xs text-primary/60 mt-1">{row.language}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'currency',
-                header: 'Currency',
-                render: (row) => <p className="text-sm text-primary/75">{row.currency}</p>,
-              },
-              {
-                key: 'timezone',
-                header: 'Timezone',
-                render: (row) => <p className="text-sm text-primary/75">{row.timezone}</p>,
-              },
-              {
-                key: 'rtl',
-                header: 'Direction',
-                render: (row) => (
-                  <AdminStatusPill label={row.rtl ? 'RTL' : 'LTR'} tone={row.rtl ? 'violet' : 'blue'} />
-                ),
-              },
-            ]}
-          />
+          {loading ? (
+            <SkeletonTable rows={10} />
+          ) : (
+            <AdminTable
+              items={localizationData}
+              getRowKey={(row: any) => row.id}
+              columns={[
+                {
+                  key: 'locale',
+                  header: 'Locale',
+                  render: (row: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{row.locale || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{row.language || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'currency',
+                  header: 'Currency',
+                  render: (row: any) => <p className="text-sm text-primary/75">{row.currency || 'Unknown'}</p>,
+                },
+                {
+                  key: 'timezone',
+                  header: 'Timezone',
+                  render: (row: any) => <p className="text-sm text-primary/75">{row.timezone || 'Unknown'}</p>,
+                },
+                {
+                  key: 'rtl',
+                  header: 'Direction',
+                  render: (row: any) => (
+                    <AdminStatusPill label={row.rtl ? 'RTL' : 'LTR'} tone={row.rtl ? 'violet' : 'blue'} />
+                  ),
+                },
+              ]}
+            />
+          )}
         </AdminPanel>
 
         <AdminPanel eyebrow="Platform default" title="Locale Behavior">
@@ -72,7 +85,7 @@ export default function AdminLocalizationPage() {
               onChange={(event) => setDefaultLocale(event.target.value)}
               className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
             >
-              {localizationData.map((locale) => (
+              {localizationData.map((locale: any) => (
                 <option key={locale.id} value={locale.locale}>
                   {locale.locale}
                 </option>

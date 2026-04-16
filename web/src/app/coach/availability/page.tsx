@@ -5,10 +5,8 @@ import { CalendarClock, Plus } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
-import {
-  availabilityExceptions,
-  availabilityWindows,
-} from '@/lib/coach/mockData'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 const templateCards = [
@@ -30,16 +28,26 @@ const templateCards = [
 ]
 
 export default function CoachAvailabilityPage() {
+  const { data: availabilityResponse, loading, error } = useApiCall('/coach/availability')
+  const availabilityData = availabilityResponse?.data || availabilityResponse || {}
+
+  const availabilityWindows = availabilityData.windows || []
+  const availabilityExceptions = availabilityData.exceptions || []
+
   const availableDays = useMemo(
-    () => Array.from(new Set(availabilityWindows.map((window) => window.day))),
-    [],
+    () => Array.from(new Set(availabilityWindows.map((window: any) => window.day))),
+    [availabilityWindows],
   )
   const [selectedDay, setSelectedDay] = useState(availableDays[0] ?? 'Monday')
 
   const filteredWindows = useMemo(
-    () => availabilityWindows.filter((window) => window.day === selectedDay),
-    [selectedDay],
+    () => availabilityWindows.filter((window: any) => window.day === selectedDay),
+    [availabilityWindows, selectedDay],
   )
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">
@@ -59,7 +67,7 @@ export default function CoachAvailabilityPage() {
 
       <AdminPanel eyebrow="Day selector" title="Weekly Coverage">
         <div className="flex flex-wrap gap-2">
-          {availableDays.map((day) => {
+          {availableDays.map((day: any) => {
             const active = day === selectedDay
 
             return (
@@ -83,14 +91,14 @@ export default function CoachAvailabilityPage() {
       <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
         <AdminPanel eyebrow="Selected day" title={`${selectedDay} Session Windows`}>
           <div className="space-y-3">
-            {filteredWindows.map((window) => (
+            {filteredWindows.map((window: any) => (
               <article key={window.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-primary">{window.start} - {window.end}</p>
-                    <p className="text-xs text-primary/60 mt-1">{window.venue}</p>
+                    <p className="text-sm font-bold text-primary">{window.start || 'Unknown'} - {window.end || 'Unknown'}</p>
+                    <p className="text-xs text-primary/60 mt-1">{window.venue || 'Unknown'}</p>
                   </div>
-                  <AdminStatusPill label={window.mode} tone={statusTone(window.mode)} />
+                  <AdminStatusPill label={window.mode || 'Unknown'} tone={statusTone(window.mode || 'Unknown')} />
                 </div>
               </article>
             ))}
@@ -99,11 +107,11 @@ export default function CoachAvailabilityPage() {
 
         <AdminPanel eyebrow="Exceptions" title="Blocked Dates & Overrides">
           <div className="space-y-3">
-            {availabilityExceptions.map((exception) => (
+            {availabilityExceptions.map((exception: any) => (
               <article key={exception.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
-                <p className="text-sm font-bold text-primary">{exception.date}</p>
-                <p className="text-xs text-primary/60 mt-1">{exception.reason}</p>
-                <p className="text-xs font-semibold text-primary mt-2">{exception.impact}</p>
+                <p className="text-sm font-bold text-primary">{new Date(exception.date).toLocaleDateString()}</p>
+                <p className="text-xs text-primary/60 mt-1">{exception.reason || 'Unknown'}</p>
+                <p className="text-xs font-semibold text-primary mt-2">{exception.impact || 'Unknown'}</p>
               </article>
             ))}
           </div>

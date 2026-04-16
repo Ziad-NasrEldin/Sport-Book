@@ -7,7 +7,9 @@ import { ArrowLeft, Save, Wrench } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
-import { branchesData, courtsData, formatEgp, getBranchNameById } from '@/lib/operator/mockData'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
 
 const statusOptions = ['Active', 'Maintenance', 'Paused'] as const
@@ -17,7 +19,12 @@ export default function OperatorCourtDetailsPage() {
   const params = useParams<{ id: string }>()
   const courtId = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const court = useMemo(() => courtsData.find((item) => item.id === courtId), [courtId])
+  const { data: courtResponse, loading, error } = useApiCall(`/operator/courts/${courtId}`)
+  const { data: branchesResponse } = useApiCall('/operator/branches')
+  const saveMutation = useApiMutation(`/operator/courts/${courtId}`, 'PUT')
+
+  const court = courtResponse?.data || courtResponse
+  const branchesData = branchesResponse?.data || branchesResponse || []
 
   const [displayName, setDisplayName] = useState(court?.name ?? '')
   const [status, setStatus] = useState<(typeof statusOptions)[number]>(court?.status ?? 'Active')
@@ -29,11 +36,19 @@ export default function OperatorCourtDetailsPage() {
   const [cancellationWindow, setCancellationWindow] = useState('4')
   const [saved, setSaved] = useState(false)
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  if (loading) {
+    return <SkeletonStat />
+  }
+
   if (!court) {
     return (
       <div className="space-y-4">
         <h2 className="text-2xl font-extrabold text-primary">Court not found</h2>
-        <p className="text-primary/70">The selected court id does not exist in the operator mock data.</p>
+        <p className="text-primary/70">The selected court id does not exist.</p>
         <Link
           href="/operator/courts"
           className="inline-flex items-center rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
@@ -44,11 +59,34 @@ export default function OperatorCourtDetailsPage() {
     )
   }
 
-  const branch = branchesData.find((entry) => entry.id === court.branchId)
+  const branch = branchesData.find((entry: any) => entry.id === court.branchId)
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1800)
+  const getBranchNameById = (branchId: string) => {
+    const found = branchesData.find((b: any) => b.id === branchId)
+    return found?.name || 'Unknown Branch'
+  }
+
+  const formatEgp = (value: number) => {
+    return `${value.toLocaleString()} EGP`
+  }
+
+  const handleSave = async () => {
+    try {
+      await saveMutation.mutate({
+        name: displayName,
+        status,
+        surface,
+        pricePerHour: Number(pricePerHour),
+        indoor,
+        lights,
+        nextMaintenance,
+        cancellationWindow: Number(cancellationWindow),
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1800)
+    } catch (err) {
+      console.error('Failed to save court:', err)
+    }
   }
 
   return (

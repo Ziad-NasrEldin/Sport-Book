@@ -1,41 +1,68 @@
+'use client'
+
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { ArrowLeft, PencilLine, UserPlus } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatCard } from '@/components/admin/AdminStatCard'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
-import {
-  approvalsData,
-  branchesData,
-  courtsData,
-  formatEgp,
-  operatorBookingsData,
-  staffData,
-} from '@/lib/operator/mockData'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
 
-type BranchDetailsPageProps = {
-  params: Promise<{ id: string }>
-}
+export default function OperatorBranchDetailsPage() {
+  const params = useParams<{ id: string }>()
+  const branchId = Array.isArray(params.id) ? params.id[0] : params.id
 
-export default async function OperatorBranchDetailsPage({ params }: BranchDetailsPageProps) {
-  const { id } = await params
-  const branch = branchesData.find((entry) => entry.id === id)
+  const { data: branchResponse, loading, error } = useApiCall(`/operator/branches/${branchId}`)
+  const { data: courtsResponse } = useApiCall('/operator/courts')
+  const { data: staffResponse } = useApiCall('/operator/staff')
+  const { data: approvalsResponse } = useApiCall('/operator/approvals')
+  const { data: bookingsResponse } = useApiCall('/operator/bookings')
 
-  if (!branch) {
-    notFound()
+  const branch = branchResponse?.data || branchResponse
+  const courtsData = courtsResponse?.data || courtsResponse || []
+  const staffData = staffResponse?.data || staffResponse || []
+  const approvalsData = approvalsResponse?.data || approvalsResponse || []
+  const bookingsData = bookingsResponse?.data || bookingsResponse || []
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
-  const branchCourts = courtsData.filter((court) => court.branchId === branch.id)
-  const branchStaff = staffData.filter((member) => member.branchId === branch.id)
+  if (loading) {
+    return <SkeletonStat />
+  }
+
+  if (!branch) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl font-extrabold text-primary">Branch not found</h2>
+        <Link
+          href="/operator/branches"
+          className="inline-flex items-center rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+        >
+          Back to Branches
+        </Link>
+      </div>
+    )
+  }
+
+  const branchCourts = courtsData.filter((court: any) => court.branchId === branch.id)
+  const branchStaff = staffData.filter((member: any) => member.branchId === branch.id)
   const pendingApprovals = approvalsData.filter(
-    (approval) => approval.branchId === branch.id && approval.status === 'Pending',
+    (approval: any) => approval.branchId === branch.id && approval.status === 'Pending',
   )
 
-  const branchBookings = operatorBookingsData.filter((booking) => booking.branchId === branch.id)
-  const branchRevenue = branchBookings.reduce((total, booking) => total + booking.amount, 0)
+  const branchBookings = bookingsData.filter((booking: any) => booking.branchId === branch.id)
+  const branchRevenue = branchBookings.reduce((total: number, booking: any) => total + (booking.amount || 0), 0)
+
+  const formatEgp = (value: number) => {
+    return `${value.toLocaleString()} EGP`
+  }
 
   return (
     <div className="space-y-6">
@@ -124,7 +151,7 @@ export default async function OperatorBranchDetailsPage({ params }: BranchDetail
             {
               key: 'court',
               header: 'Court',
-              render: (court) => (
+              render: (court: any) => (
                 <div>
                   <p className="font-bold text-primary">{court.name}</p>
                   <p className="text-xs text-primary/60 mt-1">{court.id}</p>
@@ -134,22 +161,22 @@ export default async function OperatorBranchDetailsPage({ params }: BranchDetail
             {
               key: 'sport',
               header: 'Sport',
-              render: (court) => <p className="text-sm font-semibold text-primary">{court.sport}</p>,
+              render: (court: any) => <p className="text-sm font-semibold text-primary">{court.sport}</p>,
             },
             {
               key: 'pricing',
               header: 'Price / Hour',
-              render: (court) => <p className="text-sm text-primary/75">{formatEgp(court.pricePerHour)}</p>,
+              render: (court: any) => <p className="text-sm text-primary/75">{formatEgp(court.pricePerHour)}</p>,
             },
             {
               key: 'status',
               header: 'Status',
-              render: (court) => <AdminStatusPill label={court.status} tone={statusTone(court.status)} />,
+              render: (court: any) => <AdminStatusPill label={court.status} tone={statusTone(court.status)} />,
             },
             {
               key: 'edit',
               header: 'Edit',
-              render: (court) => (
+              render: (court: any) => (
                 <Link
                   href={`/operator/courts/${court.id}`}
                   className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
@@ -165,7 +192,7 @@ export default async function OperatorBranchDetailsPage({ params }: BranchDetail
       <section className="grid grid-cols-1 xl:grid-cols-[1.1fr_1fr] gap-4">
         <AdminPanel eyebrow="Staff" title="Assigned Team">
           <div className="space-y-3">
-            {branchStaff.map((member) => (
+            {branchStaff.map((member: any) => (
               <article key={member.id} className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -187,7 +214,7 @@ export default async function OperatorBranchDetailsPage({ params }: BranchDetail
                 <p className="text-sm font-semibold text-primary">No pending approvals for this branch.</p>
               </article>
             ) : (
-              pendingApprovals.map((request) => (
+              pendingApprovals.map((request: any) => (
                 <article key={request.id} className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
                   <p className="text-sm font-bold text-primary">{request.subject}</p>
                   <p className="text-xs text-primary/60 mt-1">{request.type} • {request.requestedBy}</p>
