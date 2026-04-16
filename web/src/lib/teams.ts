@@ -19,6 +19,7 @@ export type TeamPost = {
   endHour: number
   neededPlayers: number
   memberUserIds: string[]
+  requestedUserIds: string[]
   status: TeamPostStatus
 }
 
@@ -80,12 +81,18 @@ function dispatchActiveUserUpdated(userId: string) {
 }
 
 function normalizeTeamPost(post: TeamPost): TeamPost {
+  const normalizedMemberUserIds = Array.from(new Set(post.memberUserIds ?? []))
+  const normalizedRequestedUserIds = Array.from(new Set(post.requestedUserIds ?? [])).filter(
+    (userId) => userId !== post.createdByUserId && !normalizedMemberUserIds.includes(userId),
+  )
+
   return {
     ...post,
     neededPlayers: Math.max(1, Math.floor(post.neededPlayers)),
     startHour: Math.max(0, Math.floor(post.startHour)),
     endHour: Math.max(1, Math.floor(post.endHour)),
-    memberUserIds: Array.from(new Set(post.memberUserIds)),
+    memberUserIds: normalizedMemberUserIds,
+    requestedUserIds: normalizedRequestedUserIds,
     status: post.status === 'full' ? 'full' : 'open',
   }
 }
@@ -167,6 +174,48 @@ function emitTeamCancelledNotifications(post: TeamPost) {
         { userId, channel: 'push' as const, title, description },
       ]
     }),
+  )
+}
+
+function emitTeamJoinRequestNotifications(post: TeamPost, requesterUserId: string) {
+  const requesterName = getUserNameById(requesterUserId)
+  const court = courts.find((item) => item.id === post.courtId)
+
+  addNotifications(
+    ['in-app', 'email', 'push'].map((channel) => ({
+      userId: post.createdByUserId,
+      channel: channel as 'in-app' | 'email' | 'push',
+      title: 'New join request',
+      description: `${requesterName} requested to join your ${post.sport} team at ${court?.title ?? 'selected court'} on ${post.date}.`,
+    })),
+  )
+}
+
+function emitTeamJoinApprovedNotifications(post: TeamPost, approvedUserId: string) {
+  const court = courts.find((item) => item.id === post.courtId)
+  const creatorName = getUserNameById(post.createdByUserId)
+
+  addNotifications(
+    ['in-app', 'email', 'push'].map((channel) => ({
+      userId: approvedUserId,
+      channel: channel as 'in-app' | 'email' | 'push',
+      title: 'Join request approved',
+      description: `${creatorName} approved your request for ${post.sport} at ${court?.title ?? 'selected court'} on ${post.date}.`,
+    })),
+  )
+}
+
+function emitTeamJoinRejectedNotifications(post: TeamPost, rejectedUserId: string) {
+  const court = courts.find((item) => item.id === post.courtId)
+  const creatorName = getUserNameById(post.createdByUserId)
+
+  addNotifications(
+    [{
+      userId: rejectedUserId,
+      channel: 'in-app' as const,
+      title: 'Join request declined',
+      description: `${creatorName} declined your request for ${post.sport} at ${court?.title ?? 'selected court'} on ${post.date}.`,
+    }],
   )
 }
 
@@ -276,6 +325,7 @@ export function createTeamPost(input: CreateTeamPostInput): TeamActionResult {
     endHour,
     neededPlayers: Math.floor(input.neededPlayers),
     memberUserIds: [],
+    requestedUserIds: [],
     status: 'open',
   }
 
@@ -283,7 +333,7 @@ export function createTeamPost(input: CreateTeamPostInput): TeamActionResult {
   return { ok: true }
 }
 
-export function joinTeamPost(postId: string, userId: string): TeamActionResult {
+export function requestJoinTeamPost(postId: string, userId: string): TeamActionResult {
   const posts = getAllPostsInternal()
   const post = posts.find((item) => item.id === postId)
 
@@ -295,6 +345,10 @@ export function joinTeamPost(postId: string, userId: string): TeamActionResult {
 
   if (post.memberUserIds.includes(userId)) {
     return { ok: false, error: 'You already joined this team.' }
+  }
+
+  if (post.requestedUserIds.includes(userId)) {
+    return { ok: false, error: 'You already sent a request to this team.' }
   }
 
   if (post.status === 'full') {
@@ -315,7 +369,60 @@ export function joinTeamPost(postId: string, userId: string): TeamActionResult {
     return { ok: false, error: 'You cannot join because this overlaps one of your other teams.' }
   }
 
-  const nextMemberUserIds = [...post.memberUserIds, userId]
+  const nextPost: TeamPost = {
+    ...post,
+    requestedUserIds: [...post.requestedUserIds, userId],
+  }
+
+  const nextPosts = posts.map((item) => (item.id === post.id ? nextPost : item))
+  setAllPostsInternal(nextPosts)
+  emitTeamJoinRequestNotifications(nextPost, userId)
+
+  return { ok: true }
+}
+
+export function joinTeamPost(postId: string, userId: string): TeamActionResult {
+  return requestJoinTeamPost(postId, userId)
+}
+
+export function approveTeamJoinRequest(
+  postId: string,
+  creatorUserId: string,
+  requestedUserId: string,
+): TeamActionResult {
+  const posts = getAllPostsInternal()
+  const post = posts.find((item) => item.id === postId)
+
+  if (!post) return { ok: false, error: 'This team post no longer exists.' }
+
+  if (post.createdByUserId !== creatorUserId) {
+    return { ok: false, error: 'Only the team creator can approve requests.' }
+  }
+
+  if (!post.requestedUserIds.includes(requestedUserId)) {
+    return { ok: false, error: 'This request no longer exists.' }
+  }
+
+  if (post.status === 'full') {
+    return { ok: false, error: 'This team is already full.' }
+  }
+
+  const userConflict = posts.some((otherPost) => {
+    if (otherPost.id === post.id) return false
+    if (!isParticipant(otherPost, requestedUserId)) return false
+
+    return hasSlotOverlap(
+      { date: otherPost.date, startHour: otherPost.startHour, endHour: otherPost.endHour },
+      { date: post.date, startHour: post.startHour, endHour: post.endHour },
+    )
+  })
+
+  if (userConflict) {
+    return { ok: false, error: 'Cannot approve: this player has an overlapping team.' }
+  }
+
+  const nextMemberUserIds = [...post.memberUserIds, requestedUserId]
+  const nextRequestedUserIds = post.requestedUserIds.filter((userId) => userId !== requestedUserId)
   const totalPlayers = 1 + nextMemberUserIds.length
   const requiredPlayers = 1 + post.neededPlayers
   const isNowFull = totalPlayers >= requiredPlayers
@@ -323,15 +430,47 @@ export function joinTeamPost(postId: string, userId: string): TeamActionResult {
   const nextPost: TeamPost = {
     ...post,
     memberUserIds: nextMemberUserIds,
+    requestedUserIds: nextRequestedUserIds,
     status: isNowFull ? 'full' : 'open',
   }
 
   const nextPosts = posts.map((item) => (item.id === post.id ? nextPost : item))
   setAllPostsInternal(nextPosts)
+  emitTeamJoinApprovedNotifications(nextPost, requestedUserId)
 
   if (isNowFull) {
     emitTeamFullNotifications(nextPost)
   }
+
+  return { ok: true }
+}
+
+export function rejectTeamJoinRequest(
+  postId: string,
+  creatorUserId: string,
+  requestedUserId: string,
+): TeamActionResult {
+  const posts = getAllPostsInternal()
+  const post = posts.find((item) => item.id === postId)
+
+  if (!post) return { ok: false, error: 'This team post no longer exists.' }
+
+  if (post.createdByUserId !== creatorUserId) {
+    return { ok: false, error: 'Only the team creator can reject requests.' }
+  }
+
+  if (!post.requestedUserIds.includes(requestedUserId)) {
+    return { ok: false, error: 'This request no longer exists.' }
+  }
+
+  const nextPost: TeamPost = {
+    ...post,
+    requestedUserIds: post.requestedUserIds.filter((userId) => userId !== requestedUserId),
+  }
+
+  const nextPosts = posts.map((item) => (item.id === post.id ? nextPost : item))
+  setAllPostsInternal(nextPosts)
+  emitTeamJoinRejectedNotifications(nextPost, requestedUserId)
 
   return { ok: true }
 }

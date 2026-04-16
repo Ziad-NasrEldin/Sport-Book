@@ -1,0 +1,38 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { coachNavItems } from '@/components/coach/coachNavigation'
+
+function isActive(pathname: string, href: string) {
+  if (pathname === href) return true
+  return pathname.startsWith(href + '/')
+}
+
+export function CoachMobileTabs() {
+  const pathname = usePathname()
+
+  return (
+    <nav className="lg:hidden px-4 md:px-6 pb-4 border-b border-primary/5 overflow-x-auto hide-scrollbar">
+      <div className="flex items-center gap-2 min-w-max">
+        {coachNavItems.map((item) => {
+          const active = isActive(pathname, item.href)
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`px-3 py-2 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.14em] whitespace-nowrap ${
+                active
+                  ? 'bg-primary-container text-surface-container-lowest'
+                  : 'bg-surface-container-low text-primary/70'
+              }`}
+            >
+              {item.label}
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}

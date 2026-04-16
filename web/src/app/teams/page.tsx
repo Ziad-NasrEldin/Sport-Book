@@ -15,7 +15,7 @@ import {
   getMockUsers,
   getTeamPosts,
   getUserNameById,
-  joinTeamPost,
+  requestJoinTeamPost,
   setActiveUserId,
 } from '@/lib/teams'
 
@@ -39,6 +39,18 @@ function formatHour(hour: number) {
 const startHourOptions = Array.from({ length: 16 }, (_, index) => 6 + index)
 const durationOptions = [1, 2, 3]
 
+function getNoticeFeedbackFromUrl() {
+  if (typeof window === 'undefined') return ''
+
+  const currentUrl = new URL(window.location.href)
+  const notice = currentUrl.searchParams.get('notice')
+
+  if (notice === 'left') return 'You left the team successfully.'
+  if (notice === 'cancelled') return 'Team post cancelled successfully.'
+
+  return ''
+}
+
 export default function TeamsPage() {
   const availableSports = useMemo(() => getAvailableTeamSports(), [])
   const users = useMemo(() => getMockUsers(), [])
@@ -46,7 +58,7 @@ export default function TeamsPage() {
   const [activeUserId, setActiveUserState] = useState(getActiveUserId)
   const [teamPosts, setTeamPosts] = useState<TeamPost[]>(() => getTeamPosts())
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [feedback, setFeedback] = useState('')
+  const [feedback, setFeedback] = useState(getNoticeFeedbackFromUrl)
   const [selectedSportFilter, setSelectedSportFilter] = useState<'All' | CourtSport>('All')
   const [selectedDateFilter, setSelectedDateFilter] = useState('')
 
@@ -83,14 +95,6 @@ export default function TeamsPage() {
   useEffect(() => {
     const currentUrl = new URL(window.location.href)
     const notice = currentUrl.searchParams.get('notice')
-
-    if (notice === 'left') {
-      setFeedback('You left the team successfully.')
-    }
-
-    if (notice === 'cancelled') {
-      setFeedback('Team post cancelled successfully.')
-    }
 
     if (!notice) return
 
@@ -140,14 +144,14 @@ export default function TeamsPage() {
   }
 
   const handleJoinTeam = (postId: string) => {
-    const result = joinTeamPost(postId, activeUserId)
+    const result = requestJoinTeamPost(postId, activeUserId)
 
     if (!result.ok) {
       setFeedback(result.error ?? 'Could not join this team.')
       return
     }
 
-    setFeedback('Joined team successfully.')
+    setFeedback('Join request sent. Waiting for creator approval.')
   }
 
   const activeUserName = getUserNameById(activeUserId)
@@ -193,7 +197,7 @@ export default function TeamsPage() {
 
           <div className="bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
             <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55">Rules</p>
-            <p className="mt-1.5 text-sm font-semibold text-primary">Join unlimited teams, but time slots cannot overlap.</p>
+            <p className="mt-1.5 text-sm font-semibold text-primary">Joining requires creator approval. Approved slots cannot overlap.</p>
           </div>
         </div>
       </header>
@@ -387,7 +391,9 @@ export default function TeamsPage() {
             const spotsLeft = Math.max(0, totalPlayers - joinedPlayers)
             const isCreator = post.createdByUserId === activeUserId
             const alreadyJoined = isCreator || post.memberUserIds.includes(activeUserId)
-            const canJoin = post.status === 'open' && !alreadyJoined
+            const hasPendingRequest = post.requestedUserIds.includes(activeUserId)
+            const canJoin = post.status === 'open' && !alreadyJoined && !hasPendingRequest
+            const pendingRequestCount = post.requestedUserIds.length
 
             return (
               <article key={post.id} className="rounded-[var(--radius-md)] bg-surface-container-high p-4 md:p-5">
@@ -428,6 +434,12 @@ export default function TeamsPage() {
                     <p className="text-sm text-primary/75">
                       Created by <strong>{getUserNameById(post.createdByUserId)}</strong>.
                     </p>
+
+                    {pendingRequestCount > 0 && (
+                      <p className="text-xs text-primary/65">
+                        {pendingRequestCount} join request{pendingRequestCount === 1 ? '' : 's'} waiting for approval.
+                      </p>
+                    )}
                   </div>
 
                   <div className="min-w-[170px] space-y-2">
@@ -448,13 +460,17 @@ export default function TeamsPage() {
                       </p>
                     )}
 
+                    {hasPendingRequest && !alreadyJoined && (
+                      <p className="text-sm font-semibold text-primary">Request pending creator approval</p>
+                    )}
+
                     <button
                       type="button"
                       disabled={!canJoin}
                       onClick={() => handleJoinTeam(post.id)}
                       className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-primary-container text-surface-container-lowest font-bold disabled:opacity-45 disabled:cursor-not-allowed"
                     >
-                      {post.status === 'full' ? 'Team Full' : 'Join Team'}
+                      {post.status === 'full' ? 'Team Full' : hasPendingRequest ? 'Request Sent' : 'Request to Join'}
                     </button>
                   </div>
                 </div>

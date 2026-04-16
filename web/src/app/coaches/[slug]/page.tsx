@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Medal, Clock3, Star, Check } from 'lucide-react'
+import { ArrowLeft, Medal, Clock3, Star, Check, ArrowRight } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { coaches } from '@/lib/coaches'
 
@@ -43,6 +43,14 @@ export default async function CoachDetailsPage({ params }: CoachDetailsPageProps
   if (!coach) {
     notFound()
   }
+
+  const confirmBookingHref = `/coaches/${coach.slug}/confirm-booking?${new URLSearchParams({
+    date: 'Apr 20, 2026',
+    time: '06:00 PM',
+    duration: '60',
+    type: 'private',
+    location: 'SportBook Club - Main Arena',
+  }).toString()}`
 
   return (
     <main className="w-full bg-surface min-h-screen pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
@@ -157,6 +165,21 @@ export default async function CoachDetailsPage({ params }: CoachDetailsPageProps
                 </p>
               </li>
             </ul>
+          </section>
+
+          <section className="bg-surface-container-lowest rounded-[1.5rem] p-5 md:p-6 shadow-ambient flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Next Step</p>
+              <h3 className="text-xl font-extrabold text-primary mt-1">Confirm this coach session</h3>
+              <p className="text-sm text-primary/65 mt-1">Review session setup, then continue to secure checkout.</p>
+            </div>
+            <Link
+              href={confirmBookingHref}
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-secondary to-secondary-container text-white px-6 py-3.5 rounded-full font-extrabold text-sm md:text-base whitespace-nowrap"
+            >
+              Confirm Booking
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </section>
         </div>
       </div>

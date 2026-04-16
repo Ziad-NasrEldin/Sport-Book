@@ -101,6 +101,12 @@ export default function SignUpPage() {
               Sign in
             </Link>
           </p>
+
+          <p className="mt-3 text-center text-xs text-primary/65">
+            <Link href="/auth/send-request" className="font-bold text-primary/80 hover:text-primary transition-colors underline underline-offset-2">
+              Do you want to be a coach or a facility?
+            </Link>
+          </p>
         </div>
       </section>
     </main>

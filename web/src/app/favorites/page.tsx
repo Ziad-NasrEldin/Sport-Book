@@ -1,43 +1,34 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Heart, MapPin, Star, CalendarPlus, Trophy } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-
-const favoriteFacilities = [
-  {
-    id: 'FAC-01',
-    name: "The Regent's Park",
-    surface: 'Hard Court',
-    location: 'London NW1',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 'FAC-02',
-    name: 'Elite Padel Club',
-    surface: 'Panoramic Court',
-    location: 'Chelsea, London',
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=900&q=80',
-  },
-]
-
-const favoriteCoaches = [
-  {
-    id: 'COA-01',
-    name: 'Sofia Carter',
-    specialty: 'Advanced Tennis Drills',
-    sessions: 36,
-    rating: 4.9,
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=320&q=80',
-  },
-]
+import {
+  FAVORITES_UPDATED_EVENT,
+  FavoritesState,
+  getFavorites,
+  toggleCoachFavorite,
+  toggleCourtFavorite,
+} from '@/lib/favorites'
 
 export default function FavoritesPage() {
   const router = useRouter()
+  const [favorites, setFavorites] = useState<FavoritesState>(() => getFavorites())
+
+  useEffect(() => {
+    const refreshFavorites = () => {
+      setFavorites(getFavorites())
+    }
+
+    refreshFavorites()
+    window.addEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    return () => {
+      window.removeEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    }
+  }, [])
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -46,6 +37,22 @@ export default function FavoritesPage() {
     }
 
     router.push('/profile')
+  }
+
+  const handleRemoveCourt = (courtId: string) => {
+    const court = favorites.courts.find((entry) => entry.id === courtId)
+    if (!court) return
+
+    toggleCourtFavorite(court)
+    setFavorites(getFavorites())
+  }
+
+  const handleRemoveCoach = (coachSlug: string) => {
+    const coach = favorites.coaches.find((entry) => entry.slug === coachSlug)
+    if (!coach) return
+
+    toggleCoachFavorite(coach)
+    setFavorites(getFavorites())
   }
 
   return (
@@ -79,7 +86,7 @@ export default function FavoritesPage() {
               <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Facilities</span>
               <Heart className="w-5 h-5 text-secondary-container" />
             </div>
-            <p className="text-4xl font-black tracking-tight text-primary">{favoriteFacilities.length}</p>
+            <p className="text-4xl font-black tracking-tight text-primary">{favorites.courts.length}</p>
           </article>
 
           <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
@@ -87,7 +94,7 @@ export default function FavoritesPage() {
               <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Coaches</span>
               <Trophy className="w-5 h-5 text-primary-container" />
             </div>
-            <p className="text-4xl font-black tracking-tight text-primary">{favoriteCoaches.length}</p>
+            <p className="text-4xl font-black tracking-tight text-primary">{favorites.coaches.length}</p>
           </article>
 
           <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
@@ -108,7 +115,7 @@ export default function FavoritesPage() {
           <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Favorite Facilities</h2>
 
           <div className="space-y-4">
-            {favoriteFacilities.map((facility) => (
+            {favorites.courts.map((facility) => (
               <article
                 key={facility.id}
                 className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-3.5 md:p-4 shadow-ambient"
@@ -133,9 +140,25 @@ export default function FavoritesPage() {
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCourt(facility.id)}
+                    className="shrink-0 w-9 h-9 rounded-full bg-surface-container-low text-primary/70 hover:text-primary flex items-center justify-center"
+                    aria-label="Remove court from favorites"
+                  >
+                    <Heart className="w-4 h-4 fill-primary" />
+                  </button>
                 </div>
               </article>
             ))}
+
+            {favorites.courts.length === 0 && (
+              <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center">
+                <h3 className="text-lg font-extrabold text-primary">No favorite courts yet</h3>
+                <p className="text-sm text-primary/60 mt-2">Tap the heart button on any court to save it here.</p>
+              </article>
+            )}
           </div>
         </section>
 
@@ -143,9 +166,9 @@ export default function FavoritesPage() {
           <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Favorite Coaches</h2>
 
           <div className="space-y-4">
-            {favoriteCoaches.map((coach) => (
+            {favorites.coaches.map((coach) => (
               <article
-                key={coach.id}
+                key={coach.slug}
                 className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient"
               >
                 <div className="flex items-center gap-4">
@@ -165,15 +188,24 @@ export default function FavoritesPage() {
                     </div>
                   </div>
 
-                  <Link
-                    href="/book"
-                    className="shrink-0 px-4 py-2 rounded-full bg-secondary-container text-on-secondary-container font-bold text-xs hover:opacity-90 transition-opacity"
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCoach(coach.slug)}
+                    className="shrink-0 w-9 h-9 rounded-full bg-surface-container-low text-primary/70 hover:text-primary flex items-center justify-center"
+                    aria-label="Remove coach from favorites"
                   >
-                    Book
-                  </Link>
+                    <Heart className="w-4 h-4 fill-primary" />
+                  </button>
                 </div>
               </article>
             ))}
+
+            {favorites.coaches.length === 0 && (
+              <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center">
+                <h3 className="text-lg font-extrabold text-primary">No favorite coaches yet</h3>
+                <p className="text-sm text-primary/60 mt-2">Tap the heart button on any coach to save it here.</p>
+              </article>
+            )}
           </div>
         </section>
       </section>

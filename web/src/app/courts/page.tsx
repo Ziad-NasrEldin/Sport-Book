@@ -1,11 +1,12 @@
 'use client'
 
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
+  Heart,
   MapPin,
   Search,
   SlidersHorizontal,
@@ -13,6 +14,11 @@ import {
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { CourtSport, courtSports, courts } from '@/lib/courts'
+import {
+  FAVORITES_UPDATED_EVENT,
+  getFavorites,
+  toggleCourtFavorite,
+} from '@/lib/favorites'
 
 function CourtsPageContent() {
   const router = useRouter()
@@ -27,6 +33,21 @@ function CourtsPageContent() {
   const [query, setQuery] = useState('')
   const [priceFilter, setPriceFilter] = useState<'all' | 'lt500' | '500to1000'>('all')
   const [distanceFilter, setDistanceFilter] = useState<'all' | 'lt5'>('all')
+  const [favoriteCourtIds, setFavoriteCourtIds] = useState<string[]>(() =>
+    getFavorites().courts.map((court) => court.id),
+  )
+
+  useEffect(() => {
+    const refreshFavorites = () => {
+      setFavoriteCourtIds(getFavorites().courts.map((court) => court.id))
+    }
+
+    refreshFavorites()
+    window.addEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    return () => {
+      window.removeEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    }
+  }, [])
 
   const filteredCourts = useMemo(() => {
     return courts
@@ -50,6 +71,18 @@ function CourtsPageContent() {
     }
 
     router.push('/categories')
+  }
+
+  const handleToggleCourtFavorite = (court: (typeof courts)[number]) => {
+    toggleCourtFavorite({
+      id: court.id,
+      name: court.title,
+      surface: court.sportLabel,
+      location: court.location,
+      rating: court.rating,
+      image: court.image,
+    })
+    setFavoriteCourtIds(getFavorites().courts.map((entry) => entry.id))
   }
 
   return (
@@ -161,10 +194,25 @@ function CourtsPageContent() {
                   {court.status}
                 </span>
 
-                <span className="absolute right-4 top-4 px-3 py-1.5 rounded-full bg-surface-container-lowest text-primary text-sm font-bold inline-flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 text-secondary-container fill-secondary-container" />
-                  {court.rating}
-                </span>
+                <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleCourtFavorite(court)}
+                    className={`w-10 h-10 rounded-full backdrop-blur-md border border-white/40 flex items-center justify-center transition-colors ${
+                      favoriteCourtIds.includes(court.id)
+                        ? 'bg-secondary-container text-white'
+                        : 'bg-white/20 text-white'
+                    }`}
+                    aria-label={favoriteCourtIds.includes(court.id) ? 'Remove court from favorites' : 'Add court to favorites'}
+                  >
+                    <Heart className={`w-4 h-4 ${favoriteCourtIds.includes(court.id) ? 'fill-white' : ''}`} />
+                  </button>
+
+                  <span className="px-3 py-1.5 rounded-full bg-surface-container-lowest text-primary text-sm font-bold inline-flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 text-secondary-container fill-secondary-container" />
+                    {court.rating}
+                  </span>
+                </div>
               </div>
 
               <div className="p-5 md:p-6">

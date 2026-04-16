@@ -1,19 +1,39 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Medal, Clock3, ChevronRight, Search, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Medal, Clock3, ChevronRight, Search, ChevronDown, ChevronUp, Heart } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { coaches } from '@/lib/coaches'
+import {
+  FAVORITES_UPDATED_EVENT,
+  getFavorites,
+  toggleCoachFavorite,
+} from '@/lib/favorites'
 
 export default function CoachesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeSport, setActiveSport] = useState('All')
   const [minExperience, setMinExperience] = useState(0)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [favoriteCoachSlugs, setFavoriteCoachSlugs] = useState<string[]>(() =>
+    getFavorites().coaches.map((coach) => coach.slug),
+  )
 
   const sports = useMemo(() => ['All', ...new Set(coaches.map((coach) => coach.sport))], [])
+
+  useEffect(() => {
+    const refreshFavorites = () => {
+      setFavoriteCoachSlugs(getFavorites().coaches.map((coach) => coach.slug))
+    }
+
+    refreshFavorites()
+    window.addEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    return () => {
+      window.removeEventListener(FAVORITES_UPDATED_EVENT, refreshFavorites)
+    }
+  }, [])
 
   const filteredCoaches = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -29,6 +49,22 @@ export default function CoachesPage() {
       return matchesSearch && matchesSport && matchesExperience
     })
   }, [searchQuery, activeSport, minExperience])
+
+  const getCoachRating = (experienceYears: number) => {
+    return Math.min(5, Number((4.4 + experienceYears / 20).toFixed(1)))
+  }
+
+  const handleToggleCoachFavorite = (coach: (typeof coaches)[number]) => {
+    toggleCoachFavorite({
+      slug: coach.slug,
+      name: coach.name,
+      specialty: coach.bio,
+      sessions: coach.experienceYears * 4,
+      rating: getCoachRating(coach.experienceYears),
+      avatar: coach.image,
+    })
+    setFavoriteCoachSlugs(getFavorites().coaches.map((entry) => entry.slug))
+  }
 
   return (
     <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
@@ -159,6 +195,19 @@ export default function CoachesPage() {
                   </span>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => handleToggleCoachFavorite(coach)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                  favoriteCoachSlugs.includes(coach.slug)
+                    ? 'bg-secondary-container text-white'
+                    : 'bg-surface-container-low text-primary/70 hover:text-primary'
+                }`}
+                aria-label={favoriteCoachSlugs.includes(coach.slug) ? 'Remove coach from favorites' : 'Add coach to favorites'}
+              >
+                <Heart className={`w-4 h-4 ${favoriteCoachSlugs.includes(coach.slug) ? 'fill-white' : ''}`} />
+              </button>
             </div>
 
             <div className="mt-4 flex items-center justify-between">

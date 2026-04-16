@@ -10,13 +10,15 @@ import {
   ACTIVE_USER_UPDATED_EVENT,
   TEAM_POSTS_UPDATED_EVENT,
   TeamPost,
+  approveTeamJoinRequest,
   cancelTeamPost,
   getActiveUserId,
   getMockUsers,
   getTeamPosts,
   getUserNameById,
-  joinTeamPost,
   leaveTeamPost,
+  rejectTeamJoinRequest,
+  requestJoinTeamPost,
   setActiveUserId,
 } from '@/lib/teams'
 
@@ -82,17 +84,40 @@ export default function TeamDetailsPage() {
   const isCreator = post.createdByUserId === activeUserId
   const isMember = post.memberUserIds.includes(activeUserId)
   const isParticipant = isCreator || isMember
-  const canJoin = post.status === 'open' && !isParticipant
+  const hasPendingRequest = post.requestedUserIds.includes(activeUserId)
+  const canJoin = post.status === 'open' && !isParticipant && !hasPendingRequest
 
   const handleJoin = () => {
-    const result = joinTeamPost(post.id, activeUserId)
+    const result = requestJoinTeamPost(post.id, activeUserId)
 
     if (!result.ok) {
       setFeedback(result.error ?? 'Could not join this team.')
       return
     }
 
-    setFeedback('Joined team successfully.')
+    setFeedback('Join request sent. Waiting for creator approval.')
+  }
+
+  const handleApproveRequest = (requestedUserId: string) => {
+    const result = approveTeamJoinRequest(post.id, activeUserId, requestedUserId)
+
+    if (!result.ok) {
+      setFeedback(result.error ?? 'Could not approve this request.')
+      return
+    }
+
+    setFeedback(`${getUserNameById(requestedUserId)} has been approved.`)
+  }
+
+  const handleRejectRequest = (requestedUserId: string) => {
+    const result = rejectTeamJoinRequest(post.id, activeUserId, requestedUserId)
+
+    if (!result.ok) {
+      setFeedback(result.error ?? 'Could not reject this request.')
+      return
+    }
+
+    setFeedback(`${getUserNameById(requestedUserId)} request was declined.`)
   }
 
   const handleLeave = () => {
@@ -233,6 +258,49 @@ export default function TeamDetailsPage() {
           </div>
         </article>
 
+        {isCreator && (
+          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg md:text-xl font-bold text-primary">Join Requests</h3>
+              <p className="text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/55">
+                {post.requestedUserIds.length} pending
+              </p>
+            </div>
+
+            {post.requestedUserIds.length === 0 && (
+              <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 text-sm text-primary/75">
+                No pending requests yet.
+              </div>
+            )}
+
+            {post.requestedUserIds.map((requestedUserId) => (
+              <div
+                key={requestedUserId}
+                className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+              >
+                <p className="font-bold text-primary">{getUserNameById(requestedUserId)}</p>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRejectRequest(requestedUserId)}
+                    className="px-4 py-2 rounded-full bg-surface-container-lowest text-primary font-semibold"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApproveRequest(requestedUserId)}
+                    className="px-4 py-2 rounded-full bg-primary-container text-surface-container-lowest font-semibold"
+                  >
+                    Approve
+                  </button>
+                </div>
+              </div>
+            ))}
+          </article>
+        )}
+
         <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3">
           <h3 className="text-lg md:text-xl font-bold text-primary">Actions</h3>
 
@@ -242,8 +310,12 @@ export default function TeamDetailsPage() {
               onClick={handleJoin}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-surface-container-lowest font-bold"
             >
-              <UserPlus className="w-4 h-4" /> Join Team
+              <UserPlus className="w-4 h-4" /> Request to Join
             </button>
+          )}
+
+          {hasPendingRequest && !isParticipant && (
+            <p className="text-sm font-semibold text-primary/75">Your request is pending creator approval.</p>
           )}
 
           {isMember && (

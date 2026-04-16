@@ -1,11 +1,42 @@
 'use client';
 
+import { useEffect, useState } from 'react'
 import { Home, Users, Store, Medal, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {
+  ACTIVE_USER_UPDATED_EVENT,
+  TEAM_POSTS_UPDATED_EVENT,
+  getActiveUserId,
+  getTeamPosts,
+} from '@/lib/teams'
 
 export function FloatingNav() {
   const pathname = usePathname()
+  const [pendingTeamRequestsCount, setPendingTeamRequestsCount] = useState(0)
+
+  useEffect(() => {
+    const refreshPendingRequestCount = () => {
+      const activeUserId = getActiveUserId()
+      const posts = getTeamPosts()
+
+      const nextCount = posts.reduce((count, post) => {
+        if (post.createdByUserId !== activeUserId) return count
+        return count + post.requestedUserIds.length
+      }, 0)
+
+      setPendingTeamRequestsCount(nextCount)
+    }
+
+    refreshPendingRequestCount()
+    window.addEventListener(TEAM_POSTS_UPDATED_EVENT, refreshPendingRequestCount)
+    window.addEventListener(ACTIVE_USER_UPDATED_EVENT, refreshPendingRequestCount)
+
+    return () => {
+      window.removeEventListener(TEAM_POSTS_UPDATED_EVENT, refreshPendingRequestCount)
+      window.removeEventListener(ACTIVE_USER_UPDATED_EVENT, refreshPendingRequestCount)
+    }
+  }, [])
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -34,7 +65,7 @@ export function FloatingNav() {
 
       <Link
         href="/teams"
-        className={`flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-full transition-transform md:w-20 md:h-20 ${
+        className={`relative flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-full transition-transform md:w-20 md:h-20 ${
           isActive('/teams')
             ? 'bg-tertiary-fixed text-primary'
             : 'text-primary/60 hover:text-primary transition-colors'
@@ -42,6 +73,11 @@ export function FloatingNav() {
       >
         <Users className={`w-5 h-5 ${isActive('/teams') ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
         <span className="text-[10px] font-bold uppercase tracking-wider md:text-xs">Teams</span>
+        {pendingTeamRequestsCount > 0 && (
+          <span className="absolute -top-0.5 right-0 min-w-5 h-5 px-1 rounded-full bg-secondary-container text-white text-[10px] font-extrabold leading-none inline-flex items-center justify-center shadow-sm">
+            {pendingTeamRequestsCount > 9 ? '9+' : pendingTeamRequestsCount}
+          </span>
+        )}
       </Link>
 
       <Link 
