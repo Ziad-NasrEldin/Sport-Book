@@ -1,5 +1,3 @@
-// Types: Role = 'PLAYER' | 'COACH' | 'OPERATOR' | 'ADMIN'
-//        UserStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED'
 import { prisma } from '@lib/prisma'
 import { env } from '@config/env'
 import {
@@ -7,8 +5,9 @@ import {
   verifyPassword,
   generateRefreshToken,
   generateVerificationToken,
+  generatePasswordResetToken,
 } from '@lib/crypto'
-import { ApiError, ConflictError, UnauthorizedError, NotFoundError } from '@common/errors'
+import { ApiError, ConflictError, UnauthorizedError, NotFoundError, BadRequestError } from '@common/errors'
 import type {
   RegisterInput,
   LoginInput,
@@ -16,9 +15,9 @@ import type {
 } from './schema'
 
 const REFRESH_TOKEN_EXPIRY_DAYS = parseInt(env.REFRESH_TOKEN_DAYS)
+const PASSWORD_RESET_EXPIRY_MINUTES = 60
 
 export interface AuthTokens {
-  accessToken: string
   refreshToken: string
 }
 
@@ -32,15 +31,14 @@ export interface AuthUser {
 }
 
 export async function register(data: RegisterInput): Promise<{ user: AuthUser; tokens: AuthTokens }> {
-  const existingUser = await prisma.user.findUnique({
-    where: { email: data.email },
-  })
+  const existingUser = await prisma.user.findUnique({ where: { email: data.email } })
 
   if (existingUser) {
     throw new ConflictError('Email already registered')
   }
 
   const passwordHash = await hashPassword(data.password)
+  const verificationToken = generateVerificationToken()
 
   const user = await prisma.user.create({
     data: {
@@ -50,49 +48,22 @@ export async function register(data: RegisterInput): Promise<{ user: AuthUser; t
       phone: data.phone,
       role: 'PLAYER',
       status: 'ACTIVE',
-      wallet: {
-        create: {
-          balance: 0,
-          currency: 'EGP',
-        },
-      },
+      emailVerificationToken: verificationToken,
+      wallet: { create: { balance: 0, currency: 'EGP' } },
       preferences: {
-        create: {
-          language: 'en',
-          currency: 'EGP',
-          timezone: 'Africa/Cairo',
-        },
+        create: { language: 'en', currency: 'EGP', timezone: 'Africa/Cairo' },
       },
     },
   })
 
-  const tokens = await generateTokens(user.id, user.email, user.role)
-
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      status: user.status,
-      emailVerified: user.emailVerified,
-    },
-    tokens,
-  }
+  const tokens = await createRefreshToken(user.id)
+  return { user: toAuthUser(user), tokens: { refreshToken: tokens } }
 }
 
 export async function login(data: LoginInput): Promise<{ user: AuthUser; tokens: AuthTokens }> {
-  const user = await prisma.user.findUnique({
-    where: { email: data.email },
-  })
+  const user = await prisma.user.findUnique({ where: { email: data.email } })
 
-  if (!user) {
-    throw new UnauthorizedError('Invalid email or password')
-  }
-
-  const isPasswordValid = await verifyPassword(data.password, user.password)
-
-  if (!isPasswordValid) {
+  if (!user || !(await verifyPassword(data.password, user.password))) {
     throw new UnauthorizedError('Invalid email or password')
   }
 
@@ -100,37 +71,21 @@ export async function login(data: LoginInput): Promise<{ user: AuthUser; tokens:
     throw new UnauthorizedError('Account has been suspended')
   }
 
-  const tokens = await generateTokens(user.id, user.email, user.role)
-
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      status: user.status,
-      emailVerified: user.emailVerified,
-    },
-    tokens,
-  }
+  const refreshToken = await createRefreshToken(user.id)
+  return { user: toAuthUser(user), tokens: { refreshToken } }
 }
 
 export async function logout(userId: string, refreshToken: string): Promise<void> {
-  await prisma.refreshToken.deleteMany({
-    where: {
-      token: refreshToken,
-      userId,
-    },
-  })
+  await prisma.refreshToken.deleteMany({ where: { token: refreshToken, userId } })
 }
 
 export async function logoutAll(userId: string): Promise<void> {
-  await prisma.refreshToken.deleteMany({
-    where: { userId },
-  })
+  await prisma.refreshToken.deleteMany({ where: { userId } })
 }
 
-export async function refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
+export async function refreshAccessToken(
+  refreshToken: string
+): Promise<{ user: AuthUser; tokens: AuthTokens }> {
   const tokenRecord = await prisma.refreshToken.findUnique({
     where: { token: refreshToken },
     include: { user: true },
@@ -140,69 +95,77 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthToke
     throw new UnauthorizedError('Invalid or expired refresh token')
   }
 
-  // Rotate refresh token
-  await prisma.refreshToken.delete({
-    where: { id: tokenRecord.id },
-  })
+  await prisma.refreshToken.delete({ where: { id: tokenRecord.id } })
 
-  const tokens = await generateTokens(tokenRecord.user.id, tokenRecord.user.email, tokenRecord.user.role as 'PLAYER' | 'COACH' | 'OPERATOR' | 'ADMIN')
-
-  return tokens
+  const newRefreshToken = await createRefreshToken(tokenRecord.user.id)
+  return { user: toAuthUser(tokenRecord.user), tokens: { refreshToken: newRefreshToken } }
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { email },
-  })
+  const user = await prisma.user.findUnique({ where: { email } })
+  if (!user) return // don't reveal whether email exists
 
-  if (!user) {
-    // Don't reveal if email exists
-    return
-  }
+  const token = generatePasswordResetToken()
+  const expiry = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000)
 
-  const token = generateVerificationToken()
-
-  // Store token in user record (could also use a separate table)
   await prisma.user.update({
     where: { id: user.id },
-    data: {
-      // In a real implementation, you'd store this in a passwordResetToken field
-      // or a separate PasswordResetToken table
-    },
+    data: { passwordResetToken: token, passwordResetTokenExpiry: expiry },
   })
 
-  // TODO: Send email with reset link
-  console.log(`Password reset token for ${email}: ${token}`)
+  // TODO Phase C: send via SMTP when env.SMTP_HOST is configured
+  if (env.NODE_ENV !== 'production') {
+    console.log(`[dev] Password reset link: ${env.WEB_ORIGIN}/auth/reset-password?token=${token}`)
+  }
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
-  // In a real implementation, validate the token and find the user
-  // Then update the password
-  throw new ApiError('Not implemented', 'NOT_IMPLEMENTED', 501)
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetToken: token,
+      passwordResetTokenExpiry: { gt: new Date() },
+    },
+  })
+
+  if (!user) {
+    throw new BadRequestError('Invalid or expired password reset token')
+  }
+
+  const passwordHash = await hashPassword(newPassword)
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: passwordHash,
+      passwordResetToken: null,
+      passwordResetTokenExpiry: null,
+    },
+  })
+
+  // Revoke all active sessions after password change
+  await logoutAll(user.id)
 }
 
 export async function requestRoleUpgrade(
   userId: string,
   data: RoleUpgradeRequestInput
 ): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) throw new NotFoundError('User')
+
+  const existing = await prisma.roleUpgradeRequest.findFirst({
+    where: { userId, status: 'PENDING' },
   })
+  if (existing) throw new ConflictError('You already have a pending role upgrade request')
 
-  if (!user) {
-    throw new NotFoundError('User')
-  }
-
-  // Check for existing pending request
-  const existingRequest = await prisma.roleUpgradeRequest.findFirst({
-    where: {
-      userId,
-      status: 'PENDING',
-    },
-  })
-
-  if (existingRequest) {
-    throw new ConflictError('You already have a pending role upgrade request')
+  const details = {
+    fullName: data.fullName,
+    email: data.email,
+    phone: data.phone,
+    city: data.city,
+    specialization: data.specialization,
+    certifications: data.certifications,
+    requestMessage: data.requestMessage,
   }
 
   await prisma.roleUpgradeRequest.create({
@@ -211,26 +174,117 @@ export async function requestRoleUpgrade(
       requestedRole: data.requestedRole,
       sportId: data.sportId,
       experienceYears: data.experienceYears,
-      bio: data.bio,
-      businessName: data.businessName,
-      businessAddress: data.businessAddress,
-      licenseNumber: data.licenseNumber,
-      documents: data.documents ? JSON.stringify(data.documents) : '[]',
+      bio: data.bio ?? data.requestMessage,
+      businessName: data.businessName ?? data.facilityName,
+      businessAddress: data.businessAddress ?? data.facilityAddress,
+      licenseNumber: data.licenseNumber ?? data.registrationNumber,
+      documents: JSON.stringify({
+        files: data.documents ?? [],
+        details,
+      }),
+      notes: JSON.stringify(details),
     },
   })
 }
 
-async function generateTokens(userId: string, email: string, role: string): Promise<AuthTokens> {
-  const accessToken = await signAccessToken(userId, email, role)
-  const refreshToken = await createRefreshToken(userId)
+export async function verifyEmail(token: string): Promise<void> {
+  const user = await prisma.user.findFirst({
+    where: {
+      emailVerificationToken: token,
+    },
+  })
 
-  return { accessToken, refreshToken }
+  if (!user) {
+    throw new BadRequestError('Invalid verification token')
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: true,
+      emailVerificationToken: null,
+    },
+  })
 }
 
-async function signAccessToken(userId: string, email: string, role: string): Promise<string> {
-  // This will be called from routes.ts where we have access to the JWT plugin
-  // For now, return a placeholder - the actual signing happens in the route
-  return ''
+type RoleUpgradeListItem = {
+  id: string
+  requestedRole: 'coach' | 'facility'
+  fullName: string
+  email: string
+  phone: string
+  city: string
+  specialization?: string
+  experienceYears?: number
+  certifications?: string
+  facilityName?: string
+  registrationNumber?: string
+  facilityAddress?: string
+  requestMessage: string
+  status: 'pending' | 'approved' | 'rejected' | 'needs-info'
+  submittedAt: string
+  reviewedAt?: string
+}
+
+export async function listMyRoleUpgradeRequests(userId: string): Promise<RoleUpgradeListItem[]> {
+  const requests = await prisma.roleUpgradeRequest.findMany({
+    where: { userId },
+    orderBy: { submittedAt: 'desc' },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
+  })
+
+  return requests.map((request) => {
+    const parsedNotes = safeParseJson<Record<string, string | undefined>>(request.notes)
+    const parsedDocuments = safeParseJson<{
+      files?: string[]
+      details?: Record<string, string | undefined>
+    }>(request.documents)
+    const details = parsedDocuments?.details ?? {}
+
+    return {
+      id: request.id,
+      requestedRole: request.requestedRole === 'COACH' ? 'coach' : 'facility',
+      fullName: details.fullName ?? parsedNotes?.fullName ?? request.user.name,
+      email: details.email ?? parsedNotes?.email ?? request.user.email,
+      phone: details.phone ?? parsedNotes?.phone ?? request.user.phone ?? '',
+      city: details.city ?? parsedNotes?.city ?? 'Egypt',
+      specialization: details.specialization ?? parsedNotes?.specialization,
+      experienceYears: request.experienceYears ?? undefined,
+      certifications: details.certifications ?? parsedNotes?.certifications,
+      facilityName: request.businessName ?? undefined,
+      registrationNumber: request.licenseNumber ?? undefined,
+      facilityAddress: request.businessAddress ?? undefined,
+      requestMessage: details.requestMessage ?? parsedNotes?.requestMessage ?? request.bio ?? '',
+      status: mapRoleUpgradeStatus(request.status),
+      submittedAt: request.submittedAt.toISOString(),
+      reviewedAt: request.reviewedAt?.toISOString(),
+    }
+  })
+}
+
+export function getAccessTokenPayload(userId: string, email: string, role: string) {
+  return { userId, email, role }
+}
+
+// ─── private helpers ──────────────────────────────────────────────────────────
+
+function toAuthUser(user: { id: string; email: string; name: string; role: string; status: string; emailVerified: boolean }): AuthUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    status: user.status,
+    emailVerified: user.emailVerified,
+  }
 }
 
 async function createRefreshToken(userId: string): Promise<string> {
@@ -238,18 +292,23 @@ async function createRefreshToken(userId: string): Promise<string> {
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS)
 
-  await prisma.refreshToken.create({
-    data: {
-      userId,
-      token,
-      expiresAt,
-    },
-  })
-
+  await prisma.refreshToken.create({ data: { userId, token, expiresAt } })
   return token
 }
 
-// This is called from routes to actually sign the JWT
-export function getAccessTokenPayload(userId: string, email: string, role: string) {
-  return { userId, email, role }
+function safeParseJson<T>(value: string | null | undefined): T | null {
+  if (!value) return null
+
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return null
+  }
+}
+
+function mapRoleUpgradeStatus(status: string): RoleUpgradeListItem['status'] {
+  if (status === 'APPROVED') return 'approved'
+  if (status === 'REJECTED') return 'rejected'
+  if (status === 'NEEDS_INFO') return 'needs-info'
+  return 'pending'
 }

@@ -3,7 +3,7 @@
 import { Bell, Search, Command, SlidersHorizontal, LogOut } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { adminNavItems } from '@/components/admin/adminNavigation'
-import { setActiveAccountType } from '@/lib/accountType'
+import { api, clearTokens } from '@/lib/api/client'
 
 function getTitle(pathname: string) {
   const exact = adminNavItems.find((item) => item.href === pathname)
@@ -31,8 +31,13 @@ export function AdminTopbar() {
   const router = useRouter()
   const title = getTitle(pathname)
 
-  const handleLogout = () => {
-    setActiveAccountType('player')
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // best-effort
+    }
+    clearTokens()
     router.push('/auth/sign-in')
   }
 

@@ -10,8 +10,8 @@ import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
-const roleOptions = ['Player', 'Coach', 'Facility', 'Admin'] as const
-const statusOptions = ['Active', 'Pending', 'Suspended', 'Archived'] as const
+const roleOptions = ['PLAYER', 'COACH', 'OPERATOR', 'ADMIN'] as const
+const statusOptions = ['ACTIVE', 'PENDING', 'SUSPENDED', 'ARCHIVED'] as const
 
 type ToastState = {
   tone: 'success' | 'error' | 'info'
@@ -45,8 +45,8 @@ export default function AdminUserEditPage() {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<typeof roleOptions[number]>('Player')
-  const [status, setStatus] = useState<typeof statusOptions[number]>('Pending')
+  const [role, setRole] = useState<typeof roleOptions[number]>('PLAYER')
+  const [status, setStatus] = useState<typeof statusOptions[number]>('PENDING')
   const [country, setCountry] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -75,8 +75,8 @@ export default function AdminUserEditPage() {
     if (user) {
       setName(user.name ?? '')
       setEmail(user.email ?? '')
-      setRole(user.role ?? 'Player')
-      setStatus(user.status ?? 'Pending')
+      setRole(user.role ?? 'PLAYER')
+      setStatus(user.status ?? 'PENDING')
       setCountry(user.country ?? '')
     }
   }, [user])

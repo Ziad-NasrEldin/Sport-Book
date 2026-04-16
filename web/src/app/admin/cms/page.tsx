@@ -7,13 +7,14 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 export default function AdminCmsPage() {
   const { data: cmsResponse, loading, error, refetch } = useApiCall('/admin-workspace/cms')
-  const saveMutation = useApiMutation('/admin-workspace/cms/:id', 'PUT')
+  const [saving, setSaving] = useState(false)
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -37,12 +38,15 @@ export default function AdminCmsPage() {
     try {
       const currentPage = cmsData.find((item: any) => item.page === selectedPage)
       if (currentPage) {
-        await saveMutation.mutate({ id: currentPage.id, content, status: 'PUBLISHED' })
+        setSaving(true)
+        await api.put(`/admin-workspace/cms/${currentPage.id}`, { content, status: 'PUBLISHED' })
         setStatus('PUBLISHED')
-        refetch()
+        await refetch()
       }
     } catch (err) {
       console.error('Failed to publish:', err)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -69,7 +73,7 @@ export default function AdminCmsPage() {
               <button
                 type="button"
                 onClick={handlePublish}
-                disabled={saveMutation.loading}
+                disabled={saving}
                 className="inline-flex items-center gap-1.5 rounded-full bg-primary-container px-3 py-1.5 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-surface-container-lowest disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />

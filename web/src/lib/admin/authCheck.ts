@@ -2,23 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getActiveAccountType, AccountType } from '@/lib/accountType'
+import { api } from '@/lib/api/client'
 
 export function useAdminAuth() {
   const router = useRouter()
-  const [isAdmin, setIsAdmin] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return getActiveAccountType() === 'admin'
-  })
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    const currentAccountType = getActiveAccountType()
-    const isUserAdmin = currentAccountType === 'admin'
-    setIsAdmin(isUserAdmin)
-
-    if (!isUserAdmin) {
-      router.push('/auth/sign-in')
-    }
+    api
+      .get<{ role: string }>('/users/me')
+      .then((user) => {
+        if ((user.role as string).toUpperCase() === 'ADMIN') {
+          setIsAdmin(true)
+        } else {
+          router.push('/auth/sign-in')
+        }
+      })
+      .catch(() => router.push('/auth/sign-in'))
   }, [router])
 
   return isAdmin

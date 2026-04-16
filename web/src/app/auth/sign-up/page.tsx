@@ -4,8 +4,9 @@ import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, UserRound, Mail, LockKeyhole } from 'lucide-react'
-import { api, setTokens } from '@/lib/api/client'
+import { api, setAccessToken } from '@/lib/api/client'
 import { APIError } from '@/lib/api/client'
+import { getPostLoginRoute } from '@/lib/auth/session'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 export default function SignUpPage() {
@@ -25,11 +26,10 @@ export default function SignUpPage() {
 
     try {
       const response = await api.post('/auth/register', { name, email, password })
-      const { accessToken, refreshToken, user } = response.data || response
+      const { accessToken, user } = response.data || response
 
-      setTokens(accessToken, refreshToken)
-
-      router.push('/')
+      setAccessToken(accessToken)
+      router.push(getPostLoginRoute(user.role))
     } catch (err) {
       const apiError = err as APIError
       setError(apiError.message || 'Failed to create account. Please try again.')

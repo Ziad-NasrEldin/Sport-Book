@@ -156,16 +156,9 @@ export default function AdminCreateSportPage() {
     try {
       await createMutation.mutate({
         name,
-        slug,
+        displayName: name,
         description,
-        minPlayers: Number(minPlayers),
-        maxPlayers: Number(maxPlayers),
-        sessionMinutes: Number(sessionMinutes),
-        categories,
-        requiresEquipmentCheck,
-        requiresReferee,
-        supportsMixedTeams,
-        status,
+        active: status === 'Enabled',
       })
       setBanner(`${status === 'Draft' ? 'Saved draft for' : 'Published'} ${name}.`)
       resetForm()

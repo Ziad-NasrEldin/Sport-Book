@@ -9,7 +9,8 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
@@ -28,7 +29,7 @@ export default function AdminCouponsPage() {
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('All')
 
   const { data: couponsResponse, loading, error, refetch } = useApiCall('/admin-workspace/coupons')
-  const toggleMutation = useApiMutation('/admin-workspace/coupons/:id', 'PATCH')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const couponsData = couponsResponse?.data || couponsResponse || []
 
@@ -53,10 +54,13 @@ export default function AdminCouponsPage() {
   const toggleCoupon = async (id: string, currentStatus: string) => {
     try {
       const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE'
-      await toggleMutation.mutate({ id, status: newStatus })
-      refetch()
+      setUpdatingId(id)
+      await api.patch(`/admin-workspace/coupons/${id}`, { status: newStatus })
+      await refetch()
     } catch (err) {
       console.error('Failed to toggle coupon:', err)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -148,7 +152,7 @@ export default function AdminCouponsPage() {
                   render: (coupon: any) => (
                     <button
                       type="button"
-                      disabled={toggleMutation.loading}
+                      disabled={updatingId === coupon.id}
                       onClick={() => toggleCoupon(coupon.id, coupon.status)}
                       className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary disabled:opacity-50"
                     >

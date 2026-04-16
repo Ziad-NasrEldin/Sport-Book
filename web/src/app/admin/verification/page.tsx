@@ -8,11 +8,10 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { SkeletonList } from '@/components/ui/SkeletonLoader'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
-
-type Decision = 'APPROVED' | 'REJECTED' | null
 
 const statusFilters = ['All', 'PENDING', 'APPROVED', 'REJECTED'] as const
 
@@ -33,9 +32,9 @@ export default function AdminVerificationPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>('All')
   const [feedback, setFeedback] = useState('')
+  const [submittingId, setSubmittingId] = useState<string | null>(null)
 
   const { data: roleUpgrades, loading, error, refetch } = useApiCall('/admin-workspace/role-upgrades')
-  const respondMutation = useApiMutation('/admin-workspace/role-upgrades/:id/respond', 'POST')
 
   const roleUpgradeRequests = roleUpgrades?.data || roleUpgrades || []
 
@@ -60,11 +59,14 @@ export default function AdminVerificationPage() {
 
   const handleDecision = async (item: any, decision: 'APPROVED' | 'REJECTED') => {
     try {
-      await respondMutation.mutate({ id: item.id, status: decision })
+      setSubmittingId(item.id)
+      await api.post(`/admin-workspace/role-upgrades/${item.id}/respond`, { status: decision })
       setFeedback(`Decision saved for ${item.userId}: ${decision}.`)
-      refetch()
+      await refetch()
     } catch (err) {
       setFeedback('Failed to save decision. Please try again.')
+    } finally {
+      setSubmittingId(null)
     }
   }
 
@@ -137,14 +139,14 @@ export default function AdminVerificationPage() {
 
                   <div className="mt-3 text-xs text-primary/60 space-y-1">
                     <p>Request ID: {item.id}</p>
-                    <p>Submitted: {new Date(item.createdAt).toLocaleString()}</p>
+                    <p>Submitted: {new Date(item.submittedAt).toLocaleString()}</p>
                   </div>
 
                   {item.status === 'PENDING' && (
                     <div className="mt-4 flex items-center justify-between gap-2">
                       <button
                         type="button"
-                        disabled={respondMutation.loading}
+                        disabled={submittingId === item.id}
                         className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-emerald-700 disabled:opacity-50"
                         onClick={() => handleDecision(item, 'APPROVED')}
                       >
@@ -153,7 +155,7 @@ export default function AdminVerificationPage() {
                       </button>
                       <button
                         type="button"
-                        disabled={respondMutation.loading}
+                        disabled={submittingId === item.id}
                         className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
                         onClick={() => handleDecision(item, 'REJECTED')}
                       >

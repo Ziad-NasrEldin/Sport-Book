@@ -20,8 +20,11 @@ model User {
   avatar    String?
   role      String   @default("PLAYER")
   status    String   @default("ACTIVE")
-  emailVerified Boolean  @default(false)
-  
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  passwordResetToken       String?
+  passwordResetTokenExpiry DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

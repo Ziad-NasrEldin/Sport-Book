@@ -4,46 +4,14 @@ import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, LockKeyhole, Mail, Eye } from 'lucide-react'
-import {
-  accountTypeOptions,
-  getActiveAccountType,
-  getPostLoginRouteForAccountType,
-  setActiveAccountType,
-} from '@/lib/accountType'
-import { api, setTokens } from '@/lib/api/client'
-import { APIError } from '@/lib/api/client'
+import { api, setAccessToken, APIError } from '@/lib/api/client'
+import { getPostLoginRoute } from '@/lib/auth/session'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
-const loginAccountTypeOptions = accountTypeOptions.filter((option) => option.value !== 'facility')
-type LoginAccountType = (typeof loginAccountTypeOptions)[number]['value']
-
-function getInitialLoginAccountType(): LoginAccountType {
-  const activeAccountType = getActiveAccountType()
-
-  if (activeAccountType === 'facility') {
-    setActiveAccountType('player')
-    return 'player'
-  }
-
-  return activeAccountType
-}
 
 export default function SignInPage() {
   const router = useRouter()
-  const [accountType, setAccountTypeState] = useState<LoginAccountType>(() => {
-    if (typeof window === 'undefined') return 'player'
-    return getInitialLoginAccountType()
-  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const selectedAccountLabel =
-    loginAccountTypeOptions.find((option) => option.value === accountType)?.label ?? 'Player'
-
-  const handleAccountTypeSelect = (nextType: LoginAccountType) => {
-    setAccountTypeState(nextType)
-    setActiveAccountType(nextType)
-  }
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -56,12 +24,10 @@ export default function SignInPage() {
 
     try {
       const response = await api.post('/auth/login', { email, password })
-      const { accessToken, refreshToken, user } = response.data || response
+      const { accessToken, user } = response.data || response
 
-      setTokens(accessToken, refreshToken)
-      setActiveAccountType(user.role.toLowerCase() as LoginAccountType)
-
-      router.push(getPostLoginRouteForAccountType(user.role.toLowerCase() as LoginAccountType))
+      setAccessToken(accessToken)
+      router.push(getPostLoginRoute(user.role))
     } catch (err) {
       const apiError = err as APIError
       setError(apiError.message || 'Failed to sign in. Please check your credentials.')
@@ -90,31 +56,6 @@ export default function SignInPage() {
         <div className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5">
           <h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight text-primary">Welcome Back</h1>
           <p className="mt-2 text-sm md:text-base text-primary/60">Sign in to continue booking courts and coaches.</p>
-
-          <div className="mt-6">
-            <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Account Type</p>
-            <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {loginAccountTypeOptions.map((option) => {
-                const isActive = accountType === option.value
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handleAccountTypeSelect(option.value)}
-                    className={`h-10 rounded-full text-xs font-bold transition-colors ${
-                      isActive
-                        ? 'bg-primary-container text-surface-container-lowest'
-                        : 'bg-surface-container-low text-primary/75 hover:text-primary'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                )
-              })}
-            </div>
-            <p className="mt-2 text-xs text-primary/55">Quick switch enabled for testing account experiences.</p>
-          </div>
 
           <form className="space-y-4 mt-6" onSubmit={handleSignIn}>
             <label className="block space-y-1.5">
@@ -170,18 +111,9 @@ export default function SignInPage() {
                   Signing in...
                 </>
               ) : (
-                `Sign In as ${selectedAccountLabel}`
+                'Sign In'
               )}
             </button>
-
-            {accountType === 'admin' ? (
-              <Link
-                href="/admin/dashboard"
-                className="w-full h-11 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold inline-flex items-center justify-center hover:opacity-90 transition-all"
-              >
-                Open Admin Dashboard
-              </Link>
-            ) : null}
           </form>
 
           <div className="my-6 flex items-center gap-3 text-primary/35">

@@ -43,6 +43,6 @@ export function getPostLoginRouteForAccountType(value: AccountType) {
   if (value === 'admin') return '/admin/dashboard'
   if (value === 'coach') return '/coach/dashboard'
   if (value === 'operator') return '/operator/dashboard'
-  if (value === 'facility') return '/dashboard/facility'
+  if (value === 'facility') return '/operator/dashboard'
   return '/'
 }

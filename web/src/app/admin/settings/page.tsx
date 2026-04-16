@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 
 export default function AdminSettingsPage() {
   const [commissionRate, setCommissionRate] = useState('18')
@@ -12,32 +14,84 @@ export default function AdminSettingsPage() {
   const [strictKyc, setStrictKyc] = useState(true)
   const [fraudMonitoring, setFraudMonitoring] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1800)
+  const { data: settingsResponse, loading, refetch } = useApiCall('/admin-workspace/settings')
+
+  useEffect(() => {
+    const settings = settingsResponse?.data || settingsResponse
+    if (!settings) return
+
+    if (settings.commissionRate !== undefined) {
+      setCommissionRate(String(settings.commissionRate))
+    }
+    if (settings.approvalMode) {
+      setApprovalMode(settings.approvalMode)
+    }
+    if (settings.refundWindow !== undefined) {
+      setRefundWindow(String(settings.refundWindow))
+    }
+    if (settings.strictKyc !== undefined) {
+      setStrictKyc(Boolean(settings.strictKyc))
+    }
+    if (settings.fraudMonitoring !== undefined) {
+      setFraudMonitoring(Boolean(settings.fraudMonitoring))
+    }
+  }, [settingsResponse])
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaved(false)
+    setSaveError('')
+
+    try {
+      await api.put('/admin-workspace/settings', {
+        commissionRate: Number(commissionRate),
+        approvalMode,
+        refundWindow: Number(refundWindow),
+        strictKyc,
+        fraudMonitoring,
+      })
+      setSaved(true)
+      await refetch()
+      setTimeout(() => setSaved(false), 1800)
+    } catch {
+      setSaveError('Failed to save settings. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Platform Settings"
-        subtitle="Control marketplace defaults, governance safeguards, and booking policy behavior used by all operator modules."
-        actions={
-          <button
-            type="button"
-            onClick={handleSave}
-            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
-          >
-            <Save className="w-4 h-4" />
-            Save Changes
-          </button>
-        }
-      />
+          subtitle="Control marketplace defaults, governance safeguards, and booking policy behavior used by all operator modules."
+          actions={
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          }
+        />
 
       {saved ? (
         <div className="rounded-[var(--radius-default)] bg-tertiary-fixed px-4 py-3 text-sm font-semibold text-primary">
           Settings updated successfully.
+        </div>
+      ) : saveError ? (
+        <div className="rounded-[var(--radius-default)] bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-700">
+          {saveError}
+        </div>
+      ) : loading ? (
+        <div className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3 text-sm font-semibold text-primary/70">
+          Loading settings from backend...
         </div>
       ) : null}
 

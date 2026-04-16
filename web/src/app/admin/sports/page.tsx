@@ -8,23 +8,27 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 export default function AdminSportsPage() {
   const { data: sportsResponse, loading, error, refetch } = useApiCall('/admin-workspace/sports')
-  const toggleMutation = useApiMutation('/admin-workspace/sports/:id', 'PATCH')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const sportsData = sportsResponse?.data || sportsResponse || []
 
   const toggleSport = async (id: string, currentStatus: string) => {
     try {
-      const newStatus = currentStatus === 'ENABLED' ? 'DISABLED' : 'ENABLED'
-      await toggleMutation.mutate({ id, status: newStatus })
-      refetch()
+      const active = currentStatus !== 'ACTIVE'
+      setUpdatingId(id)
+      await api.patch(`/admin-workspace/sports/${id}`, { active })
+      await refetch()
     } catch (err) {
       console.error('Failed to toggle sport:', err)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -82,7 +86,7 @@ export default function AdminSportsPage() {
                 render: (row: any) => (
                   <button
                     type="button"
-                    disabled={toggleMutation.loading}
+                    disabled={updatingId === row.id}
                     onClick={() => toggleSport(row.id, row.status)}
                     className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary disabled:opacity-50"
                   >

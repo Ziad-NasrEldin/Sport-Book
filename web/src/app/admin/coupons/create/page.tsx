@@ -6,9 +6,10 @@ import { ArrowLeft, Copy, FlaskConical, RefreshCcw, Save, Sparkles, TicketPercen
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
+import { api } from '@/lib/api/client'
 
 type DiscountKind = 'Percentage' | 'Fixed Amount'
-type MockCouponStatus = 'Draft' | 'Active'
+type MockCouponStatus = 'DRAFT' | 'ACTIVE'
 
 type MockCreatedCoupon = {
   id: string
@@ -40,6 +41,7 @@ export default function AdminCreateCouponPage() {
   const [simulationResult, setSimulationResult] = useState('')
   const [banner, setBanner] = useState('Use the controls below to draft or publish a coupon.')
   const [createdCoupons, setCreatedCoupons] = useState<MockCreatedCoupon[]>([])
+  const [savingStatus, setSavingStatus] = useState<MockCouponStatus | null>(null)
 
   const valueLabel = useMemo(() => {
     if (discountKind === 'Percentage') {
@@ -94,24 +96,53 @@ export default function AdminCreateCouponPage() {
     setBanner('Form reset. Fill details to create a new promotion.')
   }
 
-  const saveCoupon = (status: MockCouponStatus) => {
+  const saveCoupon = async (status: MockCouponStatus) => {
     if (validationMessage) {
       setBanner(validationMessage)
       return
     }
 
-    const nextId = `CP-MOCK-${String(createdCoupons.length + 1).padStart(2, '0')}`
-    const entry: MockCreatedCoupon = {
-      id: nextId,
-      code: couponCode,
-      campaign: campaignName,
-      status,
-      valueLabel,
-      createdAt: typeof window === 'undefined' ? '2026-04-16 09:14' : new Date().toLocaleString(),
-    }
+    setSavingStatus(status)
 
-    setCreatedCoupons((prev) => [entry, ...prev])
-    setBanner(`${status === 'Draft' ? 'Saved draft' : 'Published'} coupon ${couponCode} successfully.`)
+    try {
+      const response = await api.post('/admin-workspace/coupons', {
+        campaignName,
+        couponCode,
+        discountKind,
+        discountValue: Number(discountValue),
+        minimumSpend: Number(minimumSpend || '0'),
+        maxDiscountCap: Number(maxDiscountCap || '0'),
+        startDate,
+        endDate,
+        totalRedemptions: Number(totalRedemptions || '0'),
+        perUserLimit: Number(perUserLimit || '1'),
+        isStackable,
+        firstBookingOnly,
+        newUsersOnly,
+        selectedSports,
+        status,
+      })
+
+      const createdCoupon = response?.data || response
+      const entry: MockCreatedCoupon = {
+        id: createdCoupon?.id || `CP-${Date.now()}`,
+        code: createdCoupon?.code || couponCode,
+        campaign: createdCoupon?.campaignName || campaignName,
+        status: (createdCoupon?.status || status) as MockCouponStatus,
+        valueLabel:
+          createdCoupon?.type === 'PERCENTAGE' || discountKind === 'Percentage'
+            ? `${createdCoupon?.value ?? discountValue}%`
+            : `EGP ${createdCoupon?.value ?? discountValue}`,
+        createdAt: createdCoupon?.createdAt || new Date().toLocaleString(),
+      }
+
+      setCreatedCoupons((prev) => [entry, ...prev])
+      setBanner(`${status === 'DRAFT' ? 'Saved draft' : 'Published'} coupon ${couponCode} successfully.`)
+    } catch {
+      setBanner('Failed to save coupon. Please try again.')
+    } finally {
+      setSavingStatus(null)
+    }
   }
 
   const runSimulation = () => {
@@ -414,19 +445,21 @@ export default function AdminCreateCouponPage() {
             </button>
             <button
               type="button"
-              onClick={() => saveCoupon('Draft')}
+              onClick={() => saveCoupon('DRAFT')}
+              disabled={savingStatus !== null}
               className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary"
             >
               <Save className="w-4 h-4" />
-              Save Draft
+              {savingStatus === 'DRAFT' ? 'Saving Draft...' : 'Save Draft'}
             </button>
             <button
               type="button"
-              onClick={() => saveCoupon('Active')}
+              onClick={() => saveCoupon('ACTIVE')}
+              disabled={savingStatus !== null}
               className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
             >
               <Upload className="w-4 h-4" />
-              Publish Coupon
+              {savingStatus === 'ACTIVE' ? 'Publishing...' : 'Publish Coupon'}
             </button>
           </>
         }
@@ -458,7 +491,7 @@ export default function AdminCreateCouponPage() {
                     <p className="text-[11px] text-primary/55 mt-1">{coupon.createdAt}</p>
                   </div>
                 </div>
-                <AdminStatusPill label={coupon.status} tone={coupon.status === 'Active' ? 'green' : 'amber'} />
+                <AdminStatusPill label={coupon.status} tone={coupon.status === 'ACTIVE' ? 'green' : 'amber'} />
               </article>
             ))
           )}

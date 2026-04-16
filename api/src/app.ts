@@ -7,7 +7,7 @@ import { registerRateLimit } from '@plugins/rateLimit'
 import { registerErrorHandler } from '@plugins/errorHandler'
 import { registerAudit } from '@plugins/audit'
 import { authRoutes } from '@modules/auth/routes'
-import { userRoutes } from '@modules/users/routes'
+import { userRoutes, playerRoutes } from '@modules/users/routes'
 import { sportRoutes } from '@modules/sports/routes'
 import { facilityRoutes } from '@modules/facilities/routes'
 import { courtRoutes } from '@modules/courts/routes'
@@ -20,7 +20,6 @@ import { storeRoutes } from '@modules/store/routes'
 import { coachWorkspaceRoutes } from '@modules/coach-workspace/routes'
 import { operatorWorkspaceRoutes } from '@modules/operator-workspace/routes'
 import { adminWorkspaceRoutes } from '@modules/admin-workspace/routes'
-import { playerRoutes } from '@modules/player/routes'
 
 export async function createApp() {
   const app = fastify({
@@ -56,7 +55,6 @@ export async function createApp() {
   await app.register(coachWorkspaceRoutes, { prefix: '/api/v1/coach-workspace' })
   await app.register(operatorWorkspaceRoutes, { prefix: '/api/v1/operator-workspace' })
   await app.register(adminWorkspaceRoutes, { prefix: '/api/v1/admin-workspace' })
-  await app.register(adminWorkspaceRoutes, { prefix: '/api/v1/admin' })
   await app.register(playerRoutes, { prefix: '/api/v1/player' })
 
   return app

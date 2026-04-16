@@ -4,6 +4,7 @@ import {
   listUsers,
   getUser,
   updateUser,
+  updateBookingStatus,
   listRoleUpgrades,
   respondToRoleUpgrade,
   getDashboardStats,
@@ -13,13 +14,37 @@ import {
   listBookings,
   listFinance,
   listSports,
+  createSport,
+  updateSport,
+  getVerificationCase,
+  updateVerificationCase,
+  listCoupons,
+  createCoupon,
+  updateCoupon,
+  listReviews,
+  updateReviewStatus,
+  listCmsPages,
+  updateCmsPage,
+  listReports,
+  createReportJob,
+  getLocalizationConfig,
+  updateLocalizationDefault,
+  getPlatformSettings,
+  updatePlatformSettings,
+  listStoreProducts,
+  listStoreOrders,
 } from './service'
 import {
-  listUsersSchema,
   updateUserSchema,
+  updateBookingStatusSchema,
+  createSportSchema,
+  updateSportSchema,
+  updateVerificationCaseSchema,
+  createCouponSchema,
+  createReportJobSchema,
+  updateLocalizationDefaultSchema,
+  updatePlatformSettingsSchema,
   respondToRoleUpgradeSchema,
-  listRoleUpgradesSchema,
-  listAuditLogsSchema,
 } from './schema'
 import { success } from '@common/response'
 
@@ -69,6 +94,14 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
 
   // PATCH /admin-workspace/users/:id - Update user
   app.patch('/users/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateUserSchema.parse(request.body)
+    const user = await updateUser(id, data)
+    return success(user)
+  })
+
+  // PUT /admin-workspace/users/:id - Update user
+  app.put('/users/:id', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const data = updateUserSchema.parse(request.body)
     const user = await updateUser(id, data)
@@ -136,6 +169,14 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
     return success(result)
   })
 
+  // PATCH /admin-workspace/bookings/:id/status - update booking status
+  app.patch('/bookings/:id/status', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateBookingStatusSchema.parse(request.body)
+    const result = await updateBookingStatus(id, data)
+    return success(result)
+  })
+
   // GET /admin-workspace/finance - List financial transactions
   app.get('/finance', async (request: FastifyRequest) => {
     const page = z.coerce.number().default(1).parse((request.query as { page?: string }).page)
@@ -155,61 +196,47 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
     return success(result)
   })
 
+  // POST /admin-workspace/sports - create sport
+  app.post('/sports', async (request: FastifyRequest) => {
+    const data = createSportSchema.parse(request.body)
+    const result = await createSport(data)
+    return success(result)
+  })
+
+  // PATCH /admin-workspace/sports/:id - update sport
+  app.patch('/sports/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateSportSchema.parse(request.body)
+    const result = await updateSport(id, data)
+    return success(result)
+  })
+
   // GET /admin-workspace/verification/:id - Get verification case details
   app.get('/verification/:id', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
-    // Mock response for verification case
-    const verificationCase = {
-      id,
-      entity: 'User',
-      type: 'Identity Verification',
-      submittedAt: new Date().toISOString(),
-      riskLevel: 'Low',
-      status: 'Pending Review',
-      region: 'Egypt',
-      assignee: 'Compliance Team',
-      checklist: [
-        { id: 'doc-id', label: 'National ID / Passport validation', verified: true },
-        { id: 'doc-face', label: 'Face match and selfie confidence', verified: false },
-        { id: 'doc-license', label: 'Business or coaching license authenticity', verified: true },
-        { id: 'doc-bank', label: 'Bank account ownership proof', verified: false },
-      ],
-      timeline: [
-        { id: 'seed-1', message: 'Case created and queued for review.', at: new Date().toISOString() },
-        { id: 'seed-2', message: 'Automated risk scoring completed.', at: new Date().toISOString() },
-      ],
-    }
+    const verificationCase = await getVerificationCase(id)
     return success(verificationCase)
+  })
+
+  // PUT /admin-workspace/verification/:id - Update verification case details
+  app.put('/verification/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateVerificationCaseSchema.parse(request.body)
+    const result = await updateVerificationCase(id, data, request.user!.userId)
+    return success(result)
   })
 
   // PUT /admin-workspace/verification/:id/status - Update verification case status
   app.put('/verification/:id/status', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
-    const { status } = request.body as { status: string }
-    // Mock response
-    return success({ id, status })
+    const data = updateVerificationCaseSchema.pick({ status: true }).parse(request.body)
+    const result = await updateVerificationCase(id, data, request.user!.userId)
+    return success(result)
   })
 
   // GET /admin-workspace/cms - List CMS pages
   app.get('/cms', async () => {
-    const cmsData = [
-      {
-        id: '1',
-        page: 'Terms of Service',
-        content: 'Terms of Service content...',
-        status: 'PUBLISHED',
-        language: 'en',
-        version: '1.0',
-      },
-      {
-        id: '2',
-        page: 'Privacy Policy',
-        content: 'Privacy Policy content...',
-        status: 'PUBLISHED',
-        language: 'en',
-        version: '1.0',
-      },
-    ]
+    const cmsData = await listCmsPages()
     return success(cmsData)
   })
 
@@ -217,48 +244,34 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
   app.put('/cms/:id', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const { content, status } = request.body as { content: string; status: string }
-    // Mock response
-    return success({ id, content, status })
+    const result = await updateCmsPage(id, { content, status })
+    return success(result)
   })
 
   // GET /admin-workspace/coupons - List coupons
   app.get('/coupons', async () => {
-    const coupons = [
-      {
-        id: '1',
-        code: 'WELCOME20',
-        type: 'PERCENTAGE',
-        value: 20,
-        status: 'ACTIVE',
-        usesCount: 45,
-        maxUses: 100,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ]
+    const coupons = await listCoupons()
     return success(coupons)
+  })
+
+  // POST /admin-workspace/coupons - Create coupon
+  app.post('/coupons', async (request: FastifyRequest) => {
+    const data = createCouponSchema.parse(request.body)
+    const result = await createCoupon(data)
+    return success(result)
   })
 
   // PATCH /admin-workspace/coupons/:id - Update coupon
   app.patch('/coupons/:id', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const { status } = request.body as { status: string }
-    // Mock response
-    return success({ id, status })
+    const result = await updateCoupon(id, status)
+    return success(result)
   })
 
   // GET /admin-workspace/reviews - List reviews
   app.get('/reviews', async () => {
-    const reviews = [
-      {
-        id: '1',
-        userId: 'user-1',
-        user: { name: 'John Doe', email: 'john@example.com' },
-        rating: 5,
-        comment: 'Great service!',
-        status: 'APPROVED',
-        createdAt: new Date().toISOString(),
-      },
-    ]
+    const reviews = await listReviews()
     return success(reviews)
   })
 
@@ -266,81 +279,71 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
   app.patch('/reviews/:id/status', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const { status } = request.body as { status: string }
-    // Mock response
-    return success({ id, status })
+    const result = await updateReviewStatus(id, status)
+    return success(result)
   })
 
   // GET /admin-workspace/reports - List reports
   app.get('/reports', async () => {
-    const reports = [
-      {
-        id: '1',
-        name: 'Monthly Revenue',
-        owner: 'Admin',
-        frequency: 'Monthly',
-        format: 'PDF',
-        status: 'ACTIVE',
-        lastRun: new Date().toISOString(),
-      },
-    ]
+    const reports = await listReports()
     return success(reports)
   })
 
-  // GET /admin-workspace/localization - List localizations
+  // POST /admin-workspace/reports - trigger report action
+  app.post('/reports', async (request: FastifyRequest) => {
+    const data = createReportJobSchema.parse(request.body)
+    const result = await createReportJob(data)
+    return success(result)
+  })
+
+  // GET /admin-workspace/localization - localization config
   app.get('/localization', async () => {
-    const localizations = [
-      {
-        id: '1',
-        locale: 'en-EG',
-        language: 'English (Egypt)',
-        currency: 'EGP',
-        timezone: 'Africa/Cairo',
-        rtl: false,
-      },
-      {
-        id: '2',
-        locale: 'ar-EG',
-        language: 'Arabic (Egypt)',
-        currency: 'EGP',
-        timezone: 'Africa/Cairo',
-        rtl: true,
-      },
-    ]
-    return success(localizations)
+    const config = await getLocalizationConfig()
+    return success(config)
+  })
+
+  // PUT /admin-workspace/localization - update default locale
+  app.put('/localization', async (request: FastifyRequest) => {
+    const data = updateLocalizationDefaultSchema.parse(request.body)
+    const result = await updateLocalizationDefault(data)
+    return success(result)
+  })
+
+  // GET /admin-workspace/localization/default - localization config
+  app.get('/localization/default', async () => {
+    const config = await getLocalizationConfig()
+    return success(config)
+  })
+
+  // PUT /admin-workspace/localization/default - update default locale
+  app.put('/localization/default', async (request: FastifyRequest) => {
+    const data = updateLocalizationDefaultSchema.parse(request.body)
+    const result = await updateLocalizationDefault(data)
+    return success(result)
+  })
+
+  // GET /admin-workspace/settings - platform settings
+  app.get('/settings', async () => {
+    const settings = await getPlatformSettings()
+    return success(settings)
+  })
+
+  // PUT /admin-workspace/settings - update platform settings
+  app.put('/settings', async (request: FastifyRequest) => {
+    const data = updatePlatformSettingsSchema.parse(request.body)
+    const result = await updatePlatformSettings(data)
+    return success(result)
   })
 
   // GET /admin-workspace/store/products - List store products
   app.get('/store/products', async () => {
-    const products = [
-      {
-        id: '1',
-        title: 'Tennis Racket Pro',
-        category: 'Equipment',
-        price: 2500,
-        quantity: 15,
-        status: 'IN_STOCK',
-        facility: { name: 'City Sports Club' },
-        createdAt: new Date().toISOString(),
-      },
-    ]
+    const products = await listStoreProducts()
     return success(products)
   })
 
   // GET /admin-workspace/store/orders - List store orders
   app.get('/store/orders', async () => {
-    const orders = [
-      {
-        id: '1',
-        productId: '1',
-        product: { title: 'Tennis Racket Pro' },
-        quantity: 2,
-        total: 5000,
-        status: 'DELIVERED',
-        fulfillment: 'PICKUP',
-        user: { name: 'Jane Smith', email: 'jane@example.com' },
-        createdAt: new Date().toISOString(),
-      },
-    ]
+    const orders = await listStoreOrders()
     return success(orders)
   })
 }

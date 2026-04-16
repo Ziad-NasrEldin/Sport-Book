@@ -7,7 +7,8 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { SkeletonList } from '@/components/ui/SkeletonLoader'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
@@ -18,7 +19,7 @@ export default function AdminReviewsPage() {
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('All')
 
   const { data: reviewsResponse, loading, error, refetch } = useApiCall('/admin-workspace/reviews')
-  const updateMutation = useApiMutation('/admin-workspace/reviews/:id/status', 'PATCH')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const reviewsData = reviewsResponse?.data || reviewsResponse || []
 
@@ -49,10 +50,13 @@ export default function AdminReviewsPage() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await updateMutation.mutate({ id, status })
-      refetch()
+      setUpdatingId(id)
+      await api.patch(`/admin-workspace/reviews/${id}/status`, { status })
+      await refetch()
     } catch (err) {
       console.error('Failed to update review status:', err)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -116,7 +120,7 @@ export default function AdminReviewsPage() {
                   <div className="mt-4 flex items-center gap-2">
                     <button
                       type="button"
-                      disabled={updateMutation.loading}
+                      disabled={updatingId === review.id}
                       onClick={() => updateStatus(review.id, 'APPROVED')}
                       className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-emerald-700 disabled:opacity-50"
                     >
@@ -125,7 +129,7 @@ export default function AdminReviewsPage() {
                     </button>
                     <button
                       type="button"
-                      disabled={updateMutation.loading}
+                      disabled={updatingId === review.id}
                       onClick={() => updateStatus(review.id, 'REJECTED')}
                       className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
                     >

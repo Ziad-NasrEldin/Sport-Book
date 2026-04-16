@@ -146,7 +146,7 @@ export default function OperatorBranchDetailsPage() {
       <AdminPanel eyebrow="Court inventory" title="Branch Courts">
         <AdminTable
           items={branchCourts}
-          getRowKey={(court) => court.id}
+          getRowKey={(court: any) => court.id}
           columns={[
             {
               key: 'court',

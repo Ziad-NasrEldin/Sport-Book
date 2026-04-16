@@ -8,7 +8,8 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
@@ -29,7 +30,7 @@ export default function AdminBookingsPage() {
   const [selectedStatus, setSelectedStatus] = useState<BookingStatus>('All')
 
   const { data: bookingsResponse, loading, error, refetch } = useApiCall('/admin-workspace/bookings')
-  const updateMutation = useApiMutation('/admin-workspace/bookings/:id/status', 'PATCH')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const bookingsData = bookingsResponse?.data || bookingsResponse || []
 
@@ -60,10 +61,13 @@ export default function AdminBookingsPage() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await updateMutation.mutate({ id, status })
-      refetch()
+      setUpdatingId(id)
+      await api.patch(`/admin-workspace/bookings/${id}/status`, { status })
+      await refetch()
     } catch (err) {
       console.error('Failed to update booking status:', err)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -147,7 +151,7 @@ export default function AdminBookingsPage() {
                   render: (booking: any) => (
                     <button
                       type="button"
-                      disabled={updateMutation.loading}
+                      disabled={updatingId === booking.id}
                       onClick={() => {
                         const nextStatus = booking.status === 'PENDING' ? 'CONFIRMED' : booking.status === 'CONFIRMED' ? 'COMPLETED' : booking.status
                         updateStatus(booking.id, nextStatus)

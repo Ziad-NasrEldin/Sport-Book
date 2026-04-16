@@ -3,13 +3,31 @@
 import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Send } from 'lucide-react'
-import {
-  addRoleUpgradeRequest,
-  getRoleUpgradeRequests,
-  ROLE_UPGRADE_REQUESTS_UPDATED_EVENT,
-  RequestedRole,
-  RoleUpgradeRequest,
-} from '@/lib/roleUpgradeRequests'
+import { api, APIError } from '@/lib/api/client'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useSession } from '@/lib/auth/session'
+
+type RequestedRole = 'coach' | 'facility'
+type RoleUpgradeRequestStatus = 'pending' | 'approved' | 'rejected' | 'needs-info'
+
+type RoleUpgradeRequest = {
+  id: string
+  requestedRole: RequestedRole
+  fullName: string
+  email: string
+  phone: string
+  city: string
+  specialization?: string
+  experienceYears?: number
+  certifications?: string
+  facilityName?: string
+  registrationNumber?: string
+  facilityAddress?: string
+  requestMessage: string
+  status: RoleUpgradeRequestStatus
+  submittedAt: string
+  reviewedAt?: string
+}
 
 type RequestFormState = {
   fullName: string
@@ -39,26 +57,74 @@ const initialFormState: RequestFormState = {
   requestMessage: '',
 }
 
+function formatStatusLabel(status: RoleUpgradeRequestStatus) {
+  if (status === 'approved') return 'Approved'
+  if (status === 'rejected') return 'Rejected'
+  if (status === 'needs-info') return 'Needs Info'
+  return 'Pending Review'
+}
+
+function getStatusClasses(status: RoleUpgradeRequestStatus) {
+  if (status === 'approved') return 'bg-emerald-500/20 text-emerald-700'
+  if (status === 'rejected') return 'bg-red-500/15 text-red-700'
+  if (status === 'needs-info') return 'bg-amber-500/20 text-amber-800'
+  return 'bg-primary/10 text-primary'
+}
+
 export default function SendRequestPage() {
+  const { user, loading: sessionLoading } = useSession()
   const [requestedRole, setRequestedRole] = useState<RequestedRole>('coach')
   const [formState, setFormState] = useState<RequestFormState>(initialFormState)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [submittedRequests, setSubmittedRequests] = useState<RoleUpgradeRequest[]>([])
+  const [loadingRequests, setLoadingRequests] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const syncRequests = () => {
-      setSubmittedRequests(getRoleUpgradeRequests())
+    if (sessionLoading) return
+
+    if (!user) {
+      setLoadingRequests(false)
+      return
     }
 
-    syncRequests()
-    window.addEventListener(ROLE_UPGRADE_REQUESTS_UPDATED_EVENT, syncRequests)
-    window.addEventListener('storage', syncRequests)
+    let cancelled = false
+
+    async function loadRequests() {
+      try {
+        const requests = await api.get<RoleUpgradeRequest[]>('/auth/send-request')
+        if (!cancelled) {
+          setSubmittedRequests(requests)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const apiError = err as APIError
+          setError(apiError.message || 'Failed to load your submitted requests.')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingRequests(false)
+        }
+      }
+    }
+
+    void loadRequests()
 
     return () => {
-      window.removeEventListener(ROLE_UPGRADE_REQUESTS_UPDATED_EVENT, syncRequests)
-      window.removeEventListener('storage', syncRequests)
+      cancelled = true
     }
-  }, [])
+  }, [sessionLoading, user])
+
+  useEffect(() => {
+    if (!user) return
+
+    setFormState((prev) => ({
+      ...prev,
+      fullName: prev.fullName || user.name,
+      email: prev.email || user.email,
+    }))
+  }, [user])
 
   const updateField = (field: keyof RequestFormState, value: string) => {
     setFormState((prev) => ({
@@ -67,45 +133,62 @@ export default function SendRequestPage() {
     }))
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    addRoleUpgradeRequest({
-      requestedRole,
-      fullName: formState.fullName.trim(),
-      email: formState.email.trim(),
-      phone: formState.phone.trim(),
-      city: formState.city.trim(),
-      specialization: requestedRole === 'coach' ? formState.specialization.trim() : undefined,
-      experienceYears:
-        requestedRole === 'coach' && formState.experienceYears
-          ? Number(formState.experienceYears)
-          : undefined,
-      certifications: requestedRole === 'coach' ? formState.certifications.trim() : undefined,
-      facilityName: requestedRole === 'facility' ? formState.facilityName.trim() : undefined,
-      registrationNumber:
-        requestedRole === 'facility' ? formState.registrationNumber.trim() : undefined,
-      facilityAddress:
-        requestedRole === 'facility' ? formState.facilityAddress.trim() : undefined,
-      requestMessage: formState.requestMessage.trim(),
-    })
+    if (!user) {
+      setError('You need to sign in before submitting a role upgrade request.')
+      return
+    }
 
-    setIsSubmitted(true)
-    setFormState(initialFormState)
-  }
+    setSubmitting(true)
+    setError(null)
 
-  const formatStatusLabel = (status: RoleUpgradeRequest['status']) => {
-    if (status === 'approved') return 'Approved'
-    if (status === 'rejected') return 'Rejected'
-    if (status === 'needs-info') return 'Needs Info'
-    return 'Pending Review'
-  }
+    const payload =
+      requestedRole === 'coach'
+        ? {
+            requestedRole: 'COACH',
+            fullName: formState.fullName.trim(),
+            email: formState.email.trim(),
+            phone: formState.phone.trim(),
+            city: formState.city.trim(),
+            specialization: formState.specialization.trim(),
+            experienceYears: formState.experienceYears ? Number(formState.experienceYears) : undefined,
+            certifications: formState.certifications.trim() || undefined,
+            requestMessage: formState.requestMessage.trim(),
+            bio: formState.requestMessage.trim(),
+          }
+        : {
+            requestedRole: 'FACILITY',
+            fullName: formState.fullName.trim(),
+            email: formState.email.trim(),
+            phone: formState.phone.trim(),
+            city: formState.city.trim(),
+            facilityName: formState.facilityName.trim(),
+            registrationNumber: formState.registrationNumber.trim(),
+            facilityAddress: formState.facilityAddress.trim(),
+            requestMessage: formState.requestMessage.trim(),
+            businessName: formState.facilityName.trim(),
+            businessAddress: formState.facilityAddress.trim(),
+            licenseNumber: formState.registrationNumber.trim(),
+          }
 
-  const getStatusClasses = (status: RoleUpgradeRequest['status']) => {
-    if (status === 'approved') return 'bg-emerald-500/20 text-emerald-700'
-    if (status === 'rejected') return 'bg-red-500/15 text-red-700'
-    if (status === 'needs-info') return 'bg-amber-500/20 text-amber-800'
-    return 'bg-primary/10 text-primary'
+    try {
+      await api.post('/auth/send-request', payload)
+      const requests = await api.get<RoleUpgradeRequest[]>('/auth/send-request')
+      setSubmittedRequests(requests)
+      setIsSubmitted(true)
+      setFormState((prev) => ({
+        ...initialFormState,
+        fullName: prev.fullName,
+        email: prev.email,
+      }))
+    } catch (err) {
+      const apiError = err as APIError
+      setError(apiError.message || 'Failed to submit your request. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -131,16 +214,25 @@ export default function SendRequestPage() {
             Request access as a coach or facility partner. Our team will review your submission.
           </p>
 
-          {isSubmitted ? (
-            <div className="mt-5 rounded-[var(--radius-default)] border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm text-emerald-800 flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-              <p>
-                Request submitted successfully. We will review your details and contact you soon.
-              </p>
+          {!sessionLoading && !user ? (
+            <div className="mt-5 rounded-[var(--radius-default)] border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-900">
+              Sign in to submit and track a role-upgrade request.
             </div>
           ) : null}
 
-          {submittedRequests.length > 0 ? (
+          {isSubmitted ? (
+            <div className="mt-5 rounded-[var(--radius-default)] border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm text-emerald-800 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+              <p>Request submitted successfully. We will review your details and contact you soon.</p>
+            </div>
+          ) : null}
+
+          {loadingRequests ? (
+            <div className="mt-5 inline-flex items-center gap-2 text-sm text-primary/60">
+              <LoadingSpinner size="sm" />
+              Loading your submitted requests...
+            </div>
+          ) : submittedRequests.length > 0 ? (
             <div className="mt-5 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low p-4">
               <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">
                 Your Submitted Requests
@@ -174,6 +266,7 @@ export default function SendRequestPage() {
                 value={requestedRole}
                 onChange={(event) => setRequestedRole(event.target.value as RequestedRole)}
                 className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                disabled={!user || sessionLoading || submitting}
               >
                 <option value="coach">Coach</option>
                 <option value="facility">Facility</option>
@@ -189,7 +282,8 @@ export default function SendRequestPage() {
                   value={formState.fullName}
                   onChange={(event) => updateField('fullName', event.target.value)}
                   placeholder="Your full name"
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                  disabled={!user || sessionLoading || submitting}
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
 
@@ -201,7 +295,8 @@ export default function SendRequestPage() {
                   value={formState.email}
                   onChange={(event) => updateField('email', event.target.value)}
                   placeholder="name@example.com"
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                  disabled={!user || sessionLoading || submitting}
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
 
@@ -213,7 +308,8 @@ export default function SendRequestPage() {
                   value={formState.phone}
                   onChange={(event) => updateField('phone', event.target.value)}
                   placeholder="+20 10 0000 0000"
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                  disabled={!user || sessionLoading || submitting}
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
 
@@ -225,7 +321,8 @@ export default function SendRequestPage() {
                   value={formState.city}
                   onChange={(event) => updateField('city', event.target.value)}
                   placeholder="Cairo"
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                  disabled={!user || sessionLoading || submitting}
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
             </div>
@@ -240,7 +337,8 @@ export default function SendRequestPage() {
                     value={formState.specialization}
                     onChange={(event) => updateField('specialization', event.target.value)}
                     placeholder="Padel, Tennis, Squash"
-                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    disabled={!user || sessionLoading || submitting}
+                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
 
@@ -253,7 +351,8 @@ export default function SendRequestPage() {
                     value={formState.experienceYears}
                     onChange={(event) => updateField('experienceYears', event.target.value)}
                     placeholder="4"
-                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    disabled={!user || sessionLoading || submitting}
+                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
 
@@ -264,7 +363,8 @@ export default function SendRequestPage() {
                     value={formState.certifications}
                     onChange={(event) => updateField('certifications', event.target.value)}
                     placeholder="PTR, ITF level, national federation certificate"
-                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    disabled={!user || sessionLoading || submitting}
+                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
               </div>
@@ -278,7 +378,8 @@ export default function SendRequestPage() {
                     value={formState.facilityName}
                     onChange={(event) => updateField('facilityName', event.target.value)}
                     placeholder="Your venue or business name"
-                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    disabled={!user || sessionLoading || submitting}
+                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
 
@@ -290,7 +391,8 @@ export default function SendRequestPage() {
                     value={formState.registrationNumber}
                     onChange={(event) => updateField('registrationNumber', event.target.value)}
                     placeholder="Business registration ID"
-                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    disabled={!user || sessionLoading || submitting}
+                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
 
@@ -302,7 +404,8 @@ export default function SendRequestPage() {
                     value={formState.facilityAddress}
                     onChange={(event) => updateField('facilityAddress', event.target.value)}
                     placeholder="Street, district, city"
-                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    disabled={!user || sessionLoading || submitting}
+                    className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
               </div>
@@ -316,16 +419,33 @@ export default function SendRequestPage() {
                 onChange={(event) => updateField('requestMessage', event.target.value)}
                 rows={4}
                 placeholder="Share your background and why you want to join SportBook."
-                className="w-full px-3 py-2 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container resize-y"
+                disabled={!user || sessionLoading || submitting}
+                className="w-full px-3 py-2 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container resize-y disabled:opacity-60"
               />
             </label>
 
+            {error ? (
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+                {error}
+              </div>
+            ) : null}
+
             <button
               type="submit"
-              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all inline-flex items-center justify-center gap-2"
+              disabled={!user || sessionLoading || submitting}
+              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" />
-              Submit Request
+              {submitting ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Submit Request
+                </>
+              )}
             </button>
           </form>
 

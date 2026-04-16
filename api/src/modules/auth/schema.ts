@@ -30,12 +30,24 @@ export const verifyEmailSchema = z.object({
 })
 
 export const roleUpgradeRequestSchema = z.object({
-  requestedRole: z.enum(['COACH', 'OPERATOR']),
+  requestedRole: z.enum(['COACH', 'OPERATOR', 'FACILITY']).transform((value) =>
+    value === 'FACILITY' ? 'OPERATOR' : value
+  ),
+  fullName: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(3).optional(),
+  city: z.string().min(2).optional(),
+  specialization: z.string().min(2).optional(),
+  certifications: z.string().optional(),
+  requestMessage: z.string().min(10).optional(),
   // For coaches
   sportId: z.string().optional(),
   experienceYears: z.number().min(0).optional(),
   bio: z.string().optional(),
   // For operators
+  facilityName: z.string().optional(),
+  registrationNumber: z.string().optional(),
+  facilityAddress: z.string().optional(),
   businessName: z.string().optional(),
   businessAddress: z.string().optional(),
   licenseNumber: z.string().optional(),

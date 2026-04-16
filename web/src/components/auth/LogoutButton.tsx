@@ -2,7 +2,7 @@
 
 import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { setActiveAccountType } from '@/lib/accountType'
+import { api, clearTokens } from '@/lib/api/client'
 
 type LogoutButtonProps = {
   className?: string
@@ -12,8 +12,13 @@ type LogoutButtonProps = {
 export function LogoutButton({ className, label = 'Log Out' }: LogoutButtonProps) {
   const router = useRouter()
 
-  const handleLogout = () => {
-    setActiveAccountType('player')
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // best-effort
+    }
+    clearTokens()
     router.push('/auth/sign-in')
   }
 

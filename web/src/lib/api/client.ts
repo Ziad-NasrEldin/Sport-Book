@@ -11,11 +11,7 @@ export { APIError, AuthenticationError, NetworkError, NotFoundError, ServerError
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
 
-const TOKEN_STORAGE_KEY = {
-  ACCESS: 'sportbook-access-token',
-  REFRESH: 'sportbook-refresh-token',
-}
-
+const ACCESS_TOKEN_KEY = 'sportbook-access-token'
 const CSRF_TOKEN_KEY = 'sportbook-csrf-token'
 
 function getCSRFToken(): string | null {
@@ -30,38 +26,24 @@ function setCSRFToken(token: string): void {
 
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem(TOKEN_STORAGE_KEY.ACCESS)
+  return localStorage.getItem(ACCESS_TOKEN_KEY)
 }
 
-function getRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(TOKEN_STORAGE_KEY.REFRESH)
-}
-
-function setTokens(accessToken: string, refreshToken: string): void {
+function setAccessToken(accessToken: string): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(TOKEN_STORAGE_KEY.ACCESS, accessToken)
-  localStorage.setItem(TOKEN_STORAGE_KEY.REFRESH, refreshToken)
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
 }
 
 function clearTokens(): void {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(TOKEN_STORAGE_KEY.ACCESS)
-  localStorage.removeItem(TOKEN_STORAGE_KEY.REFRESH)
+  localStorage.removeItem(ACCESS_TOKEN_KEY)
 }
 
 async function refreshAccessToken(): Promise<string> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) {
-    throw new AuthenticationError('No refresh token available')
-  }
-
+  // Refresh token is in an HttpOnly cookie — no body needed
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ refreshToken }),
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -70,9 +52,9 @@ async function refreshAccessToken(): Promise<string> {
   }
 
   const data = await response.json()
-  const { accessToken, refreshToken: newRefreshToken } = data.data || data
+  const { accessToken } = data.data || data
 
-  setTokens(accessToken, newRefreshToken || refreshToken)
+  setAccessToken(accessToken)
   return accessToken
 }
 
@@ -84,11 +66,9 @@ async function handleResponse(response: Response): Promise<any> {
     if (response.status === 401) {
       try {
         await refreshAccessToken()
-        // Retry the original request with new token
-        return null // Signal to retry
+        return null // Signal to retry with new access token
       } catch {
         clearTokens()
-        // Redirect to sign-in page
         if (typeof window !== 'undefined') {
           window.location.href = '/auth/sign-in'
         }
@@ -127,7 +107,7 @@ async function fetchWithRetry(
   delay: number = 1000,
 ): Promise<Response> {
   try {
-    const response = await fetch(url, options)
+    const response = await fetch(url, { ...options, credentials: 'include' })
     return response
   } catch {
     if (retries <= 0) {
@@ -163,7 +143,7 @@ export async function apiRequest<T = any>(
   let response = await fetchWithRetry(url, { ...options, headers })
   let data = await handleResponse(response)
 
-  // If data is null, it means we need to retry with new token
+  // null signals the access token was refreshed — retry with the new one
   if (data === null) {
     const newAccessToken = getAccessToken()
     if (newAccessToken) {
@@ -187,4 +167,4 @@ export const api = {
     apiRequest<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
 }
 
-export { getAccessToken, getRefreshToken, setTokens, clearTokens, getCSRFToken, setCSRFToken }
+export { getAccessToken, setAccessToken, clearTokens, getCSRFToken, setCSRFToken }

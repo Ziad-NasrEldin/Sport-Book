@@ -134,3 +134,36 @@ export async function userRoutes(app: FastifyInstance) {
     return success({ message: 'Notifications marked as read' })
   })
 }
+
+// Player-context routes (migrated from the removed player module).
+// These stubs keep the web frontend working until Phase C replaces them
+// with real implementations pointing at the correct domain modules.
+export async function playerRoutes(app: FastifyInstance) {
+  app.addHook('preHandler', async (request: FastifyRequest, reply) => {
+    try {
+      await request.jwtVerify()
+    } catch {
+      return reply.status(401).send({ error: 'Unauthorized - Please log in', code: 'UNAUTHORIZED' })
+    }
+  })
+
+  app.get('/profile', async (request: FastifyRequest) => {
+    const user = await getMe(request.user!.userId)
+    return success(user)
+  })
+
+  app.get('/categories', async () => success([]))
+
+  app.get('/courts', async () => success([]))
+
+  app.get('/courts/nearby', async () => success([]))
+
+  app.get('/teams', async () => success([]))
+
+  app.get('/coaches', async () => success([]))
+
+  app.get('/notifications/unread-count', async (request: FastifyRequest) => {
+    const count = await getUnreadNotificationsCount(request.user!.userId)
+    return success({ count })
+  })
+}
