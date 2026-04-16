@@ -31,8 +31,14 @@ export default function TeamDetailsPage() {
   const params = useParams<{ teamId: string }>()
   const users = useMemo(() => getMockUsers(), [])
 
-  const [activeUserId, setActiveUserState] = useState(getActiveUserId)
-  const [teamPosts, setTeamPosts] = useState<TeamPost[]>(() => getTeamPosts())
+  const [activeUserId, setActiveUserState] = useState(() => {
+    if (typeof window === 'undefined') return 'usr-001'
+    return getActiveUserId()
+  })
+  const [teamPosts, setTeamPosts] = useState<TeamPost[]>(() => {
+    if (typeof window === 'undefined') return []
+    return getTeamPosts()
+  })
   const [feedback, setFeedback] = useState('')
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
 

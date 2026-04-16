@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download, Grid2x2 } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -12,6 +12,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { CourtRecord, CourtStatus, BranchRecord } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'ACTIVE', 'MAINTENANCE', 'PAUSED'] as const
 
@@ -32,25 +33,42 @@ export default function OperatorCourtsPage() {
   const { data: courtsResponse, loading, error } = useApiCall('/operator/courts')
   const { data: branchesResponse } = useApiCall('/operator/branches')
 
+  const handleBranchChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBranch(event.target.value)
+  }, [])
+
+  const handleSportChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSport(event.target.value)
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as (typeof statusOptions)[number])
+  }, [])
+
   const courtsData = courtsResponse?.data || courtsResponse || []
   const branchesData = branchesResponse?.data || branchesResponse || []
 
-  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
-  const sportOptions = ['All', ...new Set(courtsData.map((court: any) => court.sport))]
+  const branchOptions = ['All', ...branchesData.map((branch: BranchRecord) => branch.id)]
+  const sportOptions = ['All', ...new Set(courtsData.map((court: CourtRecord) => court.sport))]
+
+  const getBranchNameById = (branchId: string) => {
+    const found = branchesData.find((b: BranchRecord) => b.id === branchId)
+    return found?.name || 'Unknown Branch'
+  }
+
+  const getCourtNameById = (courtId: string) => {
+    const found = courtsData.find((c: CourtRecord) => c.id === courtId)
+    return found?.name || 'Unknown Court'
+  }
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
-  const getBranchNameById = (id: string) => {
-    const branch = branchesData.find((b: any) => b.id === id)
-    return branch?.name || 'Unknown'
-  }
-
   const filteredCourts = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return courtsData.filter((court: any) => {
+    return courtsData.filter((court: CourtRecord) => {
       const matchesSearch =
         query.length === 0 ||
         court.name?.toLowerCase()?.includes(query) ||
@@ -59,7 +77,7 @@ export default function OperatorCourtsPage() {
 
       const matchesBranch = selectedBranch === 'All' || court.branchId === selectedBranch
       const matchesSport = selectedSport === 'All' || court.sport === selectedSport
-      const matchesStatus = selectedStatus === 'All' || court.status === selectedStatus
+      const matchesStatus = selectedStatus === 'All' || (court.status as string).toUpperCase() === selectedStatus
 
       return matchesSearch && matchesBranch && matchesSport && matchesStatus
     })
@@ -99,7 +117,7 @@ export default function OperatorCourtsPage() {
             <>
               <select
                 value={selectedBranch}
-                onChange={(event) => setSelectedBranch(event.target.value)}
+                onChange={handleBranchChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {branchOptions.map((branchId: any) => (
@@ -111,7 +129,7 @@ export default function OperatorCourtsPage() {
 
               <select
                 value={selectedSport}
-                onChange={(event) => setSelectedSport(event.target.value)}
+                onChange={handleSportChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {sportOptions.map((sport: any) => (
@@ -123,7 +141,7 @@ export default function OperatorCourtsPage() {
 
               <select
                 value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as (typeof statusOptions)[number])}
+                onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {statusOptions.map((status) => (

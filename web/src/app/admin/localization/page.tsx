@@ -13,7 +13,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 export default function AdminLocalizationPage() {
   const [defaultLocale, setDefaultLocale] = useState('en-EG')
 
-  const { data: localizationResponse, loading, error } = useApiCall('/admin/localization')
+  const { data: localizationResponse, loading, error } = useApiCall('/admin-workspace/localization')
   const localizationData = localizationResponse?.data || localizationResponse || []
 
   if (error) {

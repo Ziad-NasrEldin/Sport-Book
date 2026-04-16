@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { CalendarRange, Download } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -12,6 +12,7 @@ import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { ReportJob, BranchRecord } from '@/lib/operator/mockData'
 
 const presetOptions = ['Revenue Heatmap', 'Utilization by Court', 'Cancellation Analysis', 'Staff Coverage'] as const
 
@@ -23,25 +24,37 @@ export default function OperatorReportsPage() {
   const { data: reportsResponse, loading, error } = useApiCall('/operator/reports')
   const { data: branchesResponse } = useApiCall('/operator/branches')
 
+  const handleBranchChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBranch(event.target.value)
+  }, [])
+
+  const handlePresetChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedPreset(event.target.value as (typeof presetOptions)[number])
+  }, [])
+
+  const handleDateRangeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setDateRange(event.target.value)
+  }, [])
+
   const reportsData = reportsResponse?.data || reportsResponse || {}
   const branchesData = branchesResponse?.data || branchesResponse || []
   const reportJobs = reportsData.reportJobs || []
   const metrics = reportsData.metrics || []
 
-  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
+  const branchOptions = ['All', ...branchesData.map((branch: BranchRecord) => branch.id)]
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   const getBranchNameById = (id: string) => {
-    const branch = branchesData.find((b: any) => b.id === id)
+    const branch = branchesData.find((b: BranchRecord) => b.id === id)
     return branch?.name || 'Unknown'
   }
 
   const visibleJobs = useMemo(() => {
     if (selectedBranch === 'All') return reportJobs
-    return reportJobs.filter((job: any) => job.branchId === selectedBranch)
+    return reportJobs.filter((job: ReportJob) => job.branchId === selectedBranch)
   }, [reportJobs, selectedBranch])
 
   return (
@@ -74,7 +87,7 @@ export default function OperatorReportsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Preset</span>
               <select
                 value={selectedPreset}
-                onChange={(event) => setSelectedPreset(event.target.value as (typeof presetOptions)[number])}
+                onChange={handlePresetChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               >
                 {presetOptions.map((preset) => (
@@ -89,7 +102,7 @@ export default function OperatorReportsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Branch scope</span>
               <select
                 value={selectedBranch}
-                onChange={(event) => setSelectedBranch(event.target.value)}
+                onChange={handleBranchChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               >
                 {branchOptions.map((branchId: any) => (
@@ -104,7 +117,7 @@ export default function OperatorReportsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Date range</span>
               <input
                 value={dateRange}
-                onChange={(event) => setDateRange(event.target.value)}
+                onChange={handleDateRangeChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>

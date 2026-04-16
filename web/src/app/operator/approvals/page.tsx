@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { CheckCircle2, Download, XCircle } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -11,18 +11,19 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { ApprovalRecord, ApprovalPriority, ApprovalStatus } from '@/lib/operator/mockData'
 
-const statusOptions = ['All', 'PENDING', 'APPROVED', 'REJECTED'] as const
-const priorityOptions = ['All', 'HIGH', 'MEDIUM', 'LOW'] as const
+const statusOptions = ['All', 'Pending', 'Approved', 'Rejected'] as const
+const priorityOptions = ['All', 'Low', 'Medium', 'High'] as const
 
 type StatusFilter = (typeof statusOptions)[number]
 type PriorityFilter = (typeof priorityOptions)[number]
 type ApprovalDecision = Exclude<StatusFilter, 'All'>
 
-function priorityTone(priority: PriorityFilter): Tone {
-  if (priority === 'HIGH') return 'red'
-  if (priority === 'MEDIUM') return 'amber'
-  if (priority === 'LOW') return 'blue'
+function priorityTone(priority: string): Tone {
+  if (priority === 'High' || priority === 'HIGH') return 'red'
+  if (priority === 'Medium' || priority === 'MEDIUM') return 'amber'
+  if (priority === 'Low' || priority === 'LOW') return 'blue'
   return 'violet'
 }
 
@@ -33,6 +34,14 @@ export default function OperatorApprovalsPage() {
 
   const { data: approvalsResponse, loading, error, refetch } = useApiCall('/operator/approvals')
   const { data: branchesResponse } = useApiCall('/operator/branches')
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as StatusFilter)
+  }, [])
+
+  const handlePriorityChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedPriority(event.target.value as PriorityFilter)
+  }, [])
 
   const approvalsData = approvalsResponse?.data || approvalsResponse || []
   const branchesData = branchesResponse?.data || branchesResponse || []
@@ -65,7 +74,7 @@ export default function OperatorApprovalsPage() {
     })
   }, [approvalsData, search, selectedStatus, selectedPriority])
 
-  const updateStatus = async (id: string, status: ApprovalDecision) => {
+  const updateStatus = async (id: string, status: string) => {
     try {
       await updateStatusMutation.mutate({ id, status })
       refetch()
@@ -99,7 +108,7 @@ export default function OperatorApprovalsPage() {
             <>
               <select
                 value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as StatusFilter)}
+                onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {statusOptions.map((status) => (
@@ -111,7 +120,7 @@ export default function OperatorApprovalsPage() {
 
               <select
                 value={selectedPriority}
-                onChange={(event) => setSelectedPriority(event.target.value as PriorityFilter)}
+                onChange={handlePriorityChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {priorityOptions.map((priority) => (

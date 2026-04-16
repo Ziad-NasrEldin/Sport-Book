@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download, Repeat2 } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -11,6 +11,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { OperatorBookingRecord, OperatorBookingStatus } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as const
 
@@ -34,6 +35,14 @@ export default function OperatorBookingsPage() {
   const { data: branchesResponse } = useApiCall('/operator/branches')
   const { data: courtsResponse } = useApiCall('/operator/courts')
 
+  const handleBranchChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBranch(event.target.value as (typeof branchOptions)[number])
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as BookingStatusFilter)
+  }, [])
+
   const operatorBookingsData = bookingsResponse?.data || bookingsResponse || []
   const branchesData = branchesResponse?.data || branchesResponse || []
   const courtsData = courtsResponse?.data || courtsResponse || []
@@ -42,32 +51,32 @@ export default function OperatorBookingsPage() {
 
   const advanceStatusMutation = useApiMutation('/operator/bookings/:id/status', 'PUT')
 
+  const getBranchNameById = (branchId: string) => {
+    const found = branchesData.find((b: any) => b.id === branchId)
+    return found?.name || 'Unknown Branch'
+  }
+
+  const getCourtNameById = (courtId: string) => {
+    const found = courtsData.find((c: any) => c.id === courtId)
+    return found?.name || 'Unknown Court'
+  }
+
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
-
-  const getBranchNameById = (id: string) => {
-    const branch = branchesData.find((b: any) => b.id === id)
-    return branch?.name || 'Unknown'
-  }
-
-  const getCourtNameById = (id: string) => {
-    const court = courtsData.find((c: any) => c.id === id)
-    return court?.name || 'Unknown'
   }
 
   const visibleBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return operatorBookingsData.filter((booking: any) => {
+    return operatorBookingsData.filter((booking: OperatorBookingRecord) => {
       const matchesSearch =
         query.length === 0 ||
         booking.id?.toLowerCase()?.includes(query) ||
         booking.customer?.toLowerCase()?.includes(query) ||
-        booking.user?.name?.toLowerCase()?.includes(query) ||
+        (booking as any).user?.name?.toLowerCase()?.includes(query) ||
         getCourtNameById(booking.courtId).toLowerCase().includes(query)
 
-      const matchesStatus = selectedStatus === 'All' || booking.status === selectedStatus
+      const matchesStatus = selectedStatus === 'All' || (booking.status as string).toUpperCase() === selectedStatus
       const matchesBranch = selectedBranch === 'All' || booking.branchId === selectedBranch
 
       return matchesSearch && matchesStatus && matchesBranch
@@ -111,7 +120,7 @@ export default function OperatorBookingsPage() {
             <>
               <select
                 value={selectedBranch}
-                onChange={(event) => setSelectedBranch(event.target.value as (typeof branchOptions)[number])}
+                onChange={handleBranchChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {branchOptions.map((branchId) => (
@@ -123,7 +132,7 @@ export default function OperatorBookingsPage() {
 
               <select
                 value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as BookingStatusFilter)}
+                onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {statusOptions.map((status) => (

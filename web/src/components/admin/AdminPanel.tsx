@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, memo } from 'react'
 
 type AdminPanelProps = {
   title?: string
@@ -8,7 +8,13 @@ type AdminPanelProps = {
   className?: string
 }
 
-export function AdminPanel({ title, eyebrow, actions, children, className }: AdminPanelProps) {
+export const AdminPanel = memo(function AdminPanel({
+  title,
+  eyebrow,
+  actions,
+  children,
+  className = '',
+}: AdminPanelProps) {
   return (
     <section className={`rounded-[var(--radius-lg)] bg-surface-container-lowest p-4 md:p-5 shadow-ambient ${className ?? ''}`}>
       {(title || eyebrow || actions) && (
@@ -25,4 +31,4 @@ export function AdminPanel({ title, eyebrow, actions, children, className }: Adm
       {children}
     </section>
   )
-}
+})

@@ -336,3 +336,131 @@ export async function listCoaches(filters: { page: number; limit: number; status
     },
   }
 }
+
+export async function listBookings(filters: { page: number; limit: number; status?: string }) {
+  const { page, limit, status } = filters
+
+  const where: { status?: string } = {}
+  if (status) where.status = status
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        court: {
+          include: {
+            branch: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        coach: {
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.booking.count({ where }),
+  ])
+
+  return {
+    data: bookings,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  }
+}
+
+export async function listFinance(filters: { page: number; limit: number }) {
+  const { page, limit } = filters
+
+  const [transactions, total] = await Promise.all([
+    prisma.walletTransaction.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        wallet: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.walletTransaction.count(),
+  ])
+
+  return {
+    data: transactions,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  }
+}
+
+export async function listSports(filters: { page: number; limit: number; status?: string }) {
+  const { page, limit, status } = filters
+
+  const where: { active?: boolean } = {}
+  if (status === 'ACTIVE') {
+    where.active = true
+  } else if (status === 'INACTIVE') {
+    where.active = false
+  }
+
+  const [sports, total] = await Promise.all([
+    prisma.sport.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        _count: {
+          select: {
+            courts: true,
+            coaches: true,
+            facilities: true,
+          },
+        },
+      },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.sport.count({ where }),
+  ])
+
+  return {
+    data: sports,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  }
+}

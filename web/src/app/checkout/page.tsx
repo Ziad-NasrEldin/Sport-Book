@@ -2,11 +2,15 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CreditCard, Smartphone, Wallet, CheckCircle2, Circle, Banknote } from 'lucide-react'
 
+type PaymentMethod = 'card' | 'applepay' | 'wallet'
+
 export default function CheckoutPage() {
   const router = useRouter()
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('card')
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -88,26 +92,36 @@ export default function CheckoutPage() {
         <section className="mb-8">
           <h3 className="text-lg font-bold text-primary mb-4">Payment Method</h3>
           <div className="flex flex-col gap-3">
-            {/* Credit/Debit Card - Selected */}
-            <button className="flex items-center justify-between w-full p-4 md:p-5 rounded-3xl bg-tertiary-fixed shadow-sm active:scale-[0.98] transition-transform">
+            <button
+              onClick={() => setSelectedPayment('card')}
+              className={`flex items-center justify-between w-full p-4 md:p-5 rounded-3xl shadow-sm active:scale-[0.98] transition-transform ${selectedPayment === 'card' ? 'bg-tertiary-fixed' : 'bg-surface-container-lowest shadow-ambient'}`}
+            >
               <div className="flex items-center gap-4">
                 <CreditCard className="w-6 h-6 text-primary" />
                 <span className="font-semibold text-primary">Credit/Debit Card</span>
               </div>
-              <CheckCircle2 className="w-6 h-6 text-primary fill-primary text-tertiary-fixed" />
+              {selectedPayment === 'card'
+                ? <CheckCircle2 className="w-6 h-6 text-primary fill-primary text-tertiary-fixed" />
+                : <Circle className="w-6 h-6 text-primary/20" />}
             </button>
 
-            {/* Apple Pay - Unselected */}
-            <button className="flex items-center justify-between w-full p-4 md:p-5 rounded-3xl bg-surface-container-lowest shadow-ambient active:scale-[0.98] transition-transform">
+            <button
+              onClick={() => setSelectedPayment('applepay')}
+              className={`flex items-center justify-between w-full p-4 md:p-5 rounded-3xl active:scale-[0.98] transition-transform ${selectedPayment === 'applepay' ? 'bg-tertiary-fixed shadow-sm' : 'bg-surface-container-lowest shadow-ambient'}`}
+            >
               <div className="flex items-center gap-4 text-primary/70">
                 <Smartphone className="w-5 h-5" />
                 <span className="font-medium text-primary">Apple Pay</span>
               </div>
-              <Circle className="w-6 h-6 text-primary/20" />
+              {selectedPayment === 'applepay'
+                ? <CheckCircle2 className="w-6 h-6 text-primary fill-primary" />
+                : <Circle className="w-6 h-6 text-primary/20" />}
             </button>
 
-            {/* Wallet Balance - Unselected */}
-            <button className="flex items-center justify-between w-full p-4 md:p-5 rounded-3xl bg-surface-container-lowest shadow-ambient active:scale-[0.98] transition-transform">
+            <button
+              onClick={() => setSelectedPayment('wallet')}
+              className={`flex items-center justify-between w-full p-4 md:p-5 rounded-3xl active:scale-[0.98] transition-transform ${selectedPayment === 'wallet' ? 'bg-tertiary-fixed shadow-sm' : 'bg-surface-container-lowest shadow-ambient'}`}
+            >
               <div className="flex items-center gap-4 text-primary/70">
                 <Wallet className="w-5 h-5" />
                 <div className="text-left">
@@ -115,7 +129,9 @@ export default function CheckoutPage() {
                   <span className="text-[10px] font-lexend font-medium text-primary/40">850.00 EGP Available</span>
                 </div>
               </div>
-              <Circle className="w-6 h-6 text-primary/20" />
+              {selectedPayment === 'wallet'
+                ? <CheckCircle2 className="w-6 h-6 text-primary fill-primary" />
+                : <Circle className="w-6 h-6 text-primary/20" />}
             </button>
           </div>
         </section>

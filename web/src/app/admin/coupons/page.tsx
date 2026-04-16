@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -27,14 +27,14 @@ export default function AdminCouponsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('All')
 
-  const { data: couponsResponse, loading, error, refetch } = useApiCall('/admin/coupons')
-  const toggleMutation = useApiMutation('/admin/coupons/:id', 'PATCH')
+  const { data: couponsResponse, loading, error, refetch } = useApiCall('/admin-workspace/coupons')
+  const toggleMutation = useApiMutation('/admin-workspace/coupons/:id', 'PATCH')
 
   const couponsData = couponsResponse?.data || couponsResponse || []
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
+  const handleStatusFilterChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(event.target.value as (typeof statusOptions)[number])
+  }, [])
 
   const visibleCoupons = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -58,6 +58,10 @@ export default function AdminCouponsPage() {
     } catch (err) {
       console.error('Failed to toggle coupon:', err)
     }
+  }
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   return (
@@ -84,7 +88,7 @@ export default function AdminCouponsPage() {
           controls={
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}
+              onChange={handleStatusFilterChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
               {statusOptions.map((status) => (

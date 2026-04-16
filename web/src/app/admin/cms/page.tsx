@@ -12,12 +12,16 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 export default function AdminCmsPage() {
-  const { data: cmsResponse, loading, error, refetch } = useApiCall('/admin/cms')
-  const saveMutation = useApiMutation('/admin/cms/:id', 'PUT')
+  const { data: cmsResponse, loading, error, refetch } = useApiCall('/admin-workspace/cms')
+  const saveMutation = useApiMutation('/admin-workspace/cms/:id', 'PUT')
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const cmsData = cmsResponse?.data || cmsResponse || []
 
-  const [selectedPage, setSelectedPage] = useState(cmsData[0]?.page ?? 'Terms of Service')
+  const [selectedPage, setSelectedPage] = useState('Terms of Service')
   const [content, setContent] = useState('')
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT')
 
@@ -28,10 +32,6 @@ export default function AdminCmsPage() {
       setStatus(cmsData[0].status || 'DRAFT')
     }
   }, [cmsData])
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
 
   const handlePublish = async () => {
     try {

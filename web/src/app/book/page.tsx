@@ -12,13 +12,32 @@ import {
 } from '@/lib/notifications'
 import { ACTIVE_USER_UPDATED_EVENT, getActiveUserId } from '@/lib/teams'
 
+const UNAVAILABLE = new Set([2, 14])
+const BOOKED = new Set([18, 19])
+
+const SLOT_PRICE: Record<string, number> = {
+  night: 40,
+  morning: 50,
+  afternoon: 60,
+  evening: 70,
+}
+
+function getSlotPeriod(h: number): string {
+  if (h < 7) return 'night'
+  if (h < 11) return 'morning'
+  if (h < 16) return 'afternoon'
+  return 'evening'
+}
+
 export default function BookingPage() {
   const router = useRouter()
   const [isReviewOpen, setIsReviewOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(() =>
-    getUnreadInAppNotificationsCount(getActiveUserId()),
-  )
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null)
+  const [unreadCount, setUnreadCount] = useState(() => {
+    if (typeof window === 'undefined') return 0
+    return getUnreadInAppNotificationsCount(getActiveUserId())
+  })
 
   useEffect(() => {
     const refreshUnread = () => {
@@ -186,18 +205,30 @@ export default function BookingPage() {
                   { h: 16, c: "bg-[#ef4444]" }, { h: 17, c: "bg-[#ef4444]" }, { h: 18, c: "bg-[#ef4444]" }, { h: 19, c: "bg-[#ef4444]" },
                   { h: 20, c: "bg-[#ef4444]" }, { h: 21, c: "bg-[#ef4444]" }, { h: 22, c: "bg-[#ef4444]" }, { h: 23, c: "bg-[#ef4444]" }
                 ].map((slot) => {
-                  // Simulate some booked/unavailable boxes
-                  let boxColor = 'bg-[#10b981]' // available
-                  if (slot.h === 2 || slot.h === 14) boxColor = 'bg-[#d1d5db]' // unavailable
-                  if (slot.h === 18 || slot.h === 19) boxColor = 'bg-[#ef4444]' // booked
+                  const isUnavailable = UNAVAILABLE.has(slot.h)
+                  const isBooked = BOOKED.has(slot.h)
+                  const isSelected = selectedSlot === slot.h
+                  const isSelectable = !isUnavailable && !isBooked
+
+                  let boxColor = 'bg-[#10b981]'
+                  if (isUnavailable) boxColor = 'bg-[#d1d5db]'
+                  if (isBooked) boxColor = 'bg-[#ef4444]'
 
                   return (
-                    <div key={slot.h} className="flex flex-col gap-[3px] active:scale-95 transition-transform cursor-pointer">
-                      <div className={`h-10 sm:h-12 md:h-14 ${slot.c} rounded-md flex items-center justify-center text-white font-bold font-lexend text-xs sm:text-sm shadow-sm`}>
+                    <button
+                      key={slot.h}
+                      type="button"
+                      disabled={!isSelectable}
+                      onClick={() => isSelectable && setSelectedSlot(isSelected ? null : slot.h)}
+                      aria-label={`${isUnavailable ? 'Unavailable' : isBooked ? 'Booked' : 'Select'} slot at ${slot.h}:00`}
+                      aria-pressed={isSelected}
+                      className={`flex flex-col gap-[3px] transition-transform ${isSelectable ? 'active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-70'} ${isSelected ? 'scale-105' : ''}`}
+                    >
+                      <div className={`h-10 sm:h-12 md:h-14 ${slot.c} rounded-md flex items-center justify-center text-white font-bold font-lexend text-xs sm:text-sm shadow-sm ${isSelected ? 'ring-2 ring-white ring-offset-1' : ''}`}>
                         {slot.h}
                       </div>
-                      <div className={`h-8 sm:h-10 md:h-12 ${boxColor} rounded-md shadow-sm`} />
-                    </div>
+                      <div className={`h-8 sm:h-10 md:h-12 ${boxColor} rounded-md shadow-sm ${isSelected ? 'ring-2 ring-white ring-offset-1' : ''}`} />
+                    </button>
                   )
                 })}
               </div>
@@ -271,17 +302,18 @@ export default function BookingPage() {
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between gap-6 md:px-14">
           <div className="hidden sm:block">
             <p className="text-xs font-lexend font-bold text-primary/50 uppercase tracking-widest mb-1.5">
-              Total Price
+              {selectedSlot !== null ? `Slot ${selectedSlot}:00 – ${selectedSlot + 1}:00` : 'No slot selected'}
             </p>
             <p className="text-3xl font-black font-lexend text-primary">
-              400 EGP
+              {selectedSlot !== null ? `${SLOT_PRICE[getSlotPeriod(selectedSlot)]} EGP` : '—'}
             </p>
           </div>
-          <button 
-            onClick={() => setIsReviewOpen(true)}
-            className="flex-1 max-w-sm ml-auto bg-gradient-to-br from-secondary to-secondary-container text-white py-4 md:py-5 px-10 rounded-[2rem] font-extrabold text-lg md:text-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_-5px_rgba(253,139,0,0.35)]"
+          <button
+            onClick={() => selectedSlot !== null && setIsReviewOpen(true)}
+            disabled={selectedSlot === null}
+            className="flex-1 max-w-sm ml-auto bg-gradient-to-br from-secondary to-secondary-container text-white py-4 md:py-5 px-10 rounded-[2rem] font-extrabold text-lg md:text-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_-5px_rgba(253,139,0,0.35)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            Confirm Booking
+            {selectedSlot !== null ? 'Confirm Booking' : 'Select a Slot'}
             <ArrowRight className="w-5 h-5 stroke-[3]" />
           </button>
         </div>

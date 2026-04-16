@@ -21,12 +21,14 @@ function buildConic(segments: Segment[]) {
 }
 
 export function AdminDonut({ segments }: AdminDonutProps) {
+  const ariaLabel = `Donut chart showing: ${segments.map(s => `${s.label} ${s.value}%`).join(', ')}`
+
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-4">
       <div
         className="w-32 h-32 rounded-full relative"
         style={{ background: buildConic(segments) }}
-        aria-label="Distribution chart"
+        aria-label={ariaLabel}
       >
         <span className="absolute inset-[22%] rounded-full bg-surface-container-lowest" />
       </div>

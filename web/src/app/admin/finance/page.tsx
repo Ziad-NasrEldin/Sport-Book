@@ -22,16 +22,16 @@ function formatEgp(value: number) {
 }
 
 export default function AdminFinancePage() {
-  const { data: transactionsResponse, loading, error } = useApiCall('/admin/finance')
+  const { data: transactionsResponse, loading, error } = useApiCall('/admin-workspace/finance')
   const transactionsData = transactionsResponse?.data || transactionsResponse || []
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
 
   const totalSettled = transactionsData
     .filter((item: any) => item.status === 'SETTLED')
     .reduce((sum: number, item: any) => sum + (item.amount || 0), 0)
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">

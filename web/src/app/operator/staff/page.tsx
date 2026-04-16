@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download, UserPlus2 } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -11,6 +11,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
+import type { StaffRecord } from '@/lib/operator/mockData'
 
 const roleOptions = ['All', 'Branch Manager', 'Front Desk', 'Maintenance', 'Coach Coordinator'] as const
 const statusOptions = ['All', 'Active', 'Pending', 'On Leave', 'Suspended'] as const
@@ -29,10 +30,22 @@ export default function OperatorStaffPage() {
   const [selectedStatus, setSelectedStatus] = useState<(typeof statusOptions)[number]>('All')
   const [selectedBranch, setSelectedBranch] = useState<(typeof branchOptions)[number]>('All')
 
+  const handleRoleChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedRole(event.target.value as (typeof roleOptions)[number])
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as (typeof statusOptions)[number])
+  }, [])
+
+  const handleBranchChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBranch(event.target.value as (typeof branchOptions)[number])
+  }, [])
+
   const visibleStaff = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return staffData.filter((member: any) => {
+    return staffData.filter((member: StaffRecord) => {
       const matchesSearch =
         query.length === 0 ||
         member.name.toLowerCase().includes(query) ||
@@ -89,7 +102,7 @@ export default function OperatorStaffPage() {
             <>
               <select
                 value={selectedRole}
-                onChange={(event) => setSelectedRole(event.target.value as (typeof roleOptions)[number])}
+                onChange={handleRoleChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {roleOptions.map((role) => (
@@ -101,7 +114,7 @@ export default function OperatorStaffPage() {
 
               <select
                 value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as (typeof statusOptions)[number])}
+                onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {statusOptions.map((status) => (
@@ -113,7 +126,7 @@ export default function OperatorStaffPage() {
 
               <select
                 value={selectedBranch}
-                onChange={(event) => setSelectedBranch(event.target.value as (typeof branchOptions)[number])}
+                onChange={handleBranchChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {branchOptions.map((branchId) => (
@@ -132,50 +145,50 @@ export default function OperatorStaffPage() {
           ) : (
             <AdminTable
               items={visibleStaff}
-              getRowKey={(member) => member.id}
-            columns={[
-              {
-                key: 'identity',
-                header: 'Member',
-                render: (member: any) => (
-                  <div>
-                    <p className="font-bold text-primary">{member.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">{member.id}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'role',
-                header: 'Role',
-                render: (member: any) => (
-                  <div>
-                    <p className="text-sm font-semibold text-primary">{member.role}</p>
-                    <p className="text-xs text-primary/55 mt-1">Shift: {member.shift}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'branch',
-                header: 'Branch',
-                render: (member: any) => <p className="text-sm text-primary/75">{getBranchNameById(member.branchId)}</p>,
-              },
-              {
-                key: 'contact',
-                header: 'Contact',
-                render: (member: any) => (
-                  <div>
-                    <p className="text-sm text-primary/75">{member.email}</p>
-                    <p className="text-xs text-primary/55 mt-1">{member.phone}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (member: any) => <AdminStatusPill label={member.status} tone={statusTone(member.status)} />,
-              },
-            ]}
-          />
+              getRowKey={(member: any) => member.id}
+              columns={[
+                {
+                  key: 'staff',
+                  header: 'Staff Member',
+                  render: (member: any) => (
+                    <div>
+                      <p className="font-bold text-primary">{member.name || 'Unknown'}</p>
+                      <p className="text-xs text-primary/60 mt-1">{member.id || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'role',
+                  header: 'Role',
+                  render: (member: any) => <p className="text-sm font-semibold text-primary">{member.role || 'Unknown'}</p>,
+                },
+                {
+                  key: 'branch',
+                  header: 'Branch',
+                  render: (member: any) => <p className="text-sm text-primary/75">{getBranchNameById(member.branchId)}</p>,
+                },
+                {
+                  key: 'shift',
+                  header: 'Shift',
+                  render: (member: any) => <p className="text-sm text-primary/70">{member.shift || 'Unknown'}</p>,
+                },
+                {
+                  key: 'contact',
+                  header: 'Contact',
+                  render: (member: any) => (
+                    <div>
+                      <p className="text-sm font-semibold text-primary">{member.phone || 'Unknown'}</p>
+                      <p className="text-xs text-primary/55 mt-1">{member.email || 'Unknown'}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (member: any) => <AdminStatusPill label={member.status || 'Unknown'} tone={statusTone(member.status || 'Unknown')} />,
+                },
+              ]}
+            />
           )}
         </div>
       </AdminPanel>

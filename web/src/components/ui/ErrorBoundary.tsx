@@ -1,6 +1,6 @@
 'use client'
 
-import { Component, ReactNode } from 'react'
+import { Component, ReactNode, useEffect } from 'react'
 import { APIError } from '@/lib/api/client'
 
 interface Props {
@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: { componentStack: string }) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
   }
 
@@ -65,12 +65,11 @@ export function APIErrorFallback({ error, onRetry }: { error: APIError; onRetry?
   }
 
   // Redirect to sign-in page on 401 errors
-  if (error.status === 401) {
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    if (error.status === 401 && typeof window !== 'undefined') {
       window.location.href = '/auth/sign-in'
     }
-    return null
-  }
+  }, [error.status])
 
   return (
     <div className="bg-surface-container-low rounded-lg p-4 text-center">

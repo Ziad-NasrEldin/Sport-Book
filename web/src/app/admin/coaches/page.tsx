@@ -12,6 +12,13 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
+function extractStringValue(value: any): string {
+  if (typeof value === 'object' && value !== null) {
+    return value.name || value.id || value.label || JSON.stringify(value)
+  }
+  return value || ''
+}
+
 export default function AdminCoachesPage() {
   const [search, setSearch] = useState('')
   const [sportFilter, setSportFilter] = useState<string>('All')
@@ -19,7 +26,7 @@ export default function AdminCoachesPage() {
   const { data: coachesResponse, loading, error } = useApiCall('/admin-workspace/coaches')
   const coachesData = coachesResponse?.data || coachesResponse || []
 
-  const sportOptions = ['All', ...new Set(coachesData.map((item: any) => item.sport || '').filter(Boolean))]
+  const sportOptions = ['All', ...new Set(coachesData.map((item: any) => extractStringValue(item.sport)).filter(Boolean))]
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -33,7 +40,7 @@ export default function AdminCoachesPage() {
         query.length === 0 ||
         coach.name?.toLowerCase()?.includes(query) ||
         coach.id?.toLowerCase()?.includes(query)
-      const matchesSport = sportFilter === 'All' || coach.sport === sportFilter
+      const matchesSport = sportFilter === 'All' || extractStringValue(coach.sport) === sportFilter
 
       return matchesSearch && matchesSport
     })
@@ -105,7 +112,7 @@ export default function AdminCoachesPage() {
                 {
                   key: 'sport',
                   header: 'Sport',
-                  render: (coach: any) => <p className="text-sm text-primary/75">{coach.sport || 'Unknown'}</p>,
+                  render: (coach: any) => <p className="text-sm text-primary/75">{extractStringValue(coach.sport) || 'Unknown'}</p>,
                 },
                 {
                   key: 'sessions',

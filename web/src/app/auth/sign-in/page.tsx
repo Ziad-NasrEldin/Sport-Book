@@ -30,7 +30,10 @@ function getInitialLoginAccountType(): LoginAccountType {
 
 export default function SignInPage() {
   const router = useRouter()
-  const [accountType, setAccountTypeState] = useState<LoginAccountType>(getInitialLoginAccountType)
+  const [accountType, setAccountTypeState] = useState<LoginAccountType>(() => {
+    if (typeof window === 'undefined') return 'player'
+    return getInitialLoginAccountType()
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -120,6 +123,7 @@ export default function SignInPage() {
                 <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
                   type="email"
+                  name="email"
                   placeholder="alex@example.com"
                   className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />
@@ -132,6 +136,7 @@ export default function SignInPage() {
                 <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
                   type="password"
+                  name="password"
                   placeholder="Enter your password"
                   className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />

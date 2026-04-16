@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw, Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -26,6 +26,7 @@ type ChangeLogItem = {
 }
 
 function nowStamp() {
+  if (typeof window === 'undefined') return '2026-04-16 09:14'
   return new Date().toLocaleString('en-GB', { hour12: false })
 }
 
@@ -37,16 +38,16 @@ export default function AdminUserEditPage() {
   const params = useParams<{ userId: string }>()
   const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId
 
-  const { data: userResponse, loading, error } = useApiCall(`/admin/users/${userId}`)
-  const saveMutation = useApiMutation(`/admin/users/${userId}`, 'PUT')
+  const { data: userResponse, loading, error } = useApiCall(`/admin-workspace/users/${userId}`)
+  const saveMutation = useApiMutation(`/admin-workspace/users/${userId}`, 'PUT')
 
-  const user = userResponse?.data || userResponse
+  const historyIdCounter = useRef(0)
 
-  const [name, setName] = useState(user?.name ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
-  const [role, setRole] = useState<typeof roleOptions[number]>(user?.role ?? 'Player')
-  const [status, setStatus] = useState<typeof statusOptions[number]>(user?.status ?? 'Pending')
-  const [country, setCountry] = useState(user?.country ?? '')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<typeof roleOptions[number]>('Player')
+  const [status, setStatus] = useState<typeof statusOptions[number]>('Pending')
+  const [country, setCountry] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
   const [changeHistory, setChangeHistory] = useState<ChangeLogItem[]>([
@@ -57,6 +58,28 @@ export default function AdminUserEditPage() {
       summary: 'Opened account editor.',
     },
   ])
+
+  useEffect(() => {
+    if (!toast) return
+
+    const timer = window.setTimeout(() => {
+      setToast(null)
+    }, 2800)
+
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  const user = userResponse?.data || userResponse
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name ?? '')
+      setEmail(user.email ?? '')
+      setRole(user.role ?? 'Player')
+      setStatus(user.status ?? 'Pending')
+      setCountry(user.country ?? '')
+    }
+  }, [user])
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -112,9 +135,10 @@ export default function AdminUserEditPage() {
     emailLooksValid
 
   const addHistory = (summary: string) => {
+    historyIdCounter.current += 1
     setChangeHistory((prev) => [
       {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id: `history-${historyIdCounter.current}`,
         at: nowStamp(),
         actor: 'Current Admin',
         summary,
@@ -179,16 +203,6 @@ export default function AdminUserEditPage() {
       addHistory('Save failed: API error.')
     }
   }
-
-  useEffect(() => {
-    if (!toast) return
-
-    const timer = window.setTimeout(() => {
-      setToast(null)
-    }, 2800)
-
-    return () => window.clearTimeout(timer)
-  }, [toast])
 
   return (
     <div className="space-y-6">

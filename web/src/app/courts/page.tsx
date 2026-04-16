@@ -22,11 +22,11 @@ import {
 } from '@/lib/favorites'
 
 function CourtsPageContent() {
+  const { data: courtsResponse, loading, error } = useApiCall('/player/courts')
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialSport = searchParams.get('sport')
 
-  const { data: courtsResponse, loading, error } = useApiCall('/player/courts')
   const courtsData = courtsResponse?.data || courtsResponse || []
   const courtSports = useMemo(() => {
     const sports = new Set(courtsData.map((court: any) => court.sport))
@@ -41,13 +41,10 @@ function CourtsPageContent() {
   const [query, setQuery] = useState('')
   const [priceFilter, setPriceFilter] = useState<'all' | 'lt500' | '500to1000'>('all')
   const [distanceFilter, setDistanceFilter] = useState<'all' | 'lt5'>('all')
-  const [favoriteCourtIds, setFavoriteCourtIds] = useState<string[]>(() =>
-    getFavorites().courts.map((court) => court.id),
-  )
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
+  const [favoriteCourtIds, setFavoriteCourtIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    return getFavorites().courts.map((court) => court.id)
+  })
 
   useEffect(() => {
     const refreshFavorites = () => {
@@ -75,6 +72,10 @@ function CourtsPageContent() {
         return text.includes(query.toLowerCase())
       })
   }, [courtsData, distanceFilter, priceFilter, query, selectedSport])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -114,8 +115,13 @@ function CourtsPageContent() {
           </div>
 
           <button
+            type="button"
+            onClick={() => {
+              const input = document.querySelector<HTMLInputElement>('input[type="text"]')
+              if (input) { input.focus(); input.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+            }}
             className="w-9 h-9 rounded-full flex items-center justify-center text-primary hover:bg-surface-container-high transition-colors"
-            aria-label="Open search"
+            aria-label="Focus search"
           >
             <Search className="w-5 h-5" />
           </button>
@@ -184,7 +190,16 @@ function CourtsPageContent() {
             Distance: {'<'}5km
           </button>
 
-          <button className="shrink-0 w-11 h-11 rounded-full bg-surface-container-high text-primary flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              setPriceFilter('all')
+              setDistanceFilter('all')
+              setQuery('')
+            }}
+            title="Reset all filters"
+            className="shrink-0 w-11 h-11 rounded-full bg-surface-container-high text-primary flex items-center justify-center hover:bg-surface-container-low transition-colors"
+          >
             <SlidersHorizontal className="w-4 h-4" />
           </button>
         </div>

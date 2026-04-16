@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { CalendarRange, Download } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -10,6 +10,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { ScheduleSlot, BranchRecord, CourtRecord } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'OPEN', 'BOOKED', 'BLOCKED'] as const
 const weekOptions = ['This Week', 'Next Week', 'Following Week'] as const
@@ -23,30 +24,42 @@ export default function OperatorSchedulePage() {
   const { data: branchesResponse } = useApiCall('/operator/branches')
   const { data: courtsResponse } = useApiCall('/operator/courts')
 
+  const handleBranchChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBranch(event.target.value)
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as (typeof statusOptions)[number])
+  }, [])
+
+  const handleWeekChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedWeek(event.target.value as (typeof weekOptions)[number])
+  }, [])
+
   const scheduleSlotsData = scheduleResponse?.data || scheduleResponse || []
   const branchesData = branchesResponse?.data || branchesResponse || []
   const courtsData = courtsResponse?.data || courtsResponse || []
 
-  const branchOptions = ['All', ...branchesData.map((branch: any) => branch.id)]
+  const branchOptions = ['All', ...branchesData.map((branch: BranchRecord) => branch.id)]
+
+  const getBranchNameById = (branchId: string) => {
+    const found = branchesData.find((b: BranchRecord) => b.id === branchId)
+    return found?.name || 'Unknown Branch'
+  }
+
+  const getCourtNameById = (courtId: string) => {
+    const found = courtsData.find((c: CourtRecord) => c.id === courtId)
+    return found?.name || 'Unknown Court'
+  }
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
-  const getBranchNameById = (id: string) => {
-    const branch = branchesData.find((b: any) => b.id === id)
-    return branch?.name || 'Unknown'
-  }
-
-  const getCourtNameById = (id: string) => {
-    const court = courtsData.find((c: any) => c.id === id)
-    return court?.name || 'Unknown'
-  }
-
   const visibleSlots = useMemo(() => {
-    return scheduleSlotsData.filter((slot: any) => {
+    return scheduleSlotsData.filter((slot: ScheduleSlot) => {
       const matchesBranch = selectedBranch === 'All' || slot.branchId === selectedBranch
-      const matchesStatus = selectedStatus === 'All' || slot.status === selectedStatus
+      const matchesStatus = selectedStatus === 'All' || (slot.status as string).toUpperCase() === selectedStatus
       return matchesBranch && matchesStatus
     })
   }, [scheduleSlotsData, selectedBranch, selectedStatus])
@@ -94,7 +107,7 @@ export default function OperatorSchedulePage() {
         <div className="flex flex-wrap gap-2">
           <select
             value={selectedBranch}
-            onChange={(event) => setSelectedBranch(event.target.value)}
+            onChange={handleBranchChange}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
           >
             {branchOptions.map((branchId: any) => (
@@ -106,7 +119,7 @@ export default function OperatorSchedulePage() {
 
           <select
             value={selectedStatus}
-            onChange={(event) => setSelectedStatus(event.target.value as (typeof statusOptions)[number])}
+            onChange={handleStatusChange}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
           >
             {statusOptions.map((status) => (
@@ -118,7 +131,7 @@ export default function OperatorSchedulePage() {
 
           <select
             value={selectedWeek}
-            onChange={(event) => setSelectedWeek(event.target.value as (typeof weekOptions)[number])}
+            onChange={handleWeekChange}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
           >
             {weekOptions.map((week) => (

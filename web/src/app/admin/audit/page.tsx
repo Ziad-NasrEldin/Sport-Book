@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -18,12 +18,12 @@ export default function AdminAuditPage() {
   const [search, setSearch] = useState('')
   const [severity, setSeverity] = useState<(typeof severityOptions)[number]>('All')
 
-  const { data: auditResponse, loading, error } = useApiCall('/admin/audit-logs')
+  const { data: auditResponse, loading, error } = useApiCall('/admin-workspace/audit-logs')
   const auditData = auditResponse?.data || auditResponse || []
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
+  const handleSeverityChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSeverity(event.target.value as (typeof severityOptions)[number])
+  }, [])
 
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -39,6 +39,10 @@ export default function AdminAuditPage() {
       return matchesSearch && matchesSeverity
     })
   }, [auditData, search, severity])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">
@@ -64,7 +68,7 @@ export default function AdminAuditPage() {
           controls={
             <select
               value={severity}
-              onChange={(event) => setSeverity(event.target.value as (typeof severityOptions)[number])}
+              onChange={handleSeverityChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
               {severityOptions.map((option) => (

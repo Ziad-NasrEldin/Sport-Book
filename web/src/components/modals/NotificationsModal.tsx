@@ -30,8 +30,14 @@ function getRelativeTimeLabel(timestamp: string) {
 }
 
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
-  const [activeUserId, setActiveUserId] = useState(getActiveUserId)
-  const [notifications, setNotifications] = useState(() => getInAppNotificationsForUser(getActiveUserId()))
+  const [activeUserId, setActiveUserId] = useState(() => {
+    if (typeof window === 'undefined') return 'usr-001'
+    return getActiveUserId()
+  })
+  const [notifications, setNotifications] = useState(() => {
+    if (typeof window === 'undefined') return []
+    return getInAppNotificationsForUser(getActiveUserId())
+  })
 
   useEffect(() => {
     const refresh = () => {

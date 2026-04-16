@@ -15,6 +15,17 @@ function getTitle(pathname: string) {
   return segment.charAt(0).toUpperCase() + segment.slice(1)
 }
 
+const QUICK_ACTION_ROUTES: Record<string, string> = {
+  '/admin/users': '/admin/verification',
+  '/admin/bookings': '/admin/finance',
+  '/admin/verification': '/admin/verification',
+  '/admin/reports': '/admin/finance',
+}
+
+function getQuickActionRoute(pathname: string): string {
+  return QUICK_ACTION_ROUTES[pathname] ?? '/admin/verification'
+}
+
 export function AdminTopbar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -23,6 +34,22 @@ export function AdminTopbar() {
   const handleLogout = () => {
     setActiveAccountType('player')
     router.push('/auth/sign-in')
+  }
+
+  const handleQuickActions = () => {
+    router.push(getQuickActionRoute(pathname))
+  }
+
+  const handleFilters = () => {
+    const input = document.querySelector<HTMLInputElement>('input[type="text"]:not([aria-label])')
+    if (input) {
+      input.focus()
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  const handleBell = () => {
+    router.push('/admin/audit')
   }
 
   return (
@@ -39,13 +66,15 @@ export function AdminTopbar() {
             <input
               type="text"
               placeholder="Search users, facilities, reports"
+              aria-label="Search users, facilities, reports"
               className="w-full bg-transparent text-sm font-medium text-primary placeholder:text-primary/45 outline-none"
             />
           </label>
 
           <button
             type="button"
-            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-default)] bg-surface-container-low text-primary text-sm font-semibold"
+            onClick={handleQuickActions}
+            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-default)] bg-surface-container-low text-primary text-sm font-semibold hover:bg-surface-container-high transition-colors"
           >
             <Command className="w-4 h-4" />
             Quick Actions
@@ -54,7 +83,7 @@ export function AdminTopbar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-default)] bg-surface-container-low text-primary text-sm font-semibold"
+            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-default)] bg-surface-container-low text-primary text-sm font-semibold hover:bg-surface-container-high transition-colors"
             aria-label="Log out"
           >
             <LogOut className="w-4 h-4" />
@@ -63,16 +92,18 @@ export function AdminTopbar() {
 
           <button
             type="button"
-            className="w-10 h-10 rounded-[var(--radius-default)] bg-surface-container-low text-primary grid place-items-center"
-            aria-label="Open filters"
+            onClick={handleFilters}
+            className="w-10 h-10 rounded-[var(--radius-default)] bg-surface-container-low text-primary grid place-items-center hover:bg-surface-container-high transition-colors"
+            aria-label="Focus search filters"
           >
             <SlidersHorizontal className="w-4.5 h-4.5" />
           </button>
 
           <button
             type="button"
-            className="w-10 h-10 rounded-[var(--radius-default)] bg-primary-container text-surface-container-lowest grid place-items-center"
-            aria-label="Open alerts"
+            onClick={handleBell}
+            className="w-10 h-10 rounded-[var(--radius-default)] bg-primary-container text-surface-container-lowest grid place-items-center hover:opacity-90 transition-opacity"
+            aria-label="Go to audit log"
           >
             <Bell className="w-4.5 h-4.5" />
           </button>

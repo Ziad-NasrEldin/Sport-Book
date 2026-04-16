@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download, FilePlus2, Store } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -35,15 +35,23 @@ export default function AdminStoreManagementPage() {
   const [orderSearch, setOrderSearch] = useState('')
   const [orderStatus, setOrderStatus] = useState<(typeof orderStatusOptions)[number]>('All')
 
-  const { data: productsResponse, loading: productsLoading, error: productsError } = useApiCall('/admin/store/products')
-  const { data: ordersResponse, loading: ordersLoading, error: ordersError } = useApiCall('/admin/store/orders')
+  const { data: productsResponse, loading: productsLoading, error: productsError } = useApiCall('/admin-workspace/store/products')
+  const { data: ordersResponse, loading: ordersLoading, error: ordersError } = useApiCall('/admin-workspace/store/orders')
+
+  const handleProductStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setProductStatus(event.target.value as (typeof productStatusOptions)[number])
+  }, [])
+
+  const handleOrderStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setOrderStatus(event.target.value as (typeof orderStatusOptions)[number])
+  }, [])
+
+  if (productsError || ordersError) {
+    return <APIErrorFallback error={productsError || ordersError!} onRetry={() => window.location.reload()} />
+  }
 
   const storeProductsAdminData = productsResponse?.data || productsResponse || []
   const storeOrdersAdminData = ordersResponse?.data || ordersResponse || []
-
-  if (productsError) {
-    return <APIErrorFallback error={productsError} onRetry={() => window.location.reload()} />
-  }
 
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase()
@@ -339,7 +347,7 @@ export default function AdminStoreManagementPage() {
               controls={
                 <select
                   value={orderStatus}
-                  onChange={(event) => setOrderStatus(event.target.value as (typeof orderStatusOptions)[number])}
+                  onChange={handleOrderStatusChange}
                   className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
                 >
                   {orderStatusOptions.map((status) => (

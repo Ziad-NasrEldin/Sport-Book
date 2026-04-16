@@ -16,20 +16,22 @@ import {
 
 export default function CoachesPage() {
   const { data: coachesResponse, loading, error } = useApiCall('/player/coaches')
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   const coachesData = coachesResponse?.data || coachesResponse || []
   const [searchQuery, setSearchQuery] = useState('')
   const [activeSport, setActiveSport] = useState('All')
   const [minExperience, setMinExperience] = useState(0)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
-  const [favoriteCoachSlugs, setFavoriteCoachSlugs] = useState<string[]>(() =>
-    getFavorites().coaches.map((coach) => coach.slug),
-  )
+  const [favoriteCoachSlugs, setFavoriteCoachSlugs] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    return getFavorites().coaches.map((coach) => coach.slug)
+  })
 
   const sports = useMemo(() => ['All', ...new Set(coachesData.map((coach: any) => coach.sport))], [coachesData])
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
 
   useEffect(() => {
     const refreshFavorites = () => {

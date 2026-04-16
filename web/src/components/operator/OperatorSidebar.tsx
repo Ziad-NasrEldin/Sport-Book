@@ -35,6 +35,8 @@ export function OperatorSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? 'page' : undefined}
+              aria-label={item.label}
               className={`flex items-center gap-3 rounded-[var(--radius-default)] px-3.5 py-3 text-sm font-bold transition-colors ${
                 active
                   ? 'bg-primary-container text-surface-container-lowest'

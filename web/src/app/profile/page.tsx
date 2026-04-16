@@ -27,7 +27,10 @@ import {
 export default function ProfilePage() {
   const { data: profileResponse, loading, error } = useApiCall('/player/profile')
   const profileData = profileResponse?.data || profileResponse || {}
-  const [favorites, setFavorites] = useState(getFavorites())
+  const [favorites, setFavorites] = useState(() => {
+    if (typeof window === 'undefined') return { courts: [], coaches: [] }
+    return getFavorites()
+  })
 
   useEffect(() => {
     const refreshFavorites = () => {

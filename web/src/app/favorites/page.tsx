@@ -16,7 +16,10 @@ import {
 
 export default function FavoritesPage() {
   const router = useRouter()
-  const [favorites, setFavorites] = useState<FavoritesState>(() => getFavorites())
+  const [favorites, setFavorites] = useState<FavoritesState>(() => {
+    if (typeof window === 'undefined') return { courts: [], coaches: [] }
+    return getFavorites()
+  })
 
   useEffect(() => {
     const refreshFavorites = () => {

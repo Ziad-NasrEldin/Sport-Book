@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Check, FileSearch, X } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -38,6 +38,10 @@ export default function AdminVerificationPage() {
   const respondMutation = useApiMutation('/admin-workspace/role-upgrades/:id/respond', 'POST')
 
   const roleUpgradeRequests = roleUpgrades?.data || roleUpgrades || []
+
+  const handleStatusFilterChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(event.target.value as (typeof statusFilters)[number])
+  }, [])
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -95,7 +99,7 @@ export default function AdminVerificationPage() {
           controls={
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as (typeof statusFilters)[number])}
+              onChange={handleStatusFilterChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
               {statusFilters.map((status) => (

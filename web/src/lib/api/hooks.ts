@@ -3,6 +3,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api, APIError } from './client'
 
+const CSRF_TOKEN_KEY = 'sportbook-csrf-token'
+
+function getCSRFToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return window.sessionStorage.getItem(CSRF_TOKEN_KEY)
+}
+
+function setCSRFToken(token: string): void {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.setItem(CSRF_TOKEN_KEY, token)
+}
+
 export interface UseApiCallOptions {
   immediate?: boolean
   onSuccess?: (data: any) => void

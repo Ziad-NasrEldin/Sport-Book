@@ -34,13 +34,13 @@ export default function AdminDashboardPage() {
   const { data: bookings, loading: bookingsLoading } = useApiCall('/admin-workspace/bookings')
   const { data: transactions, loading: transactionsLoading } = useApiCall('/admin-workspace/finance')
 
-  const dashboardMetrics = dashboardData?.metrics || []
-  const pendingRefunds = transactions?.filter?.((item: any) => item.type === 'Refund')?.length || 0
-  const pendingBookings = bookings?.filter?.((item: any) => item.status === 'PENDING')?.length || 0
-
-  if (dashboardError) {
-    return <APIErrorFallback error={dashboardError} onRetry={() => window.location.reload()} />
+  if (dashboardError || upgradesError) {
+    return <APIErrorFallback error={dashboardError || upgradesError!} onRetry={() => window.location.reload()} />
   }
+
+  const dashboardMetrics = dashboardData?.metrics || []
+  const pendingRefunds = transactions?.data?.filter?.((item: any) => item.type === 'Refund')?.length || 0
+  const pendingBookings = bookings?.data?.filter?.((item: any) => item.status === 'PENDING')?.length || 0
 
   return (
     <div className="space-y-6">
@@ -51,14 +51,25 @@ export default function AdminDashboardPage() {
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Refresh KPIs
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+              onClick={() => {
+                const rows = ['Metric,Value,Delta', ...dashboardMetrics.map((m: any) => `${m.label},${m.value},${m.delta ?? ''}`)]
+                const blob = new Blob([rows.join('\n')], { type: 'text/csv' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `dashboard-${new Date().toISOString().slice(0, 10)}.csv`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 transition-opacity"
             >
               <Download className="w-4 h-4" />
               Export Snapshot
@@ -125,7 +136,7 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {roleUpgrades?.map((item: any) => (
+              {roleUpgrades?.data?.map((item: any) => (
                 <article key={item.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>

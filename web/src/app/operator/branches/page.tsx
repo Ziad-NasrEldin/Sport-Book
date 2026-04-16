@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Building2, Download } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -12,6 +12,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { BranchRecord, BranchStatus } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'ACTIVE', 'PENDING_SETUP', 'MAINTENANCE', 'PAUSED'] as const
 
@@ -31,7 +32,15 @@ export default function OperatorBranchesPage() {
   const { data: branchesResponse, loading, error } = useApiCall('/operator/branches')
   const branchesData = branchesResponse?.data || branchesResponse || []
 
-  const cityOptions = ['All', ...new Set(branchesData.map((branch: any) => branch.city))]
+  const handleCityChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCity(event.target.value)
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as (typeof statusOptions)[number])
+  }, [])
+
+  const cityOptions = ['All', ...new Set(branchesData.map((branch: BranchRecord) => branch.city))]
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -40,7 +49,7 @@ export default function OperatorBranchesPage() {
   const filteredBranches = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return branchesData.filter((branch: any) => {
+    return branchesData.filter((branch: BranchRecord) => {
       const matchesSearch =
         query.length === 0 ||
         branch.name?.toLowerCase()?.includes(query) ||
@@ -48,7 +57,7 @@ export default function OperatorBranchesPage() {
         branch.manager?.toLowerCase()?.includes(query)
 
       const matchesCity = selectedCity === 'All' || branch.city === selectedCity
-      const matchesStatus = selectedStatus === 'All' || branch.status === selectedStatus
+      const matchesStatus = selectedStatus === 'All' || (branch.status as string).toUpperCase() === selectedStatus
 
       return matchesSearch && matchesCity && matchesStatus
     })
@@ -88,7 +97,7 @@ export default function OperatorBranchesPage() {
             <>
               <select
                 value={selectedCity}
-                onChange={(event) => setSelectedCity(event.target.value)}
+                onChange={handleCityChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {cityOptions.map((city: any) => (
@@ -99,7 +108,7 @@ export default function OperatorBranchesPage() {
               </select>
               <select
                 value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as (typeof statusOptions)[number])}
+                onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {statusOptions.map((status) => (

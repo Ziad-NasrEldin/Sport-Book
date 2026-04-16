@@ -20,15 +20,15 @@ export default function AdminUserDetailsPage() {
   const params = useParams<{ userId: string }>()
   const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId
 
-  const { data: userResponse, loading, error } = useApiCall(`/admin/users/${userId}`)
+  const { data: userResponse, loading, error } = useApiCall(`/admin-workspace/users/${userId}`)
   const user = userResponse?.data || userResponse
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
 
   if (loading) {
     return <SkeletonStat />
+  }
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   if (!user) {

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download, UserCog, UserMinus } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -13,8 +13,21 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const roleOptions = ['All', 'PLAYER', 'COACH', 'OPERATOR', 'ADMIN'] as const
-const statusOptions = ['All', 'ACTIVE', 'PENDING', 'SUSPENDED', 'ARCHIVED'] as const
+const roleOptions = ['All', 'PLAYER', 'COACH', 'FACILITY', 'OPERATOR', 'ADMIN'] as const
+const statusOptions = ['All', 'ACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'] as const
+
+type UserRole = 'PLAYER' | 'COACH' | 'FACILITY' | 'OPERATOR' | 'ADMIN'
+type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING_VERIFICATION'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  status: UserStatus
+  country?: string
+  createdAt: string
+}
 
 function buildWhatsAppHref(userName: string, userId: string) {
   const message = `Hi ${userName}, this is the SportBook admin team regarding your account (${userId}).`
@@ -30,14 +43,18 @@ export default function AdminUsersPage() {
 
   const usersData = usersResponse?.data || usersResponse || []
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
+  const handleRoleChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedRole(event.target.value as (typeof roleOptions)[number])
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as (typeof statusOptions)[number])
+  }, [])
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return usersData.filter((user: any) => {
+    return usersData.filter((user: User) => {
       const matchSearch =
         query.length === 0 ||
         user.name?.toLowerCase()?.includes(query) ||
@@ -50,6 +67,10 @@ export default function AdminUsersPage() {
     })
   }, [search, selectedRole, selectedStatus, usersData])
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -59,18 +80,31 @@ export default function AdminUsersPage() {
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              onClick={() => {
+                const headers = 'ID,Name,Email,Role,Status,Created At'
+                const rows = filteredUsers.map((u: User) =>
+                  [u.id, u.name, u.email, u.role, u.status, u.createdAt].join(',')
+                )
+                const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors"
             >
               <Download className="w-4 h-4" />
               Export Users
             </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+            <Link
+              href="/admin/verification"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 transition-opacity"
             >
               <UserCog className="w-4 h-4" />
               Create Admin
-            </button>
+            </Link>
           </>
         }
       />
@@ -84,7 +118,7 @@ export default function AdminUsersPage() {
             <>
               <select
                 value={selectedRole}
-                onChange={(event) => setSelectedRole(event.target.value as (typeof roleOptions)[number])}
+                onChange={handleRoleChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {roleOptions.map((role) => (
@@ -95,7 +129,7 @@ export default function AdminUsersPage() {
               </select>
               <select
                 value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as (typeof statusOptions)[number])}
+                onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
               >
                 {statusOptions.map((status) => (

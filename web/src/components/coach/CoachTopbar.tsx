@@ -1,7 +1,7 @@
 'use client'
 
 import { Bell, Search, Command, SlidersHorizontal } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { coachNavItems } from '@/components/coach/coachNavigation'
 
 function getTitle(pathname: string) {
@@ -16,7 +16,26 @@ function getTitle(pathname: string) {
 
 export function CoachTopbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const title = getTitle(pathname)
+
+  const handleQuickActions = () => {
+    if (pathname.includes('availability')) router.push('/coach/services')
+    else if (pathname.includes('services')) router.push('/coach/availability')
+    else router.push('/coach/bookings')
+  }
+
+  const handleFilters = () => {
+    const input = document.querySelector<HTMLInputElement>('input[type="text"]:not([aria-label])')
+    if (input) {
+      input.focus()
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  const handleBell = () => {
+    router.push('/coach/dashboard')
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-primary/5 bg-surface/85 backdrop-blur-xl">
@@ -38,7 +57,8 @@ export function CoachTopbar() {
 
           <button
             type="button"
-            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-default)] bg-surface-container-low text-primary text-sm font-semibold"
+            onClick={handleQuickActions}
+            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-default)] bg-surface-container-low text-primary text-sm font-semibold hover:bg-surface-container-high transition-colors"
           >
             <Command className="w-4 h-4" />
             Quick Actions
@@ -46,16 +66,18 @@ export function CoachTopbar() {
 
           <button
             type="button"
-            className="w-10 h-10 rounded-[var(--radius-default)] bg-surface-container-low text-primary grid place-items-center"
-            aria-label="Open filters"
+            onClick={handleFilters}
+            className="w-10 h-10 rounded-[var(--radius-default)] bg-surface-container-low text-primary grid place-items-center hover:bg-surface-container-high transition-colors"
+            aria-label="Focus search filters"
           >
             <SlidersHorizontal className="w-4.5 h-4.5" />
           </button>
 
           <button
             type="button"
-            className="w-10 h-10 rounded-[var(--radius-default)] bg-primary-container text-surface-container-lowest grid place-items-center"
-            aria-label="Open alerts"
+            onClick={handleBell}
+            className="w-10 h-10 rounded-[var(--radius-default)] bg-primary-container text-surface-container-lowest grid place-items-center hover:opacity-90 transition-opacity"
+            aria-label="Go to dashboard"
           >
             <Bell className="w-4.5 h-4.5" />
           </button>

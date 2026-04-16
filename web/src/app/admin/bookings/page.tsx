@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Download, Repeat2 } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -33,9 +33,9 @@ export default function AdminBookingsPage() {
 
   const bookingsData = bookingsResponse?.data || bookingsResponse || []
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as BookingStatus)
+  }, [])
 
   const visibleBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -53,6 +53,10 @@ export default function AdminBookingsPage() {
       return matchSearch && matchStatus
     })
   }, [search, selectedStatus, bookingsData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const updateStatus = async (id: string, status: string) => {
     try {
@@ -87,7 +91,7 @@ export default function AdminBookingsPage() {
           controls={
             <select
               value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value as BookingStatus)}
+              onChange={handleStatusChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
               {statusOptions.map((status) => (

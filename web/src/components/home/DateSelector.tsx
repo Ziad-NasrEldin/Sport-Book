@@ -99,7 +99,7 @@ export function DateSelector() {
         clearTimeout(scrollEndTimerRef.current)
       }
     }
-  }, [])
+  }, [selectedDate])
 
   return (
     <section className="mb-10 md:mb-12">

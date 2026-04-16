@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Building2, Download } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -11,6 +11,13 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+
+function extractStringValue(value: any): string {
+  if (typeof value === 'object' && value !== null) {
+    return value.name || value.id || value.label || JSON.stringify(value)
+  }
+  return value || ''
+}
 
 function formatEgp(value: number) {
   return new Intl.NumberFormat('en-EG', {
@@ -27,7 +34,11 @@ export default function AdminFacilitiesPage() {
   const { data: facilitiesResponse, loading, error } = useApiCall('/admin-workspace/facilities')
   const facilitiesData = facilitiesResponse?.data || facilitiesResponse || []
 
-  const cityOptions = ['All', ...new Set(facilitiesData.map((item: any) => item.city).filter(Boolean))]
+  const handleCityFilterChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setCityFilter(event.target.value)
+  }, [])
+
+  const cityOptions = ['All', ...new Set(facilitiesData.map((item: any) => extractStringValue(item.city)).filter(Boolean))]
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -80,7 +91,7 @@ export default function AdminFacilitiesPage() {
           controls={
             <select
               value={cityFilter}
-              onChange={(event) => setCityFilter(event.target.value)}
+              onChange={handleCityFilterChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
               {cityOptions.map((city: any) => (

@@ -23,9 +23,11 @@ export function AdminFilterBar({
       <label className="flex items-center gap-2.5 rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 w-full xl:max-w-sm">
         <Search className="w-4 h-4 text-primary/45" />
         <input
+          type="text"
           value={searchValue}
           onChange={handleSearch}
           placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
           className="w-full bg-transparent text-sm text-primary placeholder:text-primary/45 outline-none"
         />
       </label>

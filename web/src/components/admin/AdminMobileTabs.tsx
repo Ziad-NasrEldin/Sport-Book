@@ -22,6 +22,8 @@ export function AdminMobileTabs() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? 'page' : undefined}
+              aria-label={item.label}
               className={`px-3 py-2 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.14em] whitespace-nowrap ${
                 active
                   ? 'bg-primary-container text-surface-container-lowest'

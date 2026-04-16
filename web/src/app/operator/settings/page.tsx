@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -13,6 +13,30 @@ export default function OperatorSettingsPage() {
   const [allowCashPayments, setAllowCashPayments] = useState(true)
   const [strictMaintenanceBlocks, setStrictMaintenanceBlocks] = useState(true)
   const [saved, setSaved] = useState(false)
+
+  const handleDefaultSlotDurationChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setDefaultSlotDuration(event.target.value)
+  }, [])
+
+  const handleBufferTimeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setBufferTime(event.target.value)
+  }, [])
+
+  const handleLateCancellationFeeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setLateCancellationFee(event.target.value)
+  }, [])
+
+  const handleAutoConfirmBookingsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setAutoConfirmBookings(event.target.checked)
+  }, [])
+
+  const handleAllowCashPaymentsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setAllowCashPayments(event.target.checked)
+  }, [])
+
+  const handleStrictMaintenanceBlocksChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setStrictMaintenanceBlocks(event.target.checked)
+  }, [])
 
   const handleSave = () => {
     setSaved(true)
@@ -52,7 +76,7 @@ export default function OperatorSettingsPage() {
                 min={30}
                 max={180}
                 value={defaultSlotDuration}
-                onChange={(event) => setDefaultSlotDuration(event.target.value)}
+                onChange={handleDefaultSlotDurationChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -64,7 +88,7 @@ export default function OperatorSettingsPage() {
                 min={0}
                 max={45}
                 value={bufferTime}
-                onChange={(event) => setBufferTime(event.target.value)}
+                onChange={handleBufferTimeChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -76,7 +100,7 @@ export default function OperatorSettingsPage() {
                 min={0}
                 max={500}
                 value={lateCancellationFee}
-                onChange={(event) => setLateCancellationFee(event.target.value)}
+                onChange={handleLateCancellationFeeChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -93,7 +117,7 @@ export default function OperatorSettingsPage() {
               <input
                 type="checkbox"
                 checked={autoConfirmBookings}
-                onChange={(event) => setAutoConfirmBookings(event.target.checked)}
+                onChange={handleAutoConfirmBookingsChange}
                 className="h-5 w-5 accent-primary-container"
               />
             </label>
@@ -106,7 +130,7 @@ export default function OperatorSettingsPage() {
               <input
                 type="checkbox"
                 checked={allowCashPayments}
-                onChange={(event) => setAllowCashPayments(event.target.checked)}
+                onChange={handleAllowCashPaymentsChange}
                 className="h-5 w-5 accent-primary-container"
               />
             </label>
@@ -119,7 +143,7 @@ export default function OperatorSettingsPage() {
               <input
                 type="checkbox"
                 checked={strictMaintenanceBlocks}
-                onChange={(event) => setStrictMaintenanceBlocks(event.target.checked)}
+                onChange={handleStrictMaintenanceBlocksChange}
                 className="h-5 w-5 accent-primary-container"
               />
             </label>

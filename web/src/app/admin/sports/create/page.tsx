@@ -65,9 +65,9 @@ const templates: Record<TemplateName, SportTemplate> = {
 }
 
 export default function AdminCreateSportPage() {
-  const { data: sportsResponse } = useApiCall('/admin/sports')
+  const { data: sportsResponse } = useApiCall('/admin-workspace/sports')
   const sportsData = sportsResponse?.data || sportsResponse || []
-  const createMutation = useApiMutation('/admin/sports', 'POST')
+  const createMutation = useApiMutation('/admin-workspace/sports', 'POST')
 
   const [name, setName] = useState('Pickleball')
   const [slug, setSlug] = useState('pickleball')

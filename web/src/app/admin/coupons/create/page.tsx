@@ -107,7 +107,7 @@ export default function AdminCreateCouponPage() {
       campaign: campaignName,
       status,
       valueLabel,
-      createdAt: new Date().toLocaleString(),
+      createdAt: typeof window === 'undefined' ? '2026-04-16 09:14' : new Date().toLocaleString(),
     }
 
     setCreatedCoupons((prev) => [entry, ...prev])

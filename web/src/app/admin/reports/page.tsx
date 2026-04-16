@@ -17,7 +17,7 @@ export default function AdminReportsPage() {
   const [selectedPreset, setSelectedPreset] = useState<(typeof presets)[number]>('Revenue')
   const [dateRange, setDateRange] = useState('Last 30 days')
 
-  const { data: reportsResponse, loading, error } = useApiCall('/admin/reports')
+  const { data: reportsResponse, loading, error } = useApiCall('/admin-workspace/reports')
   const reportsData = reportsResponse?.data || reportsResponse || []
 
   if (error) {

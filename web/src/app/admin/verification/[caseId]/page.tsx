@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, Check, FileWarning, UserPlus2, X } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -27,6 +27,7 @@ type TimelineItem = {
 }
 
 function nowStamp() {
+  if (typeof window === 'undefined') return '2026-04-16 09:14'
   return new Date().toLocaleString('en-GB', { hour12: false })
 }
 
@@ -34,35 +35,52 @@ export default function AdminVerificationCasePage() {
   const params = useParams<{ caseId: string }>()
   const caseId = params.caseId
 
-  const { data: caseResponse, loading, error } = useApiCall(`/admin/verification/${caseId}`)
-  const updateStatusMutation = useApiMutation(`/admin/verification/${caseId}/status`, 'PUT')
+  const { data: caseResponse, loading, error } = useApiCall(`/admin-workspace/verification/${caseId}`)
+  const updateStatusMutation = useApiMutation(`/admin-workspace/verification/${caseId}/status`, 'PUT')
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const verificationCase = caseResponse?.data || caseResponse
+  const timelineIdCounter = useRef(0)
 
-  const [status, setStatus] = useState<CaseStatus>(verificationCase?.status || 'Pending Review')
-  const [assignee, setAssignee] = useState<string | null>(verificationCase?.assignee || 'Compliance Team')
+  const [status, setStatus] = useState<CaseStatus>('Pending Review')
+  const [assignee, setAssignee] = useState<string | null>('Compliance Team')
   const [adminNote, setAdminNote] = useState('')
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(verificationCase?.checklist || [
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([
     { id: 'doc-id', label: 'National ID / Passport validation', verified: true },
     { id: 'doc-face', label: 'Face match and selfie confidence', verified: false },
     { id: 'doc-license', label: 'Business or coaching license authenticity', verified: true },
     { id: 'doc-bank', label: 'Bank account ownership proof', verified: false },
   ])
-  const [timeline, setTimeline] = useState<TimelineItem[]>(verificationCase?.timeline || [
+  const [timeline, setTimeline] = useState<TimelineItem[]>([
     { id: 'seed-1', message: 'Case created and queued for review.', at: '2026-04-16 09:14' },
     { id: 'seed-2', message: 'Automated risk scoring completed.', at: '2026-04-16 09:15' },
   ])
 
   useEffect(() => {
-    if (verificationCase?.status) {
-      setStatus(verificationCase.status as CaseStatus)
+    if (verificationCase) {
+      if (verificationCase.status) {
+        setStatus(verificationCase.status as CaseStatus)
+      }
+      if (verificationCase.assignee) {
+        setAssignee(verificationCase.assignee)
+      }
+      if (verificationCase.checklist) {
+        setChecklist(verificationCase.checklist)
+      }
+      if (verificationCase.timeline) {
+        setTimeline(verificationCase.timeline)
+      }
     }
   }, [verificationCase])
 
   const addTimeline = (message: string) => {
+    timelineIdCounter.current += 1
     setTimeline((prev) => [
       {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id: `timeline-${timelineIdCounter.current}`,
         message,
         at: nowStamp(),
       },
@@ -104,10 +122,6 @@ export default function AdminVerificationCasePage() {
     if (!adminNote.trim()) return
     addTimeline(`Admin note added: ${adminNote.trim()}`)
     setAdminNote('')
-  }
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   if (loading) {

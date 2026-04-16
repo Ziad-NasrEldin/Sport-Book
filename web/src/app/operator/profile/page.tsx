@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { Save, ShieldCheck, UserCircle2 } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -32,6 +32,34 @@ export default function OperatorProfilePage() {
     if (profileData.notifyIncidents !== undefined) setNotifyIncidents(profileData.notifyIncidents)
     if (profileData.notifyReports !== undefined) setNotifyReports(profileData.notifyReports)
   }, [profileData])
+
+  const handleFullNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFullName(event.target.value)
+  }, [])
+
+  const handleTitleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(event.target.value)
+  }, [])
+
+  const handleEmailChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value)
+  }, [])
+
+  const handlePhoneChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(event.target.value)
+  }, [])
+
+  const handleNotifyApprovalsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setNotifyApprovals(event.target.checked)
+  }, [])
+
+  const handleNotifyIncidentsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setNotifyIncidents(event.target.checked)
+  }, [])
+
+  const handleNotifyReportsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setNotifyReports(event.target.checked)
+  }, [])
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -87,7 +115,7 @@ export default function OperatorProfilePage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Full name</span>
               <input
                 value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
+                onChange={handleFullNameChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -96,7 +124,7 @@ export default function OperatorProfilePage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Role title</span>
               <input
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={handleTitleChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -105,7 +133,7 @@ export default function OperatorProfilePage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Email address</span>
               <input
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={handleEmailChange}
                 type="email"
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
@@ -115,7 +143,7 @@ export default function OperatorProfilePage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Phone</span>
               <input
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={handlePhoneChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -133,7 +161,7 @@ export default function OperatorProfilePage() {
                 <input
                   type="checkbox"
                   checked={notifyApprovals}
-                  onChange={(event) => setNotifyApprovals(event.target.checked)}
+                  onChange={handleNotifyApprovalsChange}
                   className="h-5 w-5 accent-primary-container"
                 />
               </label>
@@ -146,7 +174,7 @@ export default function OperatorProfilePage() {
                 <input
                   type="checkbox"
                   checked={notifyIncidents}
-                  onChange={(event) => setNotifyIncidents(event.target.checked)}
+                  onChange={handleNotifyIncidentsChange}
                   className="h-5 w-5 accent-primary-container"
                 />
               </label>
@@ -159,7 +187,7 @@ export default function OperatorProfilePage() {
                 <input
                   type="checkbox"
                   checked={notifyReports}
-                  onChange={(event) => setNotifyReports(event.target.checked)}
+                  onChange={handleNotifyReportsChange}
                   className="h-5 w-5 accent-primary-container"
                 />
               </label>

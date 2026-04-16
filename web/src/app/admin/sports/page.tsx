@@ -13,14 +13,10 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
 export default function AdminSportsPage() {
-  const { data: sportsResponse, loading, error, refetch } = useApiCall('/admin/sports')
-  const toggleMutation = useApiMutation('/admin/sports/:id', 'PATCH')
+  const { data: sportsResponse, loading, error, refetch } = useApiCall('/admin-workspace/sports')
+  const toggleMutation = useApiMutation('/admin-workspace/sports/:id', 'PATCH')
 
   const sportsData = sportsResponse?.data || sportsResponse || []
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
 
   const toggleSport = async (id: string, currentStatus: string) => {
     try {
@@ -30,6 +26,10 @@ export default function AdminSportsPage() {
     } catch (err) {
       console.error('Failed to toggle sport:', err)
     }
+  }
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   return (

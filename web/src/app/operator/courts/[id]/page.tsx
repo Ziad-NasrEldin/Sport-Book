@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, Save, Wrench } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -35,6 +35,38 @@ export default function OperatorCourtDetailsPage() {
   const [nextMaintenance, setNextMaintenance] = useState(court?.nextMaintenance ?? '2026-05-01')
   const [cancellationWindow, setCancellationWindow] = useState('4')
   const [saved, setSaved] = useState(false)
+
+  const handleDisplayNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setDisplayName(event.target.value)
+  }, [])
+
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatus(event.target.value as (typeof statusOptions)[number])
+  }, [])
+
+  const handleSurfaceChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSurface(event.target.value as (typeof surfaceOptions)[number])
+  }, [])
+
+  const handlePricePerHourChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setPricePerHour(event.target.value)
+  }, [])
+
+  const handleIndoorChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setIndoor(event.target.checked)
+  }, [])
+
+  const handleLightsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setLights(event.target.checked)
+  }, [])
+
+  const handleNextMaintenanceChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setNextMaintenance(event.target.value)
+  }, [])
+
+  const handleCancellationWindowChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setCancellationWindow(event.target.value)
+  }, [])
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -128,7 +160,7 @@ export default function OperatorCourtDetailsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Court name</span>
               <input
                 value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
+                onChange={handleDisplayNameChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -137,7 +169,7 @@ export default function OperatorCourtDetailsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Status</span>
               <select
                 value={status}
-                onChange={(event) => setStatus(event.target.value as (typeof statusOptions)[number])}
+                onChange={handleStatusChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               >
                 {statusOptions.map((option) => (
@@ -152,7 +184,7 @@ export default function OperatorCourtDetailsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Surface type</span>
               <select
                 value={surface}
-                onChange={(event) => setSurface(event.target.value as (typeof surfaceOptions)[number])}
+                onChange={handleSurfaceChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               >
                 {surfaceOptions.map((option) => (
@@ -172,7 +204,7 @@ export default function OperatorCourtDetailsPage() {
                 <input
                   type="checkbox"
                   checked={indoor}
-                  onChange={(event) => setIndoor(event.target.checked)}
+                  onChange={handleIndoorChange}
                   className="h-5 w-5 accent-primary-container"
                 />
               </label>
@@ -185,7 +217,7 @@ export default function OperatorCourtDetailsPage() {
                 <input
                   type="checkbox"
                   checked={lights}
-                  onChange={(event) => setLights(event.target.checked)}
+                  onChange={handleLightsChange}
                   className="h-5 w-5 accent-primary-container"
                 />
               </label>
@@ -199,7 +231,7 @@ export default function OperatorCourtDetailsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Price per hour (EGP)</span>
               <input
                 value={pricePerHour}
-                onChange={(event) => setPricePerHour(event.target.value)}
+                onChange={handlePricePerHourChange}
                 type="number"
                 min={0}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -211,7 +243,7 @@ export default function OperatorCourtDetailsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Cancellation window (hours)</span>
               <input
                 value={cancellationWindow}
-                onChange={(event) => setCancellationWindow(event.target.value)}
+                onChange={handleCancellationWindowChange}
                 type="number"
                 min={1}
                 max={24}
@@ -223,7 +255,7 @@ export default function OperatorCourtDetailsPage() {
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Next maintenance date</span>
               <input
                 value={nextMaintenance}
-                onChange={(event) => setNextMaintenance(event.target.value)}
+                onChange={handleNextMaintenanceChange}
                 type="date"
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />

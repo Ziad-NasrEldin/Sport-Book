@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Star, MapPin } from 'lucide-react'
 
 // Dummy properties for the previous booking context
@@ -55,7 +54,7 @@ export function ReviewModal({ isOpen, onClose, onComplete }: ReviewModalProps) {
               </span>
             </div>
             <h3 className="text-[19px] font-bold text-primary mb-1">
-              The Regent's Park - Court 04
+              The Regent&apos;s Park - Court 04
             </h3>
             <p className="text-primary/60 text-[13px] font-medium pt-0.5">October 24, 2023</p>
           </div>

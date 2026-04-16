@@ -56,6 +56,7 @@ export async function createApp() {
   await app.register(coachWorkspaceRoutes, { prefix: '/api/v1/coach-workspace' })
   await app.register(operatorWorkspaceRoutes, { prefix: '/api/v1/operator-workspace' })
   await app.register(adminWorkspaceRoutes, { prefix: '/api/v1/admin-workspace' })
+  await app.register(adminWorkspaceRoutes, { prefix: '/api/v1/admin' })
   await app.register(playerRoutes, { prefix: '/api/v1/player' })
 
   return app

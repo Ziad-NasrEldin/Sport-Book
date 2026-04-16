@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -17,10 +17,14 @@ export default function AdminReviewsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('All')
 
-  const { data: reviewsResponse, loading, error, refetch } = useApiCall('/admin/reviews')
-  const updateMutation = useApiMutation('/admin/reviews/:id/status', 'PATCH')
+  const { data: reviewsResponse, loading, error, refetch } = useApiCall('/admin-workspace/reviews')
+  const updateMutation = useApiMutation('/admin-workspace/reviews/:id/status', 'PATCH')
 
   const reviewsData = reviewsResponse?.data || reviewsResponse || []
+
+  const handleStatusFilterChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(event.target.value as (typeof statusOptions)[number])
+  }, [])
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -52,6 +56,10 @@ export default function AdminReviewsPage() {
     }
   }
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -67,7 +75,7 @@ export default function AdminReviewsPage() {
           controls={
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}
+              onChange={handleStatusFilterChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
             >
               {statusOptions.map((status) => (

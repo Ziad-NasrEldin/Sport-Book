@@ -16,6 +16,18 @@ const TOKEN_STORAGE_KEY = {
   REFRESH: 'sportbook-refresh-token',
 }
 
+const CSRF_TOKEN_KEY = 'sportbook-csrf-token'
+
+function getCSRFToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return window.sessionStorage.getItem(CSRF_TOKEN_KEY)
+}
+
+function setCSRFToken(token: string): void {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.setItem(CSRF_TOKEN_KEY, token)
+}
+
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem(TOKEN_STORAGE_KEY.ACCESS)
@@ -71,10 +83,10 @@ async function handleResponse(response: Response): Promise<any> {
   if (!response.ok) {
     if (response.status === 401) {
       try {
-        const newToken = await refreshAccessToken()
+        await refreshAccessToken()
         // Retry the original request with new token
         return null // Signal to retry
-      } catch (error) {
+      } catch {
         clearTokens()
         // Redirect to sign-in page
         if (typeof window !== 'undefined') {
@@ -117,7 +129,7 @@ async function fetchWithRetry(
   try {
     const response = await fetch(url, options)
     return response
-  } catch (error) {
+  } catch {
     if (retries <= 0) {
       throw new NetworkError('Failed to connect to server')
     }
@@ -141,6 +153,11 @@ export async function apiRequest<T = any>(
 
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
+  }
+
+  const csrfToken = getCSRFToken()
+  if (csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken
   }
 
   let response = await fetchWithRetry(url, { ...options, headers })
@@ -170,4 +187,4 @@ export const api = {
     apiRequest<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
 }
 
-export { getAccessToken, getRefreshToken, setTokens, clearTokens }
+export { getAccessToken, getRefreshToken, setTokens, clearTokens, getCSRFToken, setCSRFToken }
