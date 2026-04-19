@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react'
 
-type Trend = 'up' | 'down' | 'flat'
+type Trend = 'up' | 'down' | 'flat' | 'steady'
 
 type AdminStatCardProps = {
   label: string

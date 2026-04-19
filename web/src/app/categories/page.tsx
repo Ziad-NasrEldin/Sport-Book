@@ -2,20 +2,39 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowUpRight, Trophy, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Trophy, Sparkles, Loader2 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
-const categories = [
-  { id: 'cat-tennis', name: 'Tennis', courts: 124, fromPrice: 400, tone: 'from-[#002366] to-[#153e8d]' },
-  { id: 'cat-padel', name: 'Padel', courts: 48, fromPrice: 550, tone: 'from-[#fd8b00] to-[#d36a00]' },
-  { id: 'cat-squash', name: 'Squash', courts: 32, fromPrice: 300, tone: 'from-[#1e2b56] to-[#00113a]' },
-  { id: 'cat-football', name: 'Football', courts: 22, fromPrice: 850, tone: 'from-[#14532d] to-[#0f3f24]' },
-  { id: 'cat-basketball', name: 'Basketball', courts: 17, fromPrice: 620, tone: 'from-[#7c2d12] to-[#9a3412]' },
-  { id: 'cat-badminton', name: 'Badminton', courts: 28, fromPrice: 260, tone: 'from-[#1e3a8a] to-[#1d4ed8]' },
-]
+const toneMap: Record<string, string> = {
+  Tennis: 'from-[#002366] to-[#153e8d]',
+  Padel: 'from-[#fd8b00] to-[#d36a00]',
+  Squash: 'from-[#1e2b56] to-[#00113a]',
+  Football: 'from-[#14532d] to-[#0f3f24]',
+  Basketball: 'from-[#7c2d12] to-[#9a3412]',
+  Badminton: 'from-[#1e3a8a] to-[#1d4ed8]',
+}
+
+const defaultTone = 'from-[#1e3a8a] to-[#3b82f6]'
 
 export default function CategoriesPage() {
   const router = useRouter()
+  const { data: sportsData, loading, error } = useApiCall('/sports')
+  const sports: any[] = Array.isArray(sportsData) ? sportsData : (Array.isArray(sportsData?.data) ? sportsData.data : [])
+
+  if (error) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+      </main>
+    )
+  }
+
+  const totalCourts = sports.reduce((sum: number, s: any) => sum + (s.courts || s.courtCount || 0), 0)
+  const minPrice = sports.length > 0
+    ? Math.min(...sports.map((s: any) => s.fromPrice || s.minPrice || s.pricePerHour || Infinity))
+    : 0
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -51,67 +70,71 @@ export default function CategoriesPage() {
         </div>
       </header>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-6 md:space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
-          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Sports</span>
-              <Trophy className="w-5 h-5 text-primary-container" />
-            </div>
-            <p className="text-4xl font-black tracking-tight text-primary">{categories.length}</p>
-          </article>
+      {loading ? (
+        <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto py-12 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </section>
+      ) : (
+        <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-6 md:space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Sports</span>
+                <Trophy className="w-5 h-5 text-primary-container" />
+              </div>
+              <p className="text-4xl font-black tracking-tight text-primary">{sports.length}</p>
+            </article>
 
-          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Total Courts</span>
-              <Sparkles className="w-5 h-5 text-secondary-container" />
-            </div>
-            <p className="text-4xl font-black tracking-tight text-primary">
-              {categories.reduce((sum, category) => sum + category.courts, 0)}
-            </p>
-          </article>
+            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Total Courts</span>
+                <Sparkles className="w-5 h-5 text-secondary-container" />
+              </div>
+              <p className="text-4xl font-black tracking-tight text-primary">{totalCourts}</p>
+            </article>
 
-          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Starting From</span>
-              <span className="text-xs font-lexend font-bold uppercase tracking-widest text-secondary-container">EGP</span>
-            </div>
-            <p className="text-4xl font-black tracking-tight text-primary">260</p>
-          </article>
-        </div>
+            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Starting From</span>
+                <span className="text-xs font-lexend font-bold uppercase tracking-widest text-secondary-container">EGP</span>
+              </div>
+              <p className="text-4xl font-black tracking-tight text-primary">{minPrice === Infinity ? 0 : minPrice}</p>
+            </article>
+          </div>
 
-        <section className="space-y-4 md:space-y-5">
-          <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Choose Your Sport</h2>
+          <section className="space-y-4 md:space-y-5">
+            <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Choose Your Sport</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/courts?sport=${encodeURIComponent(category.name)}`}
-                className={`group relative min-h-[210px] rounded-[var(--radius-lg)] overflow-hidden bg-gradient-to-br ${category.tone} p-5 md:p-6 shadow-ambient text-white flex flex-col justify-between`}
-              >
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-black tracking-tight">{category.name}</h3>
-                  <p className="mt-2 text-xs font-lexend uppercase tracking-widest text-white/70">{category.courts} Courts Available</p>
-                </div>
-
-                <div className="flex items-end justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {sports.map((category: any) => (
+                <Link
+                  key={category.id || category.name}
+                  href={`/courts?sport=${encodeURIComponent(category.name)}`}
+                  className={`group relative min-h-[210px] rounded-[var(--radius-lg)] overflow-hidden bg-gradient-to-br ${toneMap[category.name] || defaultTone} p-5 md:p-6 shadow-ambient text-white flex flex-col justify-between`}
+                >
                   <div>
-                    <p className="text-[10px] font-lexend uppercase tracking-widest text-white/70">From</p>
-                    <p className="text-xl font-extrabold">{category.fromPrice} EGP/hr</p>
+                    <h3 className="text-2xl md:text-3xl font-black tracking-tight">{category.name}</h3>
+                    <p className="mt-2 text-xs font-lexend uppercase tracking-widest text-white/70">{category.courts || category.courtCount || 0} Courts Available</p>
                   </div>
 
-                  <span className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <ArrowUpRight className="w-5 h-5" />
-                  </span>
-                </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] font-lexend uppercase tracking-widest text-white/70">From</p>
+                      <p className="text-xl font-extrabold">{category.fromPrice || category.minPrice || category.pricePerHour || 0} EGP/hr</p>
+                    </div>
 
-                <div className="absolute -right-8 -bottom-8 h-24 w-24 rounded-full border-[12px] border-white/15" />
-              </Link>
-            ))}
-          </div>
+                    <span className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <ArrowUpRight className="w-5 h-5" />
+                    </span>
+                  </div>
+
+                  <div className="absolute -right-8 -bottom-8 h-24 w-24 rounded-full border-[12px] border-white/15" />
+                </Link>
+              ))}
+            </div>
+          </section>
         </section>
-      </section>
+      )}
 
       <FloatingNav />
     </main>

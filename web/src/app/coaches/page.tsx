@@ -13,15 +13,11 @@ import {
   getFavorites,
   toggleCoachFavorite,
 } from '@/lib/favorites'
+import type { PublicCoachSummary } from '@/lib/coach/types'
 
 export default function CoachesPage() {
-  const { data: coachesResponse, loading, error } = useApiCall('/player/coaches')
+  const { data: coachesResponse, loading, error, refetch } = useApiCall('/coaches')
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
-
-  const coachesData = coachesResponse?.data || coachesResponse || []
   const [searchQuery, setSearchQuery] = useState('')
   const [activeSport, setActiveSport] = useState('All')
   const [minExperience, setMinExperience] = useState(0)
@@ -30,8 +26,6 @@ export default function CoachesPage() {
     if (typeof window === 'undefined') return []
     return getFavorites().coaches.map((coach) => coach.slug)
   })
-
-  const sports = useMemo(() => ['All', ...new Set(coachesData.map((coach: any) => coach.sport))], [coachesData])
 
   useEffect(() => {
     const refreshFavorites = () => {
@@ -45,26 +39,43 @@ export default function CoachesPage() {
     }
   }, [])
 
+  const coachesData: any[] = Array.isArray(coachesResponse)
+    ? coachesResponse
+    : Array.isArray((coachesResponse as any)?.items)
+      ? (coachesResponse as any).items
+      : Array.isArray((coachesResponse as any)?.data)
+        ? (coachesResponse as any).data
+        : []
+
+  const sportLabel = (sport: any): string => typeof sport === 'string' ? sport : (sport?.displayName || sport?.name || '')
+
+  const sports = useMemo(() => ['All', ...new Set(coachesData.map((coach: any) => sportLabel(coach.sport)).filter(Boolean))], [coachesData])
+
   const filteredCoaches = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
 
     return coachesData.filter((coach: any) => {
+      const sportName = sportLabel(coach.sport)
       const matchesSearch =
         query.length === 0 ||
         coach.name.toLowerCase().includes(query) ||
-        coach.sport.toLowerCase().includes(query)
-      const matchesSport = activeSport === 'All' || coach.sport === activeSport
+        sportName.toLowerCase().includes(query)
+      const matchesSport = activeSport === 'All' || sportName === activeSport
       const matchesExperience = coach.experienceYears >= minExperience
 
       return matchesSearch && matchesSport && matchesExperience
     })
   }, [searchQuery, activeSport, minExperience, coachesData])
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={refetch} />
+  }
+
   const getCoachRating = (experienceYears: number) => {
     return Math.min(5, Number((4.4 + experienceYears / 20).toFixed(1)))
   }
 
-  const handleToggleCoachFavorite = (coach: any) => {
+  const handleToggleCoachFavorite = (coach: PublicCoachSummary) => {
     toggleCoachFavorite({
       slug: coach.slug,
       name: coach.name,
@@ -93,7 +104,7 @@ export default function CoachesPage() {
           </Link>
           <div>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Coaches</h1>
-            <p className="text-sm md:text-base text-primary/60">Choose your coach and view available time slots</p>
+            <p className="text-sm md:text-base text-primary/60">Choose your coach and view available session slots.</p>
           </div>
         </div>
       </header>
@@ -125,28 +136,25 @@ export default function CoachesPage() {
             </button>
           </div>
 
-          <div
-            id="coach-filters"
-            className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} md:block`}
-          >
+          <div id="coach-filters" className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} md:block`}>
             <div className="space-y-2.5">
               <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Sport</p>
               <div className="flex flex-wrap gap-2">
-                {sports.map((sport: any) => {
+                {sports.map((sport) => {
                   const isActive = activeSport === sport
 
                   return (
                     <button
                       key={sport}
                       type="button"
-                      onClick={() => setActiveSport(sport as string)}
+                      onClick={() => setActiveSport(sport)}
                       className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-colors ${
                         isActive
                           ? 'bg-primary-container text-surface-container-lowest'
                           : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high'
                       }`}
                     >
-                      {sport as string}
+                      {sport}
                     </button>
                   )
                 })}
@@ -185,7 +193,7 @@ export default function CoachesPage() {
 
         {loading ? (
           <SkeletonStat />
-        ) : filteredCoaches.map((coach: any) => (
+        ) : filteredCoaches.map((coach) => (
           <article key={coach.slug} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient">
             <div className="flex gap-3 md:gap-4 items-start">
               <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
@@ -203,7 +211,7 @@ export default function CoachesPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-[11px] font-lexend font-bold uppercase tracking-wide text-primary/75">
                     <Clock3 className="w-3.5 h-3.5" />
-                    {coach.sport}
+                    {sportLabel(coach.sport)}
                   </span>
                 </div>
               </div>

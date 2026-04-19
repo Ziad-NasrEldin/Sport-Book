@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
@@ -13,9 +13,17 @@ import {
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { resetOnboardingCompleted } from '@/lib/onboarding'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 export default function PreferencesPage() {
   const router = useRouter()
+  const { data: prefsData, loading, error, refetch } = useApiCall<any>('/users/me/preferences')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
   const [language, setLanguage] = useState('English')
   const [sports, setSports] = useState<string[]>(['Tennis', 'Padel'])
   const [duration, setDuration] = useState('90 min')
@@ -35,6 +43,27 @@ export default function PreferencesPage() {
   const languageOptions = ['English', 'Arabic']
   const durationOptions = ['60 min', '90 min', '120 min']
 
+  useEffect(() => {
+    const prefs = !prefsData ? null : (prefsData.data && typeof prefsData.data === 'object' ? prefsData.data : prefsData)
+    if (prefs) {
+      if (prefs.language) setLanguage(prefs.language)
+      if (prefs.favoriteSports) setSports(prefs.favoriteSports)
+      if (prefs.notificationSettings) {
+        setNotifications({
+          bookingReminders: prefs.notificationSettings.bookingReminders ?? true,
+          courtAvailability: prefs.notificationSettings.courtAvailability ?? true,
+          promotions: prefs.notificationSettings.promotions ?? false,
+        })
+      }
+      if (prefs.privacySettings) {
+        setPrivacy({
+          profileVisible: prefs.privacySettings.profileVisible ?? true,
+          showStats: prefs.privacySettings.showStats ?? false,
+        })
+      }
+    }
+  }, [prefsData])
+
   const toggleSport = (sport: string) => {
     setSports((prev) => (prev.includes(sport) ? prev.filter((item) => item !== sport) : [...prev, sport]))
   }
@@ -51,6 +80,36 @@ export default function PreferencesPage() {
   const handleReplayOnboarding = () => {
     resetOnboardingCompleted()
     router.push('/onboarding')
+  }
+
+  const handleSavePreferences = async () => {
+    setSaving(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+
+    try {
+      await api.patch('/users/me/preferences', {
+        language,
+        favoriteSports: sports,
+        notificationSettings: notifications,
+        privacySettings: privacy,
+      })
+      setSaveSuccess(true)
+      refetch()
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch {
+      setSaveError('Failed to save preferences. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (error) {
+    return (
+      <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans flex items-center justify-center">
+        <APIErrorFallback error={error} onRetry={refetch} />
+      </main>
+    )
   }
 
   return (
@@ -257,9 +316,25 @@ export default function PreferencesPage() {
           </div>
         </article>
 
+        {saveError && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold">
+            {saveError}
+          </div>
+        )}
+
+        {saveSuccess && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-green-400 font-semibold">
+            Preferences saved successfully!
+          </div>
+        )}
+
         <div className="pb-1">
-          <button className="w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:opacity-90 transition-opacity">
-            Save Preferences
+          <button
+            onClick={handleSavePreferences}
+            disabled={saving}
+            className="w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:opacity-90 transition-opacity disabled:opacity-60"
+          >
+            {saving ? 'Saving...' : 'Save Preferences'}
           </button>
 
           <button

@@ -188,11 +188,6 @@ export default function AdminUsersPage() {
                   render: (user: any) => <p className="text-sm text-primary/70">{user.createdAt || 'Unknown'}</p>,
                 },
                 {
-                  key: 'id',
-                  header: 'ID',
-                  render: (user: any) => <p className="font-lexend text-xs uppercase tracking-[0.12em] text-primary/55">{user.id || 'Unknown'}</p>,
-                },
-                {
                   key: 'actions',
                   header: 'Actions',
                   render: (user: any) => (

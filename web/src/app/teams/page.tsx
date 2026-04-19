@@ -6,6 +6,7 @@ import { CalendarDays, Clock3, MapPin, Plus, Users } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { CourtSport, courts } from '@/lib/courts'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
@@ -51,7 +52,7 @@ export default function TeamsPage() {
   const usersData = usersResponse?.data || usersResponse || []
 
   const availableSports = useMemo(() => {
-    const sports = new Set(teamsData.map((team: any) => team.sport))
+    const sports = new Set(teamsData.map((team: any) => stringValue(team.sport)))
     return Array.from(sports) as CourtSport[]
   }, [teamsData])
 
@@ -405,7 +406,7 @@ export default function TeamsPage() {
                   <div className="space-y-2 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="inline-flex px-2.5 py-1 rounded-full bg-tertiary-fixed text-primary text-[10px] font-lexend font-bold uppercase tracking-widest">
-                        {post.sport}
+                        {stringValue(post.sport)}
                       </span>
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${

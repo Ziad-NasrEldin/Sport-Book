@@ -16,7 +16,11 @@ import {
   Banknote,
   ShieldCheck,
 } from 'lucide-react'
-import { storeProducts } from '@/lib/storeProducts'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { showToast } from '@/lib/toast'
 
 const SHIPPING_FEE = 45
 
@@ -29,10 +33,11 @@ function StoreCheckoutPageContent() {
   const initialQty = Number.isFinite(rawQty) && rawQty > 0 ? Math.floor(rawQty) : 1
   const queryFulfillment = searchParams.get('fulfillment')
 
-  const product = useMemo(
-    () => storeProducts.find((item) => item.id === productId),
-    [productId],
-  )
+  const { data: productData, loading: productLoading, error: productError } = useApiCall(productId ? `/store/products/${productId}` : '')
+  const product = useMemo(() => {
+    if (!productData) return null
+    return productData?.data || productData
+  }, [productData])
 
   const [quantity, setQuantity] = useState(initialQty)
   const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'delivery'>(
@@ -41,27 +46,59 @@ function StoreCheckoutPageContent() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet' | 'cash'>('card')
   const [promoCode, setPromoCode] = useState('')
   const [isPromoApplied, setIsPromoApplied] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  const createOrderMutation = useApiMutation('/store/orders', 'POST')
 
   const subtotal = product ? product.price * quantity : 0
   const shipping = deliveryMethod === 'delivery' ? SHIPPING_FEE : 0
   const promoDiscount = isPromoApplied ? Math.round(subtotal * 0.1) : 0
   const total = subtotal + shipping - promoDiscount
 
-  if (!product) {
+  const deliveryAddress = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    const el = document.querySelector<HTMLInputElement>('input[placeholder="Street address"]')
+    return el?.value || ''
+  }, [])
+
+  if (productError) {
     return (
-      <main className="w-full min-h-screen bg-surface px-5 md:px-10 lg:px-14 py-12">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-2xl md:text-4xl font-extrabold text-primary">Store Checkout</h1>
-          <p className="mt-2 text-primary/70">We could not find the product you selected.</p>
-          <Link
-            href="/store"
-            className="mt-6 inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary-container text-surface-container-lowest font-bold"
-          >
-            Back To Store
-          </Link>
-        </div>
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <APIErrorFallback error={productError} onRetry={() => window.location.reload()} />
       </main>
     )
+  }
+
+  if (productLoading || !product) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <LoadingSpinner size="lg" />
+      </main>
+    )
+  }
+
+  const handlePlaceOrder = async () => {
+    setSubmitting(true)
+    try {
+      const orderBody: any = {
+        items: [{ productId: product.id, quantity }],
+        fulfillment: deliveryMethod,
+      }
+      if (deliveryMethod === 'delivery') {
+        const addressInputs = document.querySelectorAll<HTMLInputElement>('input[placeholder^="Street"], input[placeholder^="City"], input[placeholder^="Postal"]')
+        orderBody.deliveryAddress = Array.from(addressInputs).map((el) => el.value).filter(Boolean).join(', ')
+      }
+      if (isPromoApplied) {
+        orderBody.couponCode = promoCode.trim().toUpperCase()
+      }
+      const result = await createOrderMutation.mutate(orderBody)
+      const orderId = result?.id || result?.data?.id || ''
+      router.push(`/store/confirmation?orderId=${encodeURIComponent(orderId)}`)
+    } catch (err) {
+      showToast('Failed to place order. Please try again.', 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -94,12 +131,12 @@ function StoreCheckoutPageContent() {
             <h2 className="text-lg md:text-xl font-bold text-primary mb-4">Item Details</h2>
             <div className="flex items-start gap-4">
               <div className="relative w-24 h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                <Image src={product.image} alt={product.title} fill className="object-cover" />
+                <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{product.category}</p>
-                <h3 className="text-base md:text-lg font-bold text-primary mt-1 leading-tight">{product.title}</h3>
-                <p className="text-sm text-primary/65 mt-1">Sold by {product.facility}</p>
+                <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{stringValue(product.category)}</p>
+                <h3 className="text-base md:text-lg font-bold text-primary mt-1 leading-tight">{product.title || product.name}</h3>
+                <p className="text-sm text-primary/65 mt-1">Sold by {stringValue(product.facility || product.facilityName)}</p>
 
                 <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3 py-2">
                   <button
@@ -295,12 +332,13 @@ function StoreCheckoutPageContent() {
               SSL encrypted checkout session
             </div>
 
-            <Link
-              href={`/store/confirmation?product=${encodeURIComponent(product.id)}&qty=${quantity}&total=${total}&delivery=${deliveryMethod}`}
-              className="w-full inline-flex items-center justify-center px-5 py-3 rounded-full bg-gradient-to-br from-secondary to-secondary-container text-white font-extrabold hover:opacity-90 transition-opacity"
+            <button
+              onClick={handlePlaceOrder}
+              disabled={submitting}
+              className="w-full inline-flex items-center justify-center px-5 py-3 rounded-full bg-gradient-to-br from-secondary to-secondary-container text-white font-extrabold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Place Order
-            </Link>
+              {submitting ? 'Placing Order...' : 'Place Order'}
+            </button>
           </article>
         </aside>
       </section>

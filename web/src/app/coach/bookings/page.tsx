@@ -10,6 +10,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import type { CoachDashboardBooking } from '@/lib/coach/types'
 
 function formatEgp(value: number) {
   return new Intl.NumberFormat('en-EG', {
@@ -23,29 +24,26 @@ export default function CoachBookingsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'>('all')
 
-  const { data: bookingsResponse, loading, error } = useApiCall('/coach/bookings')
-  const coachBookings = bookingsResponse?.data || bookingsResponse || []
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
+  const { data: coachBookings, loading, error, refetch } = useApiCall<CoachDashboardBooking[]>('/coach/bookings')
 
   const filteredBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return coachBookings.filter((booking: any) => {
+    return (coachBookings ?? []).filter((booking) => {
       const matchesStatus = statusFilter === 'all' || booking.status === statusFilter
       const matchesSearch =
         query.length === 0 ||
-        booking.athlete?.toLowerCase()?.includes(query) ||
-        booking.user?.name?.toLowerCase()?.includes(query) ||
-        booking.sessionType?.toLowerCase()?.includes(query) ||
-        booking.service?.name?.toLowerCase()?.includes(query) ||
-        booking.location?.toLowerCase()?.includes(query)
+        booking.athlete.toLowerCase().includes(query) ||
+        booking.sessionType.toLowerCase().includes(query) ||
+        booking.location.toLowerCase().includes(query)
 
       return matchesStatus && matchesSearch
     })
   }, [coachBookings, search, statusFilter])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={refetch} />
+  }
 
   return (
     <div className="space-y-6">
@@ -88,42 +86,42 @@ export default function CoachBookingsPage() {
             ) : (
               <AdminTable
                 items={filteredBookings}
-                getRowKey={(booking: any) => booking.id}
+                getRowKey={(booking) => booking.id}
                 columns={[
                   {
                     key: 'athlete',
                     header: 'Athlete',
-                    render: (booking: any) => (
+                    render: (booking) => (
                       <div>
-                        <p className="font-bold text-primary">{booking.athlete || booking.user?.name || 'Unknown'}</p>
-                        <p className="text-xs text-primary/60 mt-1">{booking.id || 'Unknown'}</p>
+                        <p className="font-bold text-primary">{booking.athlete}</p>
+                        <p className="text-xs text-primary/60 mt-1">{booking.id}</p>
                       </div>
                     ),
                   },
                   {
                     key: 'sessionType',
                     header: 'Session Type',
-                    render: (booking: any) => <span className="font-semibold text-primary">{booking.sessionType || booking.service?.name || 'Unknown'}</span>,
+                    render: (booking) => <span className="font-semibold text-primary">{booking.sessionType}</span>,
                   },
                   {
                     key: 'schedule',
                     header: 'Schedule',
-                    render: (booking: any) => (
+                    render: (booking) => (
                       <div>
                         <p className="font-semibold text-primary">{new Date(booking.dateTime).toLocaleString()}</p>
-                        <p className="text-xs text-primary/60 mt-1">{booking.duration || 60} min • {booking.location || 'TBD'}</p>
+                        <p className="text-xs text-primary/60 mt-1">{booking.duration} min • {booking.location}</p>
                       </div>
                     ),
                   },
                   {
                     key: 'payout',
                     header: 'Payout',
-                    render: (booking: any) => <span className="font-bold text-primary">{formatEgp(booking.payout || 0)}</span>,
+                    render: (booking) => <span className="font-bold text-primary">{formatEgp(booking.payout)}</span>,
                   },
                   {
                     key: 'status',
                     header: 'Status',
-                    render: (booking: any) => <AdminStatusPill label={booking.status || 'Unknown'} tone={statusTone(booking.status || 'Unknown')} />,
+                    render: (booking) => <AdminStatusPill label={booking.status} tone={statusTone(booking.status)} />,
                   },
                 ]}
               />
@@ -133,15 +131,17 @@ export default function CoachBookingsPage() {
 
         <AdminPanel eyebrow="Today" title="Operational Notes">
           <div className="space-y-3">
-            {[
-              '2 pending confirmations should be finalized before 17:00.',
-              'Travel buffer enabled between back-to-back sessions.',
-              'One cancellation request requires your approval.',
-            ].map((note) => (
-              <article key={note} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
-                <p className="text-sm font-semibold text-primary">{note}</p>
-              </article>
-            ))}
+            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              <p className="text-sm font-semibold text-primary">
+                {(coachBookings ?? []).filter((booking) => booking.status === 'PENDING').length} pending confirmations should be reviewed today.
+              </p>
+            </article>
+            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              <p className="text-sm font-semibold text-primary">Travel buffer is reflected by your current availability windows.</p>
+            </article>
+            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              <p className="text-sm font-semibold text-primary">Completed sessions automatically feed the reports page payout totals.</p>
+            </article>
           </div>
         </AdminPanel>
       </section>

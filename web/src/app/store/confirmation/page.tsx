@@ -4,17 +4,35 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Check, Package, Truck, Store } from 'lucide-react'
-import { storeProducts } from '@/lib/storeProducts'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 function StoreConfirmationPageContent() {
   const searchParams = useSearchParams()
+  const orderId = searchParams.get('orderId') ?? ''
 
-  const productId = searchParams.get('product') ?? ''
-  const quantity = Number(searchParams.get('qty') ?? '1') || 1
-  const total = Number(searchParams.get('total') ?? '0') || 0
-  const delivery = searchParams.get('delivery') === 'delivery' ? 'delivery' : 'pickup'
+  const { data: orderData, loading, error } = useApiCall(orderId ? `/store/orders/${orderId}` : '', { immediate: !!orderId })
+  const order = orderData?.data || orderData
 
-  const product = storeProducts.find((item) => item.id === productId)
+  if (error) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+      </main>
+    )
+  }
+
+  if (loading || !order) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <LoadingSpinner size="lg" />
+      </main>
+    )
+  }
+
+  const deliveryMethod = order.fulfillment === 'delivery' ? 'delivery' : 'pickup'
+  const totalAmount = order.total ?? order.totalAmount ?? 0
 
   return (
     <main className="w-full min-h-screen bg-surface px-5 py-8 md:px-10 lg:px-14 md:py-12">
@@ -30,19 +48,28 @@ function StoreConfirmationPageContent() {
           <p className="text-primary/70 mt-2">Your store purchase is now being processed.</p>
 
           <div className="mt-6 bg-surface-container-high rounded-[var(--radius-lg)] p-4 text-left space-y-3">
+            {order.items && order.items.length > 0 && (
+              <p className="text-sm text-primary/75">
+                <span className="font-bold text-primary">Item(s):</span> {order.items.map((item: any) => item.productName || item.productId || 'Item').join(', ')}
+              </p>
+            )}
+            {orderId && (
+              <p className="text-sm text-primary/75">
+                <span className="font-bold text-primary">Order ID:</span> {orderId}
+              </p>
+            )}
             <p className="text-sm text-primary/75">
-              <span className="font-bold text-primary">Item:</span> {product?.title ?? 'Store Product'}
+              <span className="font-bold text-primary">Status:</span> {order.status || 'Processing'}
             </p>
-            <p className="text-sm text-primary/75">
-              <span className="font-bold text-primary">Quantity:</span> {quantity}
-            </p>
-            <p className="text-sm text-primary/75">
-              <span className="font-bold text-primary">Total Paid:</span> {total} EGP
-            </p>
+            {totalAmount > 0 && (
+              <p className="text-sm text-primary/75">
+                <span className="font-bold text-primary">Total Paid:</span> {totalAmount} EGP
+              </p>
+            )}
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
-              {delivery === 'delivery' ? <Truck className="w-4 h-4" /> : <Package className="w-4 h-4" />}
+              {deliveryMethod === 'delivery' ? <Truck className="w-4 h-4" /> : <Package className="w-4 h-4" />}
               <span>
-                <span className="font-bold text-primary">Fulfillment:</span> {delivery === 'delivery' ? 'Delivery' : 'Pick Up'}
+                <span className="font-bold text-primary">Fulfillment:</span> {deliveryMethod === 'delivery' ? 'Delivery' : 'Pick Up'}
               </span>
             </p>
           </div>

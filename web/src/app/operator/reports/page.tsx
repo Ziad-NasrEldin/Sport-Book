@@ -36,16 +36,16 @@ export default function OperatorReportsPage() {
     setDateRange(event.target.value)
   }, [])
 
-  const reportsData = reportsResponse?.data || reportsResponse || {}
-  const branchesData = branchesResponse?.data || branchesResponse || []
+  const reportsData = (() => {
+    if (!reportsResponse) return {}
+    if (typeof reportsResponse === 'object' && !Array.isArray(reportsResponse) && reportsResponse.data && typeof reportsResponse.data === 'object') return reportsResponse.data
+    return reportsResponse
+  })()
+  const branchesData = Array.isArray(branchesResponse) ? branchesResponse : (Array.isArray(branchesResponse?.data) ? branchesResponse.data : [])
   const reportJobs = reportsData.reportJobs || []
   const metrics = reportsData.metrics || []
 
   const branchOptions = ['All', ...branchesData.map((branch: BranchRecord) => branch.id)]
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
 
   const getBranchNameById = (id: string) => {
     const branch = branchesData.find((b: BranchRecord) => b.id === id)
@@ -56,6 +56,10 @@ export default function OperatorReportsPage() {
     if (selectedBranch === 'All') return reportJobs
     return reportJobs.filter((job: ReportJob) => job.branchId === selectedBranch)
   }, [reportJobs, selectedBranch])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">

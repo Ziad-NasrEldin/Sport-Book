@@ -18,6 +18,7 @@ import { reviewRoutes } from '@modules/reviews/routes'
 import { teamRoutes } from '@modules/teams/routes'
 import { storeRoutes } from '@modules/store/routes'
 import { coachWorkspaceRoutes } from '@modules/coach-workspace/routes'
+import { coachConsoleRoutes } from '@modules/coach-console/routes'
 import { operatorWorkspaceRoutes } from '@modules/operator-workspace/routes'
 import { adminWorkspaceRoutes } from '@modules/admin-workspace/routes'
 
@@ -52,7 +53,9 @@ export async function createApp() {
   await app.register(reviewRoutes, { prefix: '/api/v1/reviews' })
   await app.register(teamRoutes, { prefix: '/api/v1/teams' })
   await app.register(storeRoutes, { prefix: '/api/v1/store' })
+  await app.register(coachConsoleRoutes, { prefix: '/api/v1/coach' })
   await app.register(coachWorkspaceRoutes, { prefix: '/api/v1/coach-workspace' })
+  await app.register(operatorWorkspaceRoutes, { prefix: '/api/v1/operator' })
   await app.register(operatorWorkspaceRoutes, { prefix: '/api/v1/operator-workspace' })
   await app.register(adminWorkspaceRoutes, { prefix: '/api/v1/admin-workspace' })
   await app.register(playerRoutes, { prefix: '/api/v1/player' })

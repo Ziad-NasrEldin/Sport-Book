@@ -1,12 +1,24 @@
 import { prisma } from '@lib/prisma'
-import { NotFoundError, BadRequestError, ForbiddenError } from '@common/errors'
+import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from '@common/errors'
 import type {
   UpdateFacilityInput,
   CreateCourtInput,
   UpdateCourtInput,
   CreateCourtPricingRuleInput,
   CreateCourtClosureInput,
+  CreateBranchInput,
+  UpdateBranchInput,
+  InviteStaffInput,
+  ApprovalActionInput,
 } from './schema'
+
+function toNumber(value: unknown) {
+  if (typeof value === 'number') return value
+  if (value && typeof value === 'object' && 'toNumber' in value && typeof value.toNumber === 'function') {
+    return value.toNumber()
+  }
+  return Number(value ?? 0)
+}
 
 export async function getOperatorFacility(userId: string) {
   const facility = await prisma.facility.findUnique({
@@ -38,6 +50,133 @@ export async function getOperatorFacility(userId: string) {
   }
 
   return facility
+}
+
+export async function getOperatorDashboard(userId: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+    include: {
+      branches: {
+        include: {
+          courts: {
+            include: {
+              sport: true,
+              bookings: {
+                include: {
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+                orderBy: {
+                  date: 'desc',
+                },
+                take: 50,
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const branches = facility.branches ?? []
+  const courts = branches.flatMap((branch) =>
+    branch.courts.map((court) => ({
+      id: court.id,
+      name: court.name,
+      branch: branch.name,
+      sport: court.sport?.name ?? 'Unknown',
+      status: court.status,
+    })),
+  )
+  const bookings = branches.flatMap((branch) =>
+    branch.courts.flatMap((court) =>
+      court.bookings.map((booking) => ({
+        id: booking.id,
+        court: court.name,
+        branch: branch.name,
+        user: booking.user?.name ?? 'Guest',
+        status: booking.status,
+        amount: toNumber(booking.totalPrice),
+        date: booking.date.toISOString(),
+      })),
+    ),
+  )
+
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const confirmedBookings = bookings.filter(
+    (booking) => booking.status === 'CONFIRMED' || booking.status === 'COMPLETED',
+  )
+  const todayRevenue = confirmedBookings
+    .filter((booking) => booking.date.slice(0, 10) === todayKey)
+    .reduce((sum, booking) => sum + booking.amount, 0)
+
+  const metrics = [
+    {
+      id: 'branches',
+      label: 'Branches',
+      value: branches.length,
+      delta: `${branches.length} live`,
+      trend: 'steady',
+    },
+    {
+      id: 'courts',
+      label: 'Courts',
+      value: courts.length,
+      delta: `${courts.filter((court) => court.status === 'ACTIVE').length} active`,
+      trend: 'up',
+    },
+    {
+      id: 'bookings',
+      label: 'Recent Bookings',
+      value: bookings.length,
+      delta: `${confirmedBookings.length} confirmed`,
+      trend: confirmedBookings.length > 0 ? 'up' : 'steady',
+    },
+    {
+      id: 'revenue',
+      label: 'Revenue Today',
+      value: `EGP ${todayRevenue.toFixed(0)}`,
+      delta: confirmedBookings.length > 0 ? 'Paid sessions flowing' : 'No paid sessions yet',
+      trend: todayRevenue > 0 ? 'up' : 'steady',
+    },
+  ]
+
+  const approvals = branches.map((branch) => ({
+    id: branch.id,
+    subject: branch.name,
+    type: 'Branch',
+    requestedBy: facility.name,
+    status: facility.status,
+    submittedAt: branch.createdAt.toISOString(),
+  }))
+
+  const utilizationVelocity = Array.from({ length: 12 }, (_, index) => {
+    const target = new Date()
+    target.setDate(target.getDate() - (11 - index))
+    const key = target.toISOString().slice(0, 10)
+    return confirmedBookings.filter((booking) => booking.date.slice(0, 10) === key).length
+  })
+
+  return {
+    facility: {
+      id: facility.id,
+      name: facility.name,
+      city: facility.city,
+      status: facility.status,
+    },
+    metrics,
+    approvals,
+    courts,
+    bookings,
+    utilizationVelocity,
+  }
 }
 
 export async function updateOperatorFacility(userId: string, data: UpdateFacilityInput) {
@@ -368,4 +507,366 @@ export async function getOperatorCourts(userId: string) {
   })
 
   return courts
+}
+
+export async function createBranch(userId: string, data: CreateBranchInput) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const branch = await prisma.branch.create({
+    data: {
+      facilityId: facility.id,
+      name: data.name,
+      address: data.address,
+      city: data.city,
+      phone: data.phone,
+    },
+  })
+
+  return branch
+}
+
+export async function getOperatorBranches(userId: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+    select: { id: true },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const branches = await prisma.branch.findMany({
+    where: { facilityId: facility.id },
+    include: {
+      _count: {
+        select: { courts: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return branches
+}
+
+export async function updateBranch(userId: string, branchId: string, data: UpdateBranchInput) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const branch = await prisma.branch.findUnique({
+    where: { id: branchId },
+  })
+
+  if (!branch) {
+    throw new NotFoundError('Branch')
+  }
+
+  if (branch.facilityId !== facility.id) {
+    throw new ForbiddenError('You can only update your own branches')
+  }
+
+  const updated = await prisma.branch.update({
+    where: { id: branchId },
+    data,
+  })
+
+  return updated
+}
+
+export async function deleteBranch(userId: string, branchId: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const branch = await prisma.branch.findUnique({
+    where: { id: branchId },
+    include: {
+      _count: {
+        select: { courts: true },
+      },
+    },
+  })
+
+  if (!branch) {
+    throw new NotFoundError('Branch')
+  }
+
+  if (branch.facilityId !== facility.id) {
+    throw new ForbiddenError('You can only delete your own branches')
+  }
+
+  if (branch._count.courts > 0) {
+    throw new ConflictError('Cannot delete branch with existing courts')
+  }
+
+  await prisma.branch.delete({
+    where: { id: branchId },
+  })
+
+  return { message: 'Branch deleted' }
+}
+
+export async function getStaff(userId: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+    select: { id: true },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const operator = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      avatar: true,
+      role: true,
+    },
+  })
+
+  const coaches = await prisma.coach.findMany({
+    where: {
+      sport: {
+        facilities: {
+          some: {
+            facilityId: facility.id,
+          },
+        },
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          role: true,
+        },
+      },
+      sport: {
+        select: {
+          id: true,
+          displayName: true,
+        },
+      },
+    },
+  })
+
+  const staff = [
+    { ...operator, staffRole: 'OPERATOR' },
+    ...coaches.map((coach) => ({
+      ...coach.user,
+      staffRole: 'COACH',
+      sport: coach.sport,
+    })),
+  ]
+
+  return staff
+}
+
+export async function inviteStaff(userId: string, data: InviteStaffInput) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: data.email },
+  })
+
+  if (existingUser) {
+    if (data.role === 'COACH') {
+      const existingCoach = await prisma.coach.findUnique({
+        where: { userId: existingUser.id },
+      })
+
+      if (existingCoach) {
+        throw new ConflictError('User is already a coach')
+      }
+
+      const sports = await prisma.facilitySport.findMany({
+        where: { facilityId: facility.id },
+        select: { sportId: true },
+      })
+
+      if (sports.length === 0) {
+        throw new BadRequestError('Facility has no sports configured')
+      }
+
+      const coach = await prisma.coach.create({
+        data: {
+          userId: existingUser.id,
+          slug: `${existingUser.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+          sportId: sports[0].sportId,
+          sessionRate: 0,
+          isVerified: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+      })
+
+      return coach
+    }
+
+    return existingUser
+  }
+
+  const newUser = await prisma.user.create({
+    data: {
+      email: data.email,
+      name: data.name,
+      password: Math.random().toString(36).slice(-12),
+      role: data.role,
+      status: 'PENDING',
+    },
+  })
+
+  await prisma.notification.create({
+    data: {
+      userId: newUser.id,
+      type: 'SYSTEM',
+      title: 'Facility Invitation',
+      message: `You have been invited to join ${facility.name} as a ${data.role.toLowerCase()}.`,
+    },
+  })
+
+  return newUser
+}
+
+export async function getPendingBookings(userId: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+    select: { id: true },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: 'PENDING',
+      court: {
+        branch: {
+          facilityId: facility.id,
+        },
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          avatar: true,
+        },
+      },
+      court: {
+        include: {
+          sport: {
+            select: { displayName: true },
+          },
+          branch: {
+            select: { name: true },
+          },
+        },
+      },
+      coach: {
+        include: {
+          user: {
+            select: { name: true, avatar: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  return bookings
+}
+
+export async function approveBooking(userId: string, bookingId: string, data: ApprovalActionInput) {
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+    select: { id: true },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      court: {
+        include: {
+          branch: true,
+        },
+      },
+    },
+  })
+
+  if (!booking) {
+    throw new NotFoundError('Booking')
+  }
+
+  if (booking.court?.branch.facilityId !== facility.id) {
+    throw new ForbiddenError('You can only manage bookings for your own facility')
+  }
+
+  if (booking.status !== 'PENDING') {
+    throw new BadRequestError('Only pending bookings can be approved or rejected')
+  }
+
+  const updated = await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: data.status,
+      cancellationReason: data.note,
+    },
+  })
+
+  await prisma.notification.create({
+    data: {
+      userId: booking.userId,
+      type: data.status === 'CONFIRMED' ? 'BOOKING_CONFIRMED' : 'BOOKING_CANCELLED',
+      title: data.status === 'CONFIRMED' ? 'Booking Confirmed' : 'Booking Cancelled',
+      message: data.status === 'CONFIRMED'
+        ? `Your booking has been confirmed${data.note ? ': ' + data.note : ''}.`
+        : `Your booking has been cancelled${data.note ? ': ' + data.note : ''}.`,
+    },
+  })
+
+  return updated
 }

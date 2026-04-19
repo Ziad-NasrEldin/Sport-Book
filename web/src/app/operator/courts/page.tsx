@@ -12,6 +12,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { exportToCsv } from '@/lib/export'
 import type { CourtRecord, CourtStatus, BranchRecord } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'ACTIVE', 'MAINTENANCE', 'PAUSED'] as const
@@ -45,11 +46,13 @@ export default function OperatorCourtsPage() {
     setSelectedStatus(event.target.value as (typeof statusOptions)[number])
   }, [])
 
+  const sportLabel = (sport: any): string => typeof sport === 'string' ? sport : (sport?.displayName || sport?.name || '')
+
   const courtsData = courtsResponse?.data || courtsResponse || []
   const branchesData = branchesResponse?.data || branchesResponse || []
 
   const branchOptions = ['All', ...branchesData.map((branch: BranchRecord) => branch.id)]
-  const sportOptions = ['All', ...new Set(courtsData.map((court: CourtRecord) => court.sport))]
+  const sportOptions = ['All', ...new Set(courtsData.map((court: CourtRecord) => sportLabel((court as any).sport)))]
 
   const getBranchNameById = (branchId: string) => {
     const found = branchesData.find((b: BranchRecord) => b.id === branchId)
@@ -59,10 +62,6 @@ export default function OperatorCourtsPage() {
   const getCourtNameById = (courtId: string) => {
     const found = courtsData.find((c: CourtRecord) => c.id === courtId)
     return found?.name || 'Unknown Court'
-  }
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   const filteredCourts = useMemo(() => {
@@ -76,12 +75,16 @@ export default function OperatorCourtsPage() {
         getBranchNameById(court.branchId).toLowerCase().includes(query)
 
       const matchesBranch = selectedBranch === 'All' || court.branchId === selectedBranch
-      const matchesSport = selectedSport === 'All' || court.sport === selectedSport
+      const matchesSport = selectedSport === 'All' || sportLabel((court as any).sport) === selectedSport
       const matchesStatus = selectedStatus === 'All' || (court.status as string).toUpperCase() === selectedStatus
 
       return matchesSearch && matchesBranch && matchesSport && matchesStatus
     })
   }, [courtsData, search, selectedBranch, selectedSport, selectedStatus, branchesData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">
@@ -92,6 +95,20 @@ export default function OperatorCourtsPage() {
           <>
             <button
               type="button"
+              onClick={() => {
+                const headers = ['ID', 'Name', 'Branch', 'Sport', 'Surface', 'Price/Hour', 'Status', 'Next Maintenance']
+                const rows = filteredCourts.map((court: any) => [
+                  court.id || '',
+                  court.name || '',
+                  getBranchNameById(court.branchId),
+                  sportLabel(court.sport),
+                  court.surface || '',
+                  String(court.pricePerHour || 0),
+                  court.status || '',
+                  court.nextMaintenance || 'TBD',
+                ])
+                exportToCsv('courts.csv', headers, rows)
+              }}
               className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
             >
               <Download className="w-4 h-4" />
@@ -182,7 +199,7 @@ export default function OperatorCourtsPage() {
                   header: 'Sport & Surface',
                   render: (court: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{court.sport || 'Unknown'}</p>
+                      <p className="text-sm font-semibold text-primary">{sportLabel(court.sport) || 'Unknown'}</p>
                       <p className="text-xs text-primary/55 mt-1">{court.surface || 'Unknown'}</p>
                     </div>
                   ),

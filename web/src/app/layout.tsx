@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Lexend } from 'next/font/google'
+import { ToastContainer } from '@/components/ui/Toast'
 import './globals.css'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -32,6 +33,7 @@ export default function RootLayout({
             {children}
           </div>
         </div>
+        <ToastContainer />
       </body>
     </html>
   )

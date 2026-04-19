@@ -26,6 +26,16 @@ export const addFavoriteSchema = z.object({
   productId: z.string().optional(),
 })
 
+export const walletTopupSchema = z.object({
+  amount: z.number().min(1, 'Amount must be at least 1'),
+  paymentMethod: z.enum(['PAYMOB_CARD', 'WALLET_TOPUP']),
+})
+
+export const markNotificationsReadSchema = z.object({
+  ids: z.array(z.string()).optional(),
+}).optional()
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>
 export type AddFavoriteInput = z.infer<typeof addFavoriteSchema>
+export type WalletTopupInput = z.infer<typeof walletTopupSchema>

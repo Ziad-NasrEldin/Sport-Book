@@ -1,8 +1,15 @@
 import { prisma } from '@lib/prisma'
 import { NotFoundError, BadRequestError } from '@common/errors'
+import { AuditAction, logAudit } from '@plugins/audit'
+import { hashPassword } from '@lib/crypto'
 import type {
   ListUsersInput,
   UpdateUserInput,
+  CreateFacilityInput,
+  CreateCoachInput,
+  CreateStoreProductInput,
+  UpdateStoreProductInput,
+  UpdateStoreOrderStatusInput,
   UpdateBookingStatusInput,
   CreateSportInput,
   UpdateSportInput,
@@ -164,6 +171,13 @@ function mapVerificationStatusToDb(status?: string): string | undefined {
   }
 }
 
+function mapVerificationDbStatusToAuditAction(status: string): AuditAction | null {
+  if (status === 'APPROVED') return AuditAction.APPROVE
+  if (status === 'REJECTED') return AuditAction.REJECT
+  if (status === 'NEEDS_INFO') return AuditAction.VERIFY
+  return null
+}
+
 function getVerificationWorkflowMeta(request: {
   documents: string
   notes: string | null
@@ -262,6 +276,224 @@ function defaultVerificationTimeline(submittedAt: string, status: VerificationSt
   }
 
   return timeline
+}
+
+function prependTimelineEntry(
+  timeline: VerificationTimelineItem[],
+  message: string,
+  at: string = new Date().toISOString(),
+) {
+  return [
+    {
+      id: `timeline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      message,
+      at,
+    },
+    ...timeline,
+  ]
+}
+
+function parseDelimitedList(value?: string) {
+  if (!value) return []
+
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function deriveStoreProductStatus(quantity: number, status?: string) {
+  if (status) return status
+  if (quantity <= 0) return 'OUT_OF_STOCK'
+  if (quantity <= 10) return 'LOW_STOCK'
+  return 'IN_STOCK'
+}
+
+function mapStoreProduct(product: {
+  id: string
+  facilityId: string
+  name: string
+  description: string | null
+  category: string
+  images: string
+  price: any
+  currency: string
+  quantity: number
+  status: string
+  createdAt: Date
+  updatedAt: Date
+  facility?: { name: string } | null
+}) {
+  const images = safeParseJson<string[]>(product.images, [])
+
+  return {
+    ...product,
+    title: product.name,
+    imageUrl: images[0] ?? '',
+    images,
+    price: Number(product.price),
+    createdAt: product.createdAt.toISOString(),
+    updatedAt: product.updatedAt.toISOString(),
+  }
+}
+
+function mapStoreOrder(order: {
+  id: string
+  userId: string
+  subtotal: any
+  discount: any
+  deliveryFee: any
+  total: any
+  currency: string
+  fulfillment: string
+  status: string
+  deliveryAddress: string | null
+  contactPhone: string | null
+  paymentStatus: string
+  paymentMethod: string | null
+  paymentRef: string | null
+  createdAt: Date
+  updatedAt: Date
+  user?: { name: string | null; email: string } | null
+  items: Array<{
+    productId: string
+    quantity: number
+    product: { name: string }
+  }>
+}) {
+  const firstItem = order.items[0]
+
+  return {
+    ...order,
+    quantity: order.items.reduce((sum, item) => sum + item.quantity, 0),
+    productId: firstItem?.productId ?? null,
+    product: firstItem ? { title: firstItem.product.name } : null,
+    subtotal: Number(order.subtotal),
+    discount: Number(order.discount),
+    deliveryFee: Number(order.deliveryFee),
+    total: Number(order.total),
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
+  }
+}
+
+function generateFacilityOperatorIdentity(input: {
+  facilityName: string
+  operatorName?: string
+  operatorEmail?: string
+}) {
+  const normalizedFacility = slugify(input.facilityName) || 'facility'
+  const normalizedOperator = slugify(input.operatorName ?? '') || 'manager'
+  const operatorName = input.operatorName?.trim() || `${input.facilityName} Manager`
+  const operatorEmail =
+    input.operatorEmail?.trim().toLowerCase() ||
+    `${normalizedFacility}-${normalizedOperator}@sportbook.local`
+
+  return {
+    operatorName,
+    operatorEmail,
+  }
+}
+
+async function provisionApprovedRoleProfile(
+  tx: any,
+  request: {
+    userId: string
+    requestedRole: string
+    sportId: string | null
+    experienceYears: number | null
+    bio: string | null
+    businessName: string | null
+    businessAddress: string | null
+    licenseNumber: string | null
+    user: { name: string }
+  },
+  details: Record<string, string | undefined>,
+) {
+  if (request.requestedRole === 'OPERATOR') {
+    const existingFacility = await tx.facility.findUnique({
+      where: { operatorId: request.userId },
+    })
+
+    if (existingFacility) {
+      await tx.facility.update({
+        where: { id: existingFacility.id },
+        data: {
+          status: 'ACTIVE',
+          name: request.businessName ?? existingFacility.name,
+          address: request.businessAddress ?? existingFacility.address,
+          city: details.city ?? existingFacility.city,
+        },
+      })
+      return
+    }
+
+    await tx.facility.create({
+      data: {
+        operatorId: request.userId,
+        name: request.businessName ?? `${request.user.name}'s Facility`,
+        description: request.bio ?? details.requestMessage ?? 'Approved through verification flow.',
+        address: request.businessAddress ?? details.facilityAddress,
+        city: details.city ?? 'Cairo',
+        phone: details.phone,
+        email: details.email,
+        status: 'ACTIVE',
+      },
+    })
+    return
+  }
+
+  if (request.requestedRole === 'COACH') {
+    const existingCoach = await tx.coach.findUnique({
+      where: { userId: request.userId },
+    })
+
+    const sport =
+      (request.sportId
+        ? await tx.sport.findUnique({ where: { id: request.sportId } })
+        : null) ??
+      (await tx.sport.findFirst({
+        where: { active: true },
+        orderBy: { sortOrder: 'asc' },
+      }))
+
+    if (!sport) {
+      throw new BadRequestError('Cannot approve coach request without an available sport')
+    }
+
+    const coachPayload = {
+      sportId: sport.id,
+      slug: `${slugify(request.user.name || 'coach') || 'coach'}-${request.userId.slice(-6)}`,
+      bio: request.bio ?? details.requestMessage ?? 'Approved through verification flow.',
+      experienceYears: request.experienceYears ?? 0,
+      certifications: JSON.stringify(parseDelimitedList(details.certifications)),
+      specialties: JSON.stringify(parseDelimitedList(details.specialization)),
+      isVerified: true,
+      isActive: true,
+    }
+
+    if (existingCoach) {
+      await tx.coach.update({
+        where: { id: existingCoach.id },
+        data: coachPayload,
+      })
+      return
+    }
+
+    await tx.coach.create({
+      data: {
+        userId: request.userId,
+        ...coachPayload,
+      },
+    })
+  }
 }
 
 function riskFromChecklist(checklist: VerificationChecklistItem[]): VerificationRisk {
@@ -461,7 +693,11 @@ export async function listRoleUpgrades(filters: ListRoleUpgradesInput) {
   }
 }
 
-export async function respondToRoleUpgrade(requestId: string, data: RespondToRoleUpgradeInput) {
+export async function respondToRoleUpgrade(
+  requestId: string,
+  data: RespondToRoleUpgradeInput,
+  reviewerId?: string,
+) {
   const request = await prisma.roleUpgradeRequest.findUnique({
     where: { id: requestId },
     include: { user: true },
@@ -475,13 +711,47 @@ export async function respondToRoleUpgrade(requestId: string, data: RespondToRol
     throw new BadRequestError('Request has already been processed')
   }
 
+  const parsedDocuments = safeParseJson<VerificationMetadata | unknown[]>(request.documents, [])
+  const parsedDocumentObject =
+    !Array.isArray(parsedDocuments) && parsedDocuments && typeof parsedDocuments === 'object'
+      ? (parsedDocuments as VerificationMetadata)
+      : null
+  const existingDetails = (parsedDocumentObject?.details ?? {}) as Record<string, string | undefined>
+  const existingVerification = (parsedDocumentObject?.verification ?? {}) as VerificationWorkflowMeta
+  const submittedAt = requestSubmittedAtToIso(request)
+  const checklist =
+    existingVerification.checklist ?? defaultVerificationChecklist(existingDetails, request.requestedRole)
+  const region =
+    existingVerification.region ?? existingDetails.city ?? request.businessAddress ?? 'Egypt'
+  const timeline = prependTimelineEntry(
+    existingVerification.timeline ?? defaultVerificationTimeline(submittedAt, mapVerificationStatus(request.status)),
+    data.status === 'APPROVED'
+      ? 'Case approved from verification queue.'
+      : 'Case rejected from verification queue.',
+  )
+  const verificationMeta: VerificationWorkflowMeta = {
+    assignee: existingVerification.assignee ?? null,
+    riskLevel: existingVerification.riskLevel ?? riskFromChecklist(checklist),
+    region,
+    checklist,
+    timeline,
+    adminNote: data.reason ?? existingVerification.adminNote,
+  }
+  const nextDocuments: VerificationMetadata = {
+    files: parsedDocumentObject?.files ?? [],
+    details: existingDetails,
+    verification: verificationMeta,
+  }
+
   const updated = await prisma.$transaction(async (tx: any) => {
     await tx.roleUpgradeRequest.update({
       where: { id: requestId },
       data: {
         status: data.status,
-        notes: data.reason,
+        notes: data.reason ?? request.notes,
         reviewedAt: new Date(),
+        reviewerId: reviewerId ?? request.reviewerId ?? null,
+        documents: JSON.stringify(nextDocuments),
       },
     })
 
@@ -490,6 +760,7 @@ export async function respondToRoleUpgrade(requestId: string, data: RespondToRol
         where: { id: request.userId },
         data: { role: request.requestedRole },
       })
+      await provisionApprovedRoleProfile(tx, request, existingDetails)
     }
 
     return tx.roleUpgradeRequest.findUnique({
@@ -498,25 +769,85 @@ export async function respondToRoleUpgrade(requestId: string, data: RespondToRol
     })
   })
 
+  const auditAction = mapVerificationDbStatusToAuditAction(data.status)
+  if (auditAction) {
+    await logAudit({
+      actorId: updated?.reviewerId ?? undefined,
+      action: auditAction,
+      object: 'Verification Queue',
+      details: {
+        requestId,
+        requestedRole: request.requestedRole,
+        userId: request.userId,
+        via: 'queue',
+      },
+    })
+  }
+
   return updated
 }
 
+function formatDelta(current: number, previous: number): string {
+  if (previous === 0) return '+0%'
+  const change = ((current - previous) / previous) * 100
+  const sign = change >= 0 ? '+' : ''
+  return `${sign}${change.toFixed(1)}%`
+}
+
 export async function getDashboardStats() {
-  const [userCount, facilityCount, coachCount, bookingCount, revenue] = await Promise.all([
+  const now = new Date()
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const last30Days = new Date()
+  last30Days.setDate(last30Days.getDate() - 30)
+
+  const [
+    userCount,
+    facilityCount,
+    coachCount,
+    bookingCount,
+    revenue,
+    thisMonthUsers,
+    lastMonthUsers,
+    thisMonthFacilities,
+    lastMonthFacilities,
+    thisMonthCoaches,
+    lastMonthCoaches,
+    thisMonthRevenue,
+    lastMonthRevenue,
+  ] = await Promise.all([
     prisma.user.count({ where: { status: 'ACTIVE' } }),
     prisma.facility.count({ where: { status: 'ACTIVE' } }),
     prisma.coach.count({ where: { isActive: true, isVerified: true } }),
-    prisma.booking.count({ where: { date: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } } }),
+    prisma.booking.count({ where: { date: { gte: last30Days } } }),
     prisma.booking.aggregate({
-      where: {
-        paymentStatus: 'PAID',
-        date: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
-      },
+      where: { paymentStatus: 'PAID', date: { gte: last30Days } },
+      _sum: { totalPrice: true },
+    }),
+    prisma.user.count({ where: { createdAt: { gte: thisMonthStart } } }),
+    prisma.user.count({ where: { createdAt: { gte: lastMonthStart, lt: thisMonthStart } } }),
+    prisma.facility.count({ where: { createdAt: { gte: thisMonthStart } } }),
+    prisma.facility.count({ where: { createdAt: { gte: lastMonthStart, lt: thisMonthStart } } }),
+    prisma.coach.count({ where: { isVerified: true, createdAt: { gte: thisMonthStart } } }),
+    prisma.coach.count({ where: { isVerified: true, createdAt: { gte: lastMonthStart, lt: thisMonthStart } } }),
+    prisma.booking.aggregate({
+      where: { paymentStatus: 'PAID', date: { gte: thisMonthStart } },
+      _sum: { totalPrice: true },
+    }),
+    prisma.booking.aggregate({
+      where: { paymentStatus: 'PAID', date: { gte: lastMonthStart, lt: thisMonthStart } },
       _sum: { totalPrice: true },
     }),
   ])
 
   const revenueTotal = revenue._sum.totalPrice?.toNumber() || 0
+  const thisMonthRevenueTotal = thisMonthRevenue._sum.totalPrice?.toNumber() || 0
+  const lastMonthRevenueTotal = lastMonthRevenue._sum.totalPrice?.toNumber() || 0
+
+  const userDelta = formatDelta(thisMonthUsers, lastMonthUsers)
+  const facilityDelta = formatDelta(thisMonthFacilities, lastMonthFacilities)
+  const coachDelta = formatDelta(thisMonthCoaches, lastMonthCoaches)
+  const revenueDelta = formatDelta(thisMonthRevenueTotal, lastMonthRevenueTotal)
 
   return {
     userCount,
@@ -525,10 +856,10 @@ export async function getDashboardStats() {
     bookingCount,
     revenue: revenueTotal,
     metrics: [
-      { id: 'users', label: 'Active Users', value: userCount.toLocaleString('en-US'), delta: '+8.1%', trend: 'up' },
-      { id: 'facilities', label: 'Active Facilities', value: facilityCount.toLocaleString('en-US'), delta: '+4.3%', trend: 'up' },
-      { id: 'coaches', label: 'Verified Coaches', value: coachCount.toLocaleString('en-US'), delta: '+5.6%', trend: 'up' },
-      { id: 'revenue', label: '30-Day Revenue', value: `EGP ${Math.round(revenueTotal).toLocaleString('en-US')}`, delta: '+11.2%', trend: 'up' },
+      { id: 'users', label: 'Active Users', value: userCount.toLocaleString('en-US'), delta: userDelta, trend: thisMonthUsers >= lastMonthUsers ? 'up' : 'down' },
+      { id: 'facilities', label: 'Active Facilities', value: facilityCount.toLocaleString('en-US'), delta: facilityDelta, trend: thisMonthFacilities >= lastMonthFacilities ? 'up' : 'down' },
+      { id: 'coaches', label: 'Verified Coaches', value: coachCount.toLocaleString('en-US'), delta: coachDelta, trend: thisMonthCoaches >= lastMonthCoaches ? 'up' : 'down' },
+      { id: 'revenue', label: '30-Day Revenue', value: `EGP ${Math.round(revenueTotal).toLocaleString('en-US')}`, delta: revenueDelta, trend: thisMonthRevenueTotal >= lastMonthRevenueTotal ? 'up' : 'down' },
     ],
   }
 }
@@ -611,20 +942,368 @@ export async function listFacilities(filters: { page: number; limit: number; sta
     prisma.facility.count({ where }),
   ])
 
-  return {
-    data: facilities.map((facility) => ({
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const daysPassed = Math.max(1, now.getDate())
+  const facilityIds = facilities.map((f) => f.id)
+
+  const revenueByFacility = new Map<string, number>()
+  const bookedHoursByFacility = new Map<string, number>()
+  const courtsPerFacility = new Map<string, number>()
+
+  for (const facilityId of facilityIds) {
+    revenueByFacility.set(facilityId, 0)
+    bookedHoursByFacility.set(facilityId, 0)
+    courtsPerFacility.set(facilityId, 0)
+  }
+
+  if (facilityIds.length > 0) {
+    const branches = await prisma.branch.findMany({
+      where: { facilityId: { in: facilityIds } },
+      select: { id: true, facilityId: true },
+    })
+
+    const branchToFacilityId = new Map(branches.map((b) => [b.id, b.facilityId]))
+    const branchIds = branches.map((b) => b.id)
+
+    if (branchIds.length > 0) {
+      const courts = await prisma.court.findMany({
+        where: { branchId: { in: branchIds } },
+        select: { id: true, branchId: true },
+      })
+
+      const courtToFacilityId = new Map<string, string>()
+      for (const court of courts) {
+        const facilityId = branchToFacilityId.get(court.branchId)
+        if (facilityId) {
+          courtToFacilityId.set(court.id, facilityId)
+          courtsPerFacility.set(facilityId, (courtsPerFacility.get(facilityId) ?? 0) + 1)
+        }
+      }
+
+      const courtIds = courts.map((c) => c.id)
+
+      if (courtIds.length > 0) {
+        const [paidBookings, activeBookings] = await Promise.all([
+          prisma.booking.findMany({
+            where: {
+              courtId: { in: courtIds },
+              paymentStatus: 'PAID',
+              date: { gte: monthStart },
+            },
+            select: { courtId: true, totalPrice: true },
+          }),
+          prisma.booking.findMany({
+            where: {
+              courtId: { in: courtIds },
+              status: { notIn: ['CANCELLED'] },
+              date: { gte: monthStart },
+            },
+            select: { courtId: true, startHour: true, endHour: true },
+          }),
+        ])
+
+        for (const booking of paidBookings) {
+          const facilityId = courtToFacilityId.get(booking.courtId!)
+          if (facilityId) {
+            revenueByFacility.set(facilityId, (revenueByFacility.get(facilityId) ?? 0) + Number(booking.totalPrice))
+          }
+        }
+
+        for (const booking of activeBookings) {
+          const facilityId = courtToFacilityId.get(booking.courtId!)
+          if (facilityId) {
+            bookedHoursByFacility.set(facilityId, (bookedHoursByFacility.get(facilityId) ?? 0) + (booking.endHour - booking.startHour))
+          }
+        }
+      }
+    }
+  }
+
+  const operatingHoursPerDay = 12
+  const data = facilities.map((facility) => {
+    const monthlyRevenue = revenueByFacility.get(facility.id) ?? 0
+    const totalCourts = courtsPerFacility.get(facility.id) ?? 0
+    const bookedHours = bookedHoursByFacility.get(facility.id) ?? 0
+    const availableHours = totalCourts > 0 ? totalCourts * operatingHoursPerDay * daysPassed : 0
+    const utilization = availableHours > 0 ? Math.min(Math.round((bookedHours / availableHours) * 100), 100) : 0
+
+    return {
       ...facility,
-      monthlyRevenue: 0,
-      utilization: 0,
+      monthlyRevenue,
+      utilization,
       createdAt: facility.createdAt.toISOString(),
       updatedAt: facility.updatedAt.toISOString(),
-    })),
+    }
+  })
+
+  return {
+    data,
     pagination: {
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
     },
+  }
+}
+
+export async function createFacility(data: CreateFacilityInput, actorId?: string) {
+  const {
+    name,
+    city,
+    address,
+    description,
+    phone,
+    email,
+    status,
+    operatorName,
+    operatorEmail,
+    operatorPhone,
+    branchName,
+    branchAddress,
+    sportIds,
+  } = data
+
+  const existingFacility = await prisma.facility.findFirst({
+    where: {
+      OR: [
+        { name: name.trim() },
+        ...(email ? [{ email: email.trim().toLowerCase() }] : []),
+      ],
+    },
+    select: { id: true },
+  })
+
+  if (existingFacility) {
+    throw new BadRequestError('Facility already exists')
+  }
+
+  const operatorIdentity = generateFacilityOperatorIdentity({
+    facilityName: name.trim(),
+    operatorName,
+    operatorEmail,
+  })
+
+  const existingOperator = await prisma.user.findUnique({
+    where: { email: operatorIdentity.operatorEmail },
+    select: { id: true },
+  })
+
+  if (existingOperator) {
+    throw new BadRequestError('Operator email already exists')
+  }
+
+  const defaultPassword = await hashPassword('password123')
+  const normalizedCity = city.trim()
+  const normalizedAddress = address?.trim() || `${name.trim()} HQ, ${normalizedCity}`
+  const normalizedBranchName = branchName?.trim() || 'Main Branch'
+  const normalizedBranchAddress = branchAddress?.trim() || normalizedAddress
+  const normalizedEmail = email?.trim().toLowerCase() || operatorIdentity.operatorEmail
+
+  const createdFacility = await prisma.$transaction(async (tx: any) => {
+    const operator = await tx.user.create({
+      data: {
+        name: operatorIdentity.operatorName,
+        email: operatorIdentity.operatorEmail,
+        password: defaultPassword,
+        phone: operatorPhone?.trim() || phone?.trim() || null,
+        role: 'OPERATOR',
+        status: status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE',
+        emailVerified: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    })
+
+    const facility = await tx.facility.create({
+      data: {
+        name: name.trim(),
+        city: normalizedCity,
+        address: normalizedAddress,
+        description: description?.trim() || `Managed through the admin workspace for ${normalizedCity}.`,
+        phone: phone?.trim() || operatorPhone?.trim() || null,
+        email: normalizedEmail,
+        status,
+        operatorId: operator.id,
+        branches: {
+          create: {
+            name: normalizedBranchName,
+            address: normalizedBranchAddress,
+            city: normalizedCity,
+            phone: phone?.trim() || operatorPhone?.trim() || null,
+          },
+        },
+        ...(sportIds.length > 0
+          ? {
+              sports: {
+                create: sportIds.map((sportId) => ({
+                  sportId,
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        operator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            branches: true,
+          },
+        },
+      },
+    })
+
+    return facility
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.CREATE,
+    object: 'Facility',
+    details: {
+      facilityId: createdFacility.id,
+      operatorId: createdFacility.operator.id,
+      status: createdFacility.status,
+    },
+  })
+
+  return {
+    ...createdFacility,
+    monthlyRevenue: 0,
+    utilization: 0,
+    createdAt: createdFacility.createdAt.toISOString(),
+    updatedAt: createdFacility.updatedAt.toISOString(),
+  }
+}
+
+export async function createCoach(data: CreateCoachInput, actorId?: string) {
+  const {
+    name,
+    email,
+    phone,
+    city,
+    bio,
+    sportId,
+    experienceYears,
+    sessionRate,
+    commissionRate,
+    status,
+    certifications,
+    specialties,
+  } = data
+
+  const normalizedEmail = email.trim().toLowerCase()
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: { id: true },
+  })
+
+  if (existingUser) {
+    throw new BadRequestError('Coach email already exists')
+  }
+
+  const sport = await prisma.sport.findUnique({
+    where: { id: sportId },
+    select: {
+      id: true,
+      name: true,
+      displayName: true,
+    },
+  })
+
+  if (!sport) {
+    throw new BadRequestError('Selected sport does not exist')
+  }
+
+  const hashedPassword = await hashPassword('password123')
+  const normalizedName = name.trim()
+  const baseSlug = slugify(normalizedName) || 'coach'
+
+  const createdCoach = await prisma.$transaction(async (tx: any) => {
+    const createdUser = await tx.user.create({
+      data: {
+        name: normalizedName,
+        email: normalizedEmail,
+        password: hashedPassword,
+        phone: phone?.trim() || null,
+        role: 'COACH',
+        status: status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE',
+        emailVerified: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    })
+
+    const coach = await tx.coach.create({
+      data: {
+        userId: createdUser.id,
+        slug: `${baseSlug}-${createdUser.id.slice(-6)}`,
+        bio: bio?.trim() || `${sport.displayName} coach added from the admin workspace.`,
+        city: city?.trim() || 'Cairo',
+        experienceYears,
+        certifications: JSON.stringify(certifications),
+        specialties: JSON.stringify(specialties),
+        sessionRate,
+        commissionRate,
+        isActive: status !== 'SUSPENDED',
+        isVerified: status === 'APPROVED',
+        sportId: sport.id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        sport: true,
+        _count: {
+          select: {
+            bookings: true,
+            reviews: true,
+          },
+        },
+      },
+    })
+
+    return coach
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.CREATE,
+    object: 'Coach',
+    details: {
+      coachId: createdCoach.id,
+      userId: createdCoach.user.id,
+      sportId: createdCoach.sport.id,
+      status,
+    },
+  })
+
+  return {
+    ...createdCoach,
+    name: createdCoach.user.name,
+    status: createdCoach.isVerified ? 'APPROVED' : createdCoach.isActive ? 'PENDING' : 'SUSPENDED',
+    commissionRate: Number(createdCoach.commissionRate),
+    rating: 0,
+    sessionsThisMonth: createdCoach._count.bookings,
+    createdAt: createdCoach.createdAt.toISOString(),
+    updatedAt: createdCoach.updatedAt.toISOString(),
   }
 }
 
@@ -966,8 +1645,20 @@ export async function updateVerificationCase(
   const submittedAt = requestSubmittedAtToIso(request)
 
   const checklist = data.checklist ?? existingVerification.checklist ?? defaultVerificationChecklist(existingDetails, request.requestedRole)
-  const timeline = data.timeline ?? existingVerification.timeline ?? defaultVerificationTimeline(submittedAt, mapVerificationStatus(request.status))
+  let timeline = data.timeline ?? existingVerification.timeline ?? defaultVerificationTimeline(submittedAt, mapVerificationStatus(request.status))
   const nextStatus = data.status ? mapVerificationStatusToDb(data.status) ?? request.status : request.status
+
+  if (data.status && nextStatus !== request.status) {
+    const statusMessage =
+      data.status === 'Approved'
+        ? 'Case approved from verification detail page.'
+        : data.status === 'Rejected'
+          ? 'Case rejected from verification detail page.'
+          : data.status === 'Needs Info'
+            ? 'Additional information requested from applicant.'
+            : 'Case returned to pending review.'
+    timeline = prependTimelineEntry(timeline, statusMessage)
+  }
 
   const verificationMeta: VerificationWorkflowMeta = {
     assignee: data.assignee ?? existingVerification.assignee ?? null,
@@ -1018,6 +1709,31 @@ export async function updateVerificationCase(
       },
     },
   })
+
+  if (nextStatus === 'APPROVED' && request.userId) {
+    await prisma.$transaction(async (tx: any) => {
+      await tx.user.update({
+        where: { id: request.userId },
+        data: { role: request.requestedRole },
+      })
+      await provisionApprovedRoleProfile(tx, request, existingDetails)
+    })
+  }
+
+  const auditAction = data.status ? mapVerificationDbStatusToAuditAction(nextStatus) : null
+  if (auditAction) {
+    await logAudit({
+      actorId: reviewerId ?? request.reviewerId ?? undefined,
+      action: auditAction,
+      object: 'Verification Queue',
+      details: {
+        requestId: caseId,
+        requestedRole: request.requestedRole,
+        userId: request.userId,
+        via: 'detail',
+      },
+    })
+  }
 
   const reviewer = updated.reviewerId
     ? await prisma.user.findUnique({
@@ -1381,13 +2097,201 @@ export async function listStoreProducts() {
     orderBy: { createdAt: 'desc' },
   })
 
-  return products.map((product) => ({
-    ...product,
-    title: product.name,
-    price: Number(product.price),
-    createdAt: product.createdAt.toISOString(),
-    updatedAt: product.updatedAt.toISOString(),
-  }))
+  return products.map(mapStoreProduct)
+}
+
+export async function createStoreProduct(data: CreateStoreProductInput, actorId?: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { id: data.facilityId },
+    select: { id: true, name: true },
+  })
+
+  if (!facility) {
+    throw new BadRequestError('Selected facility does not exist')
+  }
+
+  const product = await prisma.storeProduct.create({
+    data: {
+      facilityId: data.facilityId,
+      name: data.name.trim(),
+      description: data.description?.trim() || null,
+      category: data.category.trim(),
+      images: JSON.stringify(data.imageUrl ? [data.imageUrl.trim()] : []),
+      price: data.price,
+      quantity: data.quantity,
+      status: deriveStoreProductStatus(data.quantity, data.status),
+    },
+    include: {
+      facility: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.CREATE,
+    object: 'Store Product',
+    details: {
+      productId: product.id,
+      facilityId: product.facilityId,
+      facilityName: facility.name,
+    },
+  })
+
+  return mapStoreProduct(product)
+}
+
+export async function updateStoreProduct(productId: string, data: UpdateStoreProductInput, actorId?: string) {
+  const existingProduct = await prisma.storeProduct.findUnique({
+    where: { id: productId },
+  })
+
+  if (!existingProduct) {
+    throw new NotFoundError('Store product')
+  }
+
+  if (data.facilityId) {
+    const facility = await prisma.facility.findUnique({
+      where: { id: data.facilityId },
+      select: { id: true },
+    })
+
+    if (!facility) {
+      throw new BadRequestError('Selected facility does not exist')
+    }
+  }
+
+  const nextQuantity = data.quantity ?? existingProduct.quantity
+  const nextStatus = deriveStoreProductStatus(nextQuantity, data.status)
+  const nextImages = data.imageUrl === undefined
+    ? existingProduct.images
+    : JSON.stringify(data.imageUrl.trim() ? [data.imageUrl.trim()] : [])
+
+  const updatedProduct = await prisma.storeProduct.update({
+    where: { id: productId },
+    data: {
+      facilityId: data.facilityId,
+      name: data.name?.trim(),
+      description: data.description === undefined ? undefined : data.description.trim() || null,
+      category: data.category?.trim(),
+      images: nextImages,
+      price: data.price,
+      quantity: data.quantity,
+      status: nextStatus,
+    },
+    include: {
+      facility: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.UPDATE,
+    object: 'Store Product',
+    details: {
+      productId,
+    },
+  })
+
+  return mapStoreProduct(updatedProduct)
+}
+
+export async function archiveStoreProduct(productId: string, actorId?: string) {
+  const existingProduct = await prisma.storeProduct.findUnique({
+    where: { id: productId },
+    include: {
+      facility: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  })
+
+  if (!existingProduct) {
+    throw new NotFoundError('Store product')
+  }
+
+  const archivedProduct = await prisma.storeProduct.update({
+    where: { id: productId },
+    data: {
+      quantity: 0,
+      status: 'OUT_OF_STOCK',
+    },
+    include: {
+      facility: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.DELETE,
+    object: 'Store Product',
+    details: {
+      productId,
+      archived: true,
+      facilityName: existingProduct.facility?.name ?? null,
+    },
+  })
+
+  return mapStoreProduct(archivedProduct)
+}
+
+export async function deleteStoreProduct(productId: string, actorId?: string) {
+  const existingProduct = await prisma.storeProduct.findUnique({
+    where: { id: productId },
+    include: {
+      facility: {
+        select: {
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          orderItems: true,
+        },
+      },
+    },
+  })
+
+  if (!existingProduct) {
+    throw new NotFoundError('Store product')
+  }
+
+  if (existingProduct._count.orderItems > 0) {
+    throw new BadRequestError('Cannot permanently delete a product that is linked to store orders')
+  }
+
+  await prisma.storeProduct.delete({
+    where: { id: productId },
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.DELETE,
+    object: 'Store Product',
+    details: {
+      productId,
+      hardDeleted: true,
+      facilityName: existingProduct.facility?.name ?? null,
+    },
+  })
+
+  return {
+    id: productId,
+    deleted: true,
+  }
 }
 
 export async function listStoreOrders() {
@@ -1412,17 +2316,69 @@ export async function listStoreOrders() {
     orderBy: { createdAt: 'desc' },
   })
 
-  return orders.map((order) => {
-    const firstItem = order.items[0]
+  return orders.map(mapStoreOrder)
+}
 
-    return {
-      ...order,
-      quantity: order.items.reduce((sum, item) => sum + item.quantity, 0),
-      productId: firstItem?.productId ?? null,
-      product: firstItem ? { title: firstItem.product.name } : null,
-      total: Number(order.total),
-      createdAt: order.createdAt.toISOString(),
-      updatedAt: order.updatedAt.toISOString(),
-    }
+export async function updateStoreOrderStatus(orderId: string, data: UpdateStoreOrderStatusInput, actorId?: string) {
+  const existingOrder = await prisma.storeOrder.findUnique({
+    where: { id: orderId },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      items: {
+        include: {
+          product: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
   })
+
+  if (!existingOrder) {
+    throw new NotFoundError('Store order')
+  }
+
+  const updatedOrder = await prisma.storeOrder.update({
+    where: { id: orderId },
+    data: {
+      status: data.status,
+      paymentStatus: data.status === 'DELIVERED' ? 'PAID' : existingOrder.paymentStatus,
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      items: {
+        include: {
+          product: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.UPDATE,
+    object: 'Store Order',
+    details: {
+      orderId,
+      status: data.status,
+    },
+  })
+
+  return mapStoreOrder(updatedOrder)
 }

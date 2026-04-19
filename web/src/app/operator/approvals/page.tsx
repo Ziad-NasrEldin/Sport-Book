@@ -11,6 +11,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { exportToCsv } from '@/lib/export'
 import type { ApprovalRecord, ApprovalPriority, ApprovalStatus } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'Pending', 'Approved', 'Rejected'] as const
@@ -48,10 +49,6 @@ export default function OperatorApprovalsPage() {
 
   const updateStatusMutation = useApiMutation('/operator/approvals/:id/status', 'PUT')
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
-
   const getBranchNameById = (id: string) => {
     const branch = branchesData.find((b: any) => b.id === id)
     return branch?.name || 'Unknown'
@@ -74,6 +71,10 @@ export default function OperatorApprovalsPage() {
     })
   }, [approvalsData, search, selectedStatus, selectedPriority])
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
   const updateStatus = async (id: string, status: string) => {
     try {
       await updateStatusMutation.mutate({ id, status })
@@ -91,6 +92,20 @@ export default function OperatorApprovalsPage() {
         actions={
           <button
             type="button"
+            onClick={() => {
+              const headers = ['ID', 'Subject', 'Type', 'Requested By', 'Branch', 'Priority', 'Status', 'Submitted At']
+              const rows = visibleRequests.map((r: any) => [
+                r.id || '',
+                r.subject || '',
+                r.type || '',
+                r.requestedBy || '',
+                getBranchNameById(r.branchId),
+                r.priority || '',
+                r.status || '',
+                r.submittedAt ? new Date(r.submittedAt).toLocaleString() : '',
+              ])
+              exportToCsv('approvals-queue.csv', headers, rows)
+            }}
             className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
           >
             <Download className="w-4 h-4" />

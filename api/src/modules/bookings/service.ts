@@ -45,7 +45,7 @@ export async function calculatePrice(
     }
 
     basePrice = coachService.price.toNumber()
-    duration = coachService.duration / 60 // Convert minutes to hours
+    duration = 1
   } else {
     throw new BadRequestError('Invalid booking parameters')
   }
@@ -137,6 +137,19 @@ export async function checkAvailability(
 
     return !conflict
   } else if (type === 'COACH' && coachId) {
+    const regularWindow = await prisma.coachAvailability.findFirst({
+      where: {
+        coachId,
+        dayOfWeek: date.getDay(),
+        startHour: { lte: startHour },
+        endHour: { gte: endHour },
+      },
+    })
+
+    if (!regularWindow) {
+      return false
+    }
+
     // Check coach availability exceptions
     const exception = await prisma.coachAvailabilityException.findFirst({
       where: {
@@ -225,6 +238,7 @@ export async function createBooking(userId: string, data: CreateBookingInput) {
           sport: true,
         },
       },
+      coachService: true,
     },
   })
 
@@ -347,6 +361,7 @@ export async function getBooking(userId: string, bookingId: string) {
           sport: true,
         },
       },
+      coachService: true,
     },
   })
 
@@ -387,6 +402,7 @@ export async function listBookings(userId: string, filters: { status?: string; t
             sport: true,
           },
         },
+        coachService: true,
       },
     }),
     prisma.booking.count({ where }),

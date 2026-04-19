@@ -112,6 +112,10 @@ export async function processPayment(userId: string, data: ProcessPaymentInput) 
       },
     })
 
+    if (!paymentIntent.bookingId) {
+      return paymentIntent
+    }
+
     const updatedBooking = await tx.booking.update({
       where: { id: paymentIntent.bookingId },
       data: {

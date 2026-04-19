@@ -8,13 +8,19 @@ export interface SessionUser {
   id: string
   email: string
   name: string
-  role: string
+  role: string | Record<string, unknown>
 }
 
 type SupportedRole = 'PLAYER' | 'COACH' | 'OPERATOR' | 'FACILITY' | 'ADMIN'
 
-function normalizeRole(role: string): SupportedRole {
-  const upper = role.toUpperCase()
+export function normalizeRole(role: unknown): SupportedRole {
+  const roleString = typeof role === 'string'
+    ? role
+    : (role != null && typeof role === 'object')
+      ? ((role as Record<string, unknown>).displayName as string || (role as Record<string, unknown>).name as string || '')
+      : ''
+
+  const upper = roleString.toUpperCase()
 
   if (upper === 'ADMIN') return 'ADMIN'
   if (upper === 'COACH') return 'COACH'
@@ -29,7 +35,7 @@ function getAccountTypeForRole(role: SupportedRole): AccountType {
   return 'player'
 }
 
-export function getPostLoginRoute(role: string): string {
+export function getPostLoginRoute(role: unknown): string {
   const normalizedRole = normalizeRole(role)
 
   if (typeof window !== 'undefined') {

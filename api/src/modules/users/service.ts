@@ -1,6 +1,6 @@
 import { prisma } from '@lib/prisma'
-import { NotFoundError } from '@common/errors'
-import type { UpdateProfileInput, UpdatePreferencesInput, AddFavoriteInput } from './schema'
+import { NotFoundError, BadRequestError } from '@common/errors'
+import type { UpdateProfileInput, UpdatePreferencesInput, AddFavoriteInput, WalletTopupInput } from './schema'
 
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
@@ -320,7 +320,6 @@ export async function markNotificationsAsRead(userId: string, notificationIds?: 
       },
     })
   } else {
-    // Mark all as read
     await prisma.notification.updateMany({
       where: {
         userId,
@@ -343,4 +342,38 @@ export async function getUnreadNotificationsCount(userId: string) {
   })
 
   return count
+}
+
+export async function walletTopup(userId: string, data: WalletTopupInput) {
+  let wallet = await prisma.wallet.findUnique({
+    where: { userId },
+  })
+
+  if (!wallet) {
+    wallet = await prisma.wallet.create({
+      data: {
+        userId,
+        balance: 0,
+        currency: 'EGP',
+      },
+    })
+  }
+
+  const paymentIntent = await prisma.paymentIntent.create({
+    data: {
+      userId,
+      type: 'WALLET_TOPUP',
+      bookingId: null,
+      amount: data.amount,
+      currency: wallet.currency,
+      paymentMethod: data.paymentMethod,
+      status: 'PENDING',
+    },
+  })
+
+  return {
+    id: paymentIntent.id,
+    status: paymentIntent.status,
+    amount: paymentIntent.amount.toNumber(),
+  }
 }

@@ -121,8 +121,8 @@ export async function authRoutes(app: FastifyInstance) {
     { preHandler: authDecorators.requireAuth },
     async (request: FastifyRequest) => {
       const data = roleUpgradeRequestSchema.parse(request.body)
-      await requestRoleUpgrade(request.user.userId, data)
-      return success({ message: 'Role upgrade request submitted successfully' })
+      const result = await requestRoleUpgrade(request.user.userId, data)
+      return success({ message: 'Role upgrade request submitted successfully', ...result })
     }
   )
 }

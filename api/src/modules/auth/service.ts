@@ -7,6 +7,7 @@ import {
   generateVerificationToken,
   generatePasswordResetToken,
 } from '@lib/crypto'
+import { sendEmail, buildPasswordResetUrl } from '@lib/email'
 import { ApiError, ConflictError, UnauthorizedError, NotFoundError, BadRequestError } from '@common/errors'
 import type {
   RegisterInput,
@@ -103,7 +104,7 @@ export async function refreshAccessToken(
 
 export async function requestPasswordReset(email: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email } })
-  if (!user) return // don't reveal whether email exists
+  if (!user) return
 
   const token = generatePasswordResetToken()
   const expiry = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000)
@@ -113,10 +114,13 @@ export async function requestPasswordReset(email: string): Promise<void> {
     data: { passwordResetToken: token, passwordResetTokenExpiry: expiry },
   })
 
-  // TODO Phase C: send via SMTP when env.SMTP_HOST is configured
-  if (env.NODE_ENV !== 'production') {
-    console.log(`[dev] Password reset link: ${env.WEB_ORIGIN}/auth/reset-password?token=${token}`)
-  }
+  const resetUrl = buildPasswordResetUrl(token)
+  await sendEmail({
+    to: email,
+    subject: 'Password Reset Request',
+    html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in ${PASSWORD_RESET_EXPIRY_MINUTES} minutes.</p>`,
+    text: `Reset your password: ${resetUrl}`,
+  })
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
@@ -149,7 +153,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 export async function requestRoleUpgrade(
   userId: string,
   data: RoleUpgradeRequestInput
-): Promise<void> {
+): Promise<{ id: string }> {
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) throw new NotFoundError('User')
 
@@ -168,7 +172,7 @@ export async function requestRoleUpgrade(
     requestMessage: data.requestMessage,
   }
 
-  await prisma.roleUpgradeRequest.create({
+  const request = await prisma.roleUpgradeRequest.create({
     data: {
       userId,
       requestedRole: data.requestedRole,
@@ -185,6 +189,8 @@ export async function requestRoleUpgrade(
       notes: JSON.stringify(details),
     },
   })
+
+  return { id: request.id }
 }
 
 export async function verifyEmail(token: string): Promise<void> {

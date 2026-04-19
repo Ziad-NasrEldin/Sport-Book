@@ -10,7 +10,9 @@ import {
   getDashboardStats,
   listAuditLogs,
   listFacilities,
+  createFacility,
   listCoaches,
+  createCoach,
   listBookings,
   listFinance,
   listSports,
@@ -32,10 +34,20 @@ import {
   getPlatformSettings,
   updatePlatformSettings,
   listStoreProducts,
+  createStoreProduct,
+  updateStoreProduct,
+  archiveStoreProduct,
+  deleteStoreProduct,
   listStoreOrders,
+  updateStoreOrderStatus,
 } from './service'
 import {
   updateUserSchema,
+  createFacilitySchema,
+  createCoachSchema,
+  createStoreProductSchema,
+  updateStoreProductSchema,
+  updateStoreOrderStatusSchema,
   updateBookingStatusSchema,
   createSportSchema,
   updateSportSchema,
@@ -122,7 +134,7 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
   app.post('/role-upgrades/:id/respond', async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const data = respondToRoleUpgradeSchema.parse(request.body)
-    const result = await respondToRoleUpgrade(id, data)
+    const result = await respondToRoleUpgrade(id, data, request.user!.userId)
     return success(result)
   })
 
@@ -149,6 +161,13 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
     return success(result)
   })
 
+  // POST /admin-workspace/facilities - Create facility
+  app.post('/facilities', async (request: FastifyRequest) => {
+    const data = createFacilitySchema.parse(request.body)
+    const result = await createFacility(data, request.user!.userId)
+    return success(result)
+  })
+
   // GET /admin-workspace/coaches - List coaches
   app.get('/coaches', async (request: FastifyRequest) => {
     const status = (request.query as { status?: string }).status
@@ -156,6 +175,13 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
     const limit = z.coerce.number().min(1).max(50).default(20).parse((request.query as { limit?: string }).limit)
 
     const result = await listCoaches({ page, limit, status })
+    return success(result)
+  })
+
+  // POST /admin-workspace/coaches - Create coach
+  app.post('/coaches', async (request: FastifyRequest) => {
+    const data = createCoachSchema.parse(request.body)
+    const result = await createCoach(data, request.user!.userId)
     return success(result)
   })
 
@@ -341,9 +367,46 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
     return success(products)
   })
 
+  // POST /admin-workspace/store/products - Create store product
+  app.post('/store/products', async (request: FastifyRequest) => {
+    const data = createStoreProductSchema.parse(request.body)
+    const result = await createStoreProduct(data, request.user!.userId)
+    return success(result)
+  })
+
+  // PATCH /admin-workspace/store/products/:id - Update store product
+  app.patch('/store/products/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateStoreProductSchema.parse(request.body)
+    const result = await updateStoreProduct(id, data, request.user!.userId)
+    return success(result)
+  })
+
+  // DELETE /admin-workspace/store/products/:id - Archive store product
+  app.delete('/store/products/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const result = await archiveStoreProduct(id, request.user!.userId)
+    return success(result)
+  })
+
+  // DELETE /admin-workspace/store/products/:id/permanent - Permanently delete store product
+  app.delete('/store/products/:id/permanent', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const result = await deleteStoreProduct(id, request.user!.userId)
+    return success(result)
+  })
+
   // GET /admin-workspace/store/orders - List store orders
   app.get('/store/orders', async () => {
     const orders = await listStoreOrders()
     return success(orders)
+  })
+
+  // PATCH /admin-workspace/store/orders/:id/status - Update store order status
+  app.patch('/store/orders/:id/status', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateStoreOrderStatusSchema.parse(request.body)
+    const result = await updateStoreOrderStatus(id, data, request.user!.userId)
+    return success(result)
   })
 }

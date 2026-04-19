@@ -1,51 +1,39 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import type { CoachSettingsData } from '@/lib/coach/types'
 
 export default function CoachSettingsPage() {
-  const { data: settingsResponse, loading, error, refetch } = useApiCall('/coach/settings')
+  const { data: settingsData, error, refetch } = useApiCall<CoachSettingsData>('/coach/settings')
   const saveMutation = useApiMutation('/coach/settings', 'PUT')
-
-  const settingsData = settingsResponse?.data || settingsResponse || {}
 
   const [notifications, setNotifications] = useState<Record<string, boolean>>({})
   const [policies, setPolicies] = useState<Record<string, boolean>>({})
   const [payoutCycle, setPayoutCycle] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly')
 
   useEffect(() => {
-    if (settingsData.notifications) {
-      const notificationDefaults = Object.fromEntries(settingsData.notifications.map((item: any) => [item.key, item.enabled]))
-      setNotifications(notificationDefaults)
-    }
-    if (settingsData.policies) {
-      const policyDefaults = Object.fromEntries(settingsData.policies.map((item: any) => [item.key, item.enabled]))
-      setPolicies(policyDefaults)
-    }
-    if (settingsData.payoutCycle) {
-      setPayoutCycle(settingsData.payoutCycle)
-    }
+    if (!settingsData) return
+    setNotifications(Object.fromEntries(settingsData.notifications.map((item) => [item.key, item.enabled])))
+    setPolicies(Object.fromEntries(settingsData.policies.map((item) => [item.key, item.enabled])))
+    setPayoutCycle(settingsData.payoutCycle)
   }, [settingsData])
 
   if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+    return <APIErrorFallback error={error} onRetry={refetch} />
   }
 
   const handleSave = async () => {
-    try {
-      await saveMutation.mutate({
-        notifications,
-        policies,
-        payoutCycle,
-      })
-      refetch()
-    } catch (err) {
-      console.error('Failed to save settings:', err)
-    }
+    await saveMutation.mutate({
+      notifications,
+      policies,
+      payoutCycle,
+    })
+    await refetch()
   }
 
   return (
@@ -56,7 +44,7 @@ export default function CoachSettingsPage() {
         actions={
           <button
             type="button"
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             disabled={saveMutation.loading}
             className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest disabled:opacity-50"
           >
@@ -69,7 +57,7 @@ export default function CoachSettingsPage() {
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <AdminPanel eyebrow="Notifications" title="Communication Preferences">
           <div className="space-y-3">
-            {(settingsData.notifications || []).map((item: any) => (
+            {(settingsData?.notifications ?? []).map((item) => (
               <ToggleRow
                 key={item.key}
                 label={item.label}
@@ -88,7 +76,7 @@ export default function CoachSettingsPage() {
 
         <AdminPanel eyebrow="Policies" title="Booking Rules">
           <div className="space-y-3">
-            {(settingsData.policies || []).map((item: any) => (
+            {(settingsData?.policies ?? []).map((item) => (
               <ToggleRow
                 key={item.key}
                 label={item.label}

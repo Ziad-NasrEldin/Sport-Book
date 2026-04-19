@@ -9,7 +9,19 @@ import {
 
 export { APIError, AuthenticationError, NetworkError, NotFoundError, ServerError, ValidationError }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+function resolveApiBaseUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
+  const defaultUrl = 'http://localhost:3001/api/v1'
+
+  if (!configuredUrl) {
+    return defaultUrl
+  }
+
+  const normalizedUrl = configuredUrl.replace(/\/+$/, '')
+  return normalizedUrl.endsWith('/api/v1') ? normalizedUrl : `${normalizedUrl}/api/v1`
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 
 const ACCESS_TOKEN_KEY = 'sportbook-access-token'
 const CSRF_TOKEN_KEY = 'sportbook-csrf-token'

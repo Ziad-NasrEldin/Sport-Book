@@ -96,3 +96,18 @@ export function toggleCoachFavorite(coach: FavoriteCoach): boolean {
   saveFavorites({ ...current, coaches: nextCoaches })
   return !exists
 }
+
+export async function fetchFavoritesFromAPI() {
+  const { api } = await import('./api/client')
+  return api.get('/users/me/favorites')
+}
+
+export async function addFavoriteToAPI(data: { courtId?: string; coachId?: string; facilityId?: string; productId?: string }) {
+  const { api } = await import('./api/client')
+  return api.post('/users/me/favorites', data)
+}
+
+export async function removeFavoriteFromAPI(id: string) {
+  const { api } = await import('./api/client')
+  return api.delete(`/users/me/favorites/${id}`)
+}

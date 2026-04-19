@@ -10,6 +10,9 @@ import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { downloadCsv, type CoachReportsData } from '@/lib/coach/types'
+
+const DONUT_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#14b8a6']
 
 function formatEgp(value: number) {
   return new Intl.NumberFormat('en-EG', {
@@ -20,21 +23,20 @@ function formatEgp(value: number) {
 }
 
 export default function CoachReportsPage() {
-  const { data: reportsResponse, loading, error } = useApiCall('/coach/reports')
-  const reportsData = reportsResponse?.data || reportsResponse || {}
+  const { data: reportsData, loading, error, refetch } = useApiCall<CoachReportsData>('/coach/reports')
 
   if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+    return <APIErrorFallback error={error} onRetry={refetch} />
   }
 
-  const coachBookings = reportsData.bookings || []
-  const coachRevenueTrend = reportsData.revenueTrend || []
-  const coachSessionMix = reportsData.sessionMix || []
-  const monthSnapshots = reportsData.monthSnapshots || []
+  const coachBookings = reportsData?.bookings ?? []
+  const coachRevenueTrend = reportsData?.revenueTrend ?? []
+  const coachSessionMix = reportsData?.sessionMix ?? []
+  const monthSnapshots = reportsData?.monthSnapshots ?? []
 
-  const completedSessions = coachBookings.filter((booking: any) => booking.status === 'COMPLETED').length
-  const pendingSessions = coachBookings.filter((booking: any) => booking.status === 'PENDING').length
-  const estimatedPayout = coachBookings.reduce((sum: number, booking: any) => sum + (booking.payout || 0), 0)
+  const completedSessions = coachBookings.filter((booking) => booking.status === 'COMPLETED').length
+  const pendingSessions = coachBookings.filter((booking) => booking.status === 'PENDING').length
+  const estimatedPayout = coachBookings.reduce((sum, booking) => sum + (typeof booking.payout === 'number' ? booking.payout : 0), 0)
 
   return (
     <div className="space-y-6">
@@ -45,13 +47,21 @@ export default function CoachReportsPage() {
           <>
             <button
               type="button"
+              onClick={() => void refetch()}
               className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
             >
               <Filter className="w-4 h-4" />
-              Last 30 Days
+              Refresh Data
             </button>
             <button
               type="button"
+              onClick={() =>
+                downloadCsv(
+                  'coach-report.csv',
+                  ['Month', 'Sessions', 'Gross', 'Average Rating'],
+                  monthSnapshots.map((row) => [row.month, row.sessions, row.gross, row.avgRating.toFixed(1)]),
+                )
+              }
               className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
             >
               <Download className="w-4 h-4" />
@@ -79,38 +89,38 @@ export default function CoachReportsPage() {
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-4">
         <AdminPanel eyebrow="Revenue trend" title="Earnings Trajectory">
-          <AdminTrendBars values={coachRevenueTrend} colorClassName="bg-secondary-container" />
+          <AdminTrendBars values={coachRevenueTrend.map((p: { value: number }) => p.value)} colorClassName="bg-secondary-container" />
         </AdminPanel>
 
         <AdminPanel eyebrow="Session mix" title="Program Balance">
-          <AdminDonut segments={coachSessionMix} />
+          <AdminDonut segments={coachSessionMix.map((s: { label: string; value: number }, i: number) => ({ label: s.label, value: s.value, color: DONUT_COLORS[i % DONUT_COLORS.length] }))} />
         </AdminPanel>
       </section>
 
       <AdminPanel eyebrow="Monthly snapshots" title="Performance Ledger">
         <AdminTable
           items={monthSnapshots}
-          getRowKey={(row: any) => row.id}
+          getRowKey={(row) => row.id}
           columns={[
             {
               key: 'month',
               header: 'Month',
-              render: (row: any) => <span className="font-bold text-primary">{row.month || 'Unknown'}</span>,
+              render: (row) => <span className="font-bold text-primary">{row.month}</span>,
             },
             {
               key: 'sessions',
               header: 'Sessions',
-              render: (row: any) => <span className="font-semibold text-primary">{row.sessions || 0}</span>,
+              render: (row) => <span className="font-semibold text-primary">{row.sessions}</span>,
             },
             {
               key: 'gross',
               header: 'Gross Earnings',
-              render: (row: any) => <span className="font-bold text-primary">{formatEgp(row.gross || 0)}</span>,
+              render: (row) => <span className="font-bold text-primary">{formatEgp(row.gross)}</span>,
             },
             {
               key: 'rating',
               header: 'Average Rating',
-              render: (row: any) => <span className="font-semibold text-primary">{(row.avgRating || 0).toFixed(1)}</span>,
+              render: (row) => <span className="font-semibold text-primary">{(row.avgRating != null && typeof row.avgRating === 'number') ? row.avgRating.toFixed(1) : '—'}</span>,
             },
           ]}
         />

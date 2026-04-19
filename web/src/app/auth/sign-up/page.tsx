@@ -3,16 +3,18 @@
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, UserRound, Mail, LockKeyhole } from 'lucide-react'
+import { ArrowLeft, UserRound, Mail, LockKeyhole, Eye, EyeOff } from 'lucide-react'
 import { api, setAccessToken } from '@/lib/api/client'
 import { APIError } from '@/lib/api/client'
 import { getPostLoginRoute } from '@/lib/auth/session'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { showToast } from '@/lib/toast'
 
 export default function SignUpPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -24,12 +26,14 @@ export default function SignUpPage() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
-    try {
+try {
       const response = await api.post('/auth/register', { name, email, password })
-      const { accessToken, user } = response.data || response
+      const responseData = response?.data || response
+      const accessToken = responseData?.accessToken
+      const user = responseData?.user
 
-      setAccessToken(accessToken)
-      router.push(getPostLoginRoute(user.role))
+setAccessToken(accessToken)
+      router.push(getPostLoginRoute(user?.role || 'player'))
     } catch (err) {
       const apiError = err as APIError
       setError(apiError.message || 'Failed to create account. Please try again.')
@@ -94,11 +98,20 @@ export default function SignUpPage() {
                 <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Create a password"
                   required
-                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                  className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/45 hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </label>
 
@@ -133,6 +146,7 @@ export default function SignUpPage() {
           <div className="space-y-3">
             <button
               type="button"
+              onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
               className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
             >
               <span className="w-6 h-6 rounded-full bg-white text-primary-container text-sm font-black inline-flex items-center justify-center">
@@ -142,6 +156,7 @@ export default function SignUpPage() {
             </button>
             <button
               type="button"
+              onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
               className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
             >
               <span className="w-6 h-6 rounded-full bg-[#1877F2] text-white text-sm font-black inline-flex items-center justify-center">

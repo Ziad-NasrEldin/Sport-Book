@@ -36,9 +36,9 @@ export default function OperatorSchedulePage() {
     setSelectedWeek(event.target.value as (typeof weekOptions)[number])
   }, [])
 
-  const scheduleSlotsData = scheduleResponse?.data || scheduleResponse || []
-  const branchesData = branchesResponse?.data || branchesResponse || []
-  const courtsData = courtsResponse?.data || courtsResponse || []
+  const scheduleSlotsData = Array.isArray(scheduleResponse) ? scheduleResponse : (Array.isArray(scheduleResponse?.data) ? scheduleResponse.data : [])
+  const branchesData = Array.isArray(branchesResponse) ? branchesResponse : (Array.isArray(branchesResponse?.data) ? branchesResponse.data : [])
+  const courtsData = Array.isArray(courtsResponse) ? courtsResponse : (Array.isArray(courtsResponse?.data) ? courtsResponse.data : [])
 
   const branchOptions = ['All', ...branchesData.map((branch: BranchRecord) => branch.id)]
 
@@ -50,10 +50,6 @@ export default function OperatorSchedulePage() {
   const getCourtNameById = (courtId: string) => {
     const found = courtsData.find((c: CourtRecord) => c.id === courtId)
     return found?.name || 'Unknown Court'
-  }
-
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
   const visibleSlots = useMemo(() => {
@@ -77,6 +73,10 @@ export default function OperatorSchedulePage() {
       }
     })
   }, [visibleSlots])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="space-y-6">

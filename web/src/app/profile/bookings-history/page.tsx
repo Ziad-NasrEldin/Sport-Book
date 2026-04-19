@@ -3,39 +3,21 @@
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CalendarClock, Clock3, MapPin, Repeat2 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
+import { useApiCall } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
-const historySessions = [
-  {
-    id: 'HS-918',
-    venue: 'The Regent Park Courts',
-    court: 'Court 1 • Hard',
-    date: 'Mon, Apr 07',
-    time: '19:00 - 20:00',
-    amount: '90 EGP',
-    status: 'Completed',
-  },
-  {
-    id: 'HS-901',
-    venue: 'Elite Club Arena',
-    court: 'Court 3 • Indoor',
-    date: 'Fri, Apr 04',
-    time: '17:00 - 18:30',
-    amount: '140 EGP',
-    status: 'Completed',
-  },
-  {
-    id: 'HS-876',
-    venue: 'City Sports Hub',
-    court: 'Court 7 • Clay',
-    date: 'Tue, Apr 01',
-    time: '20:00 - 21:00',
-    amount: '80 EGP',
-    status: 'Canceled',
-  },
-]
+const statusMap: Record<string, { label: string; className: string }> = {
+  COMPLETED: { label: 'Completed', className: 'bg-tertiary-fixed text-primary' },
+  CANCELLED: { label: 'Canceled', className: 'bg-primary/10 text-primary' },
+  NO_SHOW: { label: 'No Show', className: 'bg-primary/10 text-primary' },
+}
 
 export default function ProfileBookingHistoryPage() {
   const router = useRouter()
+  const { data: bookingsData, loading, error, refetch } = useApiCall<any>('/users/me/bookings?status=COMPLETED,CANCELLED,NO_SHOW')
+
+  const bookings = Array.isArray(bookingsData) ? bookingsData : (Array.isArray(bookingsData?.data) ? bookingsData.data : [])
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -44,6 +26,14 @@ export default function ProfileBookingHistoryPage() {
     }
 
     router.push('/profile/bookings')
+  }
+
+  if (error) {
+    return (
+      <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] flex items-center justify-center">
+        <APIErrorFallback error={error} onRetry={refetch} />
+      </main>
+    )
   }
 
   return (
@@ -66,52 +56,76 @@ export default function ProfileBookingHistoryPage() {
       </header>
 
       <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-3 md:space-y-4">
-        {historySessions.map((session) => (
-          <article
-            key={session.id}
-            className="bg-surface-container-lowest rounded-[var(--radius-md)] p-3.5 md:p-4 shadow-ambient h-[min(25svh,11rem)] max-h-[25svh]"
-          >
-            <div className="h-full flex items-center justify-between gap-3 min-w-0">
-              <div className="flex-1 min-w-0 h-full flex flex-col justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <h3 className="text-sm md:text-base font-bold text-primary truncate">{session.venue}</h3>
-                    <span
-                      className={`text-[10px] font-lexend font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                        session.status === 'Completed' ? 'bg-tertiary-fixed text-primary' : 'bg-primary/10 text-primary'
-                      }`}
-                    >
-                      {session.status}
-                    </span>
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-surface-container-lowest rounded-[var(--radius-md)] p-3.5 md:p-4 shadow-ambient animate-pulse h-32" />
+          ))
+        ) : !Array.isArray(bookings) || bookings.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-primary/60 text-lg font-semibold">No booking history yet</p>
+            <p className="text-primary/40 text-sm mt-2">Your past bookings will appear here</p>
+          </div>
+        ) : (
+          bookings.map((booking: any) => {
+            const statusInfo = statusMap[booking.status] || { label: booking.status, className: 'bg-primary/10 text-primary' }
+
+            return (
+              <article
+                key={booking.id}
+                className="bg-surface-container-lowest rounded-[var(--radius-md)] p-3.5 md:p-4 shadow-ambient h-[min(25svh,11rem)] max-h-[25svh]"
+              >
+                <div className="h-full flex items-center justify-between gap-3 min-w-0">
+                  <div className="flex-1 min-w-0 h-full flex flex-col justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <h3 className="text-sm md:text-base font-bold text-primary truncate">{booking.courtName || booking.facilityName || 'Court'}</h3>
+                        <span
+                          className={`text-[10px] font-lexend font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusInfo.className}`}
+                        >
+                          {statusInfo.label}
+                        </span>
+                      </div>
+                      <p className="text-xs md:text-sm text-primary/65 truncate">{stringValue(booking.courtDetails || booking.court)}</p>
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap gap-2 text-[10px] md:text-xs text-primary/70">
+                      {booking.date && (
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarClock className="w-3.5 h-3.5" />
+                          {booking.date}
+                        </span>
+                      )}
+                      {booking.time && (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 className="w-3.5 h-3.5" />
+                          {booking.time}
+                        </span>
+                      )}
+                      {booking.courtId && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {booking.courtId}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs md:text-sm text-primary/65 truncate">{session.court}</p>
-                </div>
 
-                <div className="mt-2 flex flex-wrap gap-2 text-[10px] md:text-xs text-primary/70">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarClock className="w-3.5 h-3.5" />
-                    {session.date}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock3 className="w-3.5 h-3.5" />
-                    {session.time}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {session.id}
-                  </span>
+                  <div className="text-right h-full flex flex-col items-end justify-between shrink-0">
+                    <p className="text-base md:text-lg font-black text-primary leading-none">{booking.amount || booking.total || ''}</p>
+                    {booking.courtId && (
+                      <button
+                        onClick={() => router.push(`/book?courtId=${booking.courtId}`)}
+                        className="inline-flex items-center gap-1 text-xs md:text-sm font-bold text-primary-container hover:text-primary transition-colors"
+                      >
+                        Rebook <Repeat2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <div className="text-right h-full flex flex-col items-end justify-between shrink-0">
-                <p className="text-base md:text-lg font-black text-primary leading-none">{session.amount}</p>
-                <button className="inline-flex items-center gap-1 text-xs md:text-sm font-bold text-primary-container hover:text-primary transition-colors">
-                  Rebook <Repeat2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+              </article>
+            )
+          })
+        )}
       </section>
 
       <FloatingNav />

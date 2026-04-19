@@ -1,37 +1,50 @@
 'use client'
 
-import { Suspense, useMemo } from 'react'
+import { Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Check, CalendarDays, Clock3, MapPin, UserRound, CreditCard } from 'lucide-react'
-import { coaches } from '@/lib/coaches'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+
+type BookingResponse = {
+  id: string
+  date: string
+  startHour: number
+  endHour: number
+  duration: number
+  playerCount: number
+  paymentMethod: string | null
+  totalPrice: number
+  coach: {
+    user: {
+      name: string
+      avatar: string | null
+    }
+    sport: {
+      displayName: string
+    }
+  } | null
+}
 
 function CoachConfirmationPageContent() {
-  const params = useParams<{ slug: string | string[] }>()
   const searchParams = useSearchParams()
+  const bookingId = searchParams.get('bookingId') ?? ''
 
-  const slugParam = params.slug
-  const slug = Array.isArray(slugParam) ? slugParam[0] : (slugParam ?? '')
+  const { data: booking, error, refetch } = useApiCall<BookingResponse>(`/bookings/${bookingId}`)
 
-  const coach = useMemo(
-    () => coaches.find((entry) => entry.slug === slug),
-    [slug],
-  )
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={refetch} />
+  }
 
-  const sessionDate = searchParams.get('date') ?? 'Apr 20, 2026'
-  const sessionTime = searchParams.get('time') ?? '06:00 PM'
-  const duration = Number(searchParams.get('duration') ?? '60') || 60
-  const participants = Number(searchParams.get('participants') ?? '1') || 1
-  const location = searchParams.get('location') ?? 'SportBook Club - Main Arena'
-  const total = Number(searchParams.get('total') ?? '0') || 0
-  const payment = searchParams.get('payment')
+  if (!booking) return null
 
-  const paymentLabel = payment === 'wallet'
+  const paymentLabel = booking.paymentMethod === 'WALLET'
     ? 'Wallet Balance'
-    : payment === 'cash'
-      ? 'Pay At Venue'
-      : 'Credit / Debit Card'
+    : booking.paymentMethod === 'PAYMOB_CARD'
+      ? 'Credit / Debit Card'
+      : 'Pay At Venue'
 
   return (
     <main className="w-full min-h-screen bg-surface px-5 py-8 md:px-10 lg:px-14 md:py-12">
@@ -49,36 +62,36 @@ function CoachConfirmationPageContent() {
           <div className="mt-6 bg-surface-container-high rounded-[var(--radius-lg)] p-4 text-left space-y-3">
             <div className="flex items-start gap-3">
               <div className="relative w-14 h-14 rounded-[var(--radius-default)] overflow-hidden shrink-0 mt-0.5">
-                <Image src={coach?.image ?? '/favicon.ico'} alt={coach?.name ?? 'Coach'} fill className="object-cover" />
+                <Image src={booking.coach?.user.avatar ?? '/favicon.ico'} alt={booking.coach?.user.name ?? 'Coach'} fill className="object-cover" />
               </div>
               <div>
-                <p className="text-sm font-bold text-primary">{coach?.name ?? 'Coach Session'}</p>
-                <p className="text-xs text-primary/70 mt-1">{coach?.sport ?? 'Sport'} coaching</p>
+                <p className="text-sm font-bold text-primary">{booking.coach?.user.name ?? 'Coach Session'}</p>
+                <p className="text-xs text-primary/70 mt-1">{booking.coach?.sport.displayName ?? 'Sport'} coaching</p>
               </div>
             </div>
 
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
-              <span><span className="font-bold text-primary">Date:</span> {sessionDate}</span>
+              <span><span className="font-bold text-primary">Date:</span> {new Date(booking.date).toLocaleDateString()}</span>
             </p>
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <Clock3 className="w-4 h-4" />
-              <span><span className="font-bold text-primary">Time:</span> {sessionTime} ({duration} min)</span>
+              <span><span className="font-bold text-primary">Time:</span> {formatHour(booking.startHour)} - {formatHour(booking.endHour)}</span>
             </p>
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <UserRound className="w-4 h-4" />
-              <span><span className="font-bold text-primary">Participants:</span> {participants}</span>
+              <span><span className="font-bold text-primary">Participants:</span> {booking.playerCount}</span>
             </p>
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              <span><span className="font-bold text-primary">Location:</span> {location}</span>
+              <span><span className="font-bold text-primary">Location:</span> SportBook Club - Main Arena</span>
             </p>
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
               <span><span className="font-bold text-primary">Payment:</span> {paymentLabel}</span>
             </p>
             <p className="text-sm text-primary/75">
-              <span className="font-bold text-primary">Total Paid:</span> {total} EGP
+              <span className="font-bold text-primary">Total Paid:</span> {booking.totalPrice} EGP
             </p>
           </div>
 
@@ -117,4 +130,10 @@ export default function CoachConfirmationPage() {
       <CoachConfirmationPageContent />
     </Suspense>
   )
+}
+
+function formatHour(hour: number) {
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  const normalized = hour % 12 === 0 ? 12 : hour % 12
+  return `${normalized}:00 ${suffix}`
 }

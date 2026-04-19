@@ -1,56 +1,100 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { ArrowLeft, Medal, Clock3, Star, Check, ArrowRight } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { coaches } from '@/lib/coaches'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import type { PublicCoachDetail } from '@/lib/coach/types'
 
-type CoachDetailsPageProps = {
-  params: Promise<{ slug: string }>
+type PublicAvailabilityWindow = {
+  id: string
+  dayOfWeek: number
+  startHour: number
+  endHour: number
 }
 
-const slotBands = [
-  { h: 0, c: 'bg-[#6366f1]' },
-  { h: 1, c: 'bg-[#6366f1]' },
-  { h: 2, c: 'bg-[#6366f1]' },
-  { h: 3, c: 'bg-[#6366f1]' },
-  { h: 4, c: 'bg-[#6366f1]' },
-  { h: 5, c: 'bg-[#6366f1]' },
-  { h: 6, c: 'bg-[#6366f1]' },
-  { h: 7, c: 'bg-[#f59e0b]' },
-  { h: 8, c: 'bg-[#f59e0b]' },
-  { h: 9, c: 'bg-[#f59e0b]' },
-  { h: 10, c: 'bg-[#f59e0b]' },
-  { h: 11, c: 'bg-[#10b981]' },
-  { h: 12, c: 'bg-[#10b981]' },
-  { h: 13, c: 'bg-[#10b981]' },
-  { h: 14, c: 'bg-[#10b981]' },
-  { h: 15, c: 'bg-[#10b981]' },
-  { h: 16, c: 'bg-[#ef4444]' },
-  { h: 17, c: 'bg-[#ef4444]' },
-  { h: 18, c: 'bg-[#ef4444]' },
-  { h: 19, c: 'bg-[#ef4444]' },
-  { h: 20, c: 'bg-[#ef4444]' },
-  { h: 21, c: 'bg-[#ef4444]' },
-  { h: 22, c: 'bg-[#ef4444]' },
-  { h: 23, c: 'bg-[#ef4444]' },
-]
+type PublicAvailabilityResponse = {
+  coachId: string
+  regularAvailability: PublicAvailabilityWindow[]
+  exceptions?: Array<{ date: string; isAvailable: boolean }>
+}
 
-export default async function CoachDetailsPage({ params }: CoachDetailsPageProps) {
-  const { slug } = await params
-  const coach = coaches.find((entry) => entry.slug === slug)
+type PublicReviewResponse = {
+  items: Array<{ id: string; rating: number; comment: string; user: { name: string } }>
+}
 
-  if (!coach) {
-    notFound()
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+export default function CoachDetailsPage() {
+  const params = useParams<{ slug: string }>()
+  const slug = params.slug
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('')
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const next = new Date()
+    next.setDate(next.getDate() + 1)
+    return next.toISOString().slice(0, 10)
+  })
+  const [selectedStartHour, setSelectedStartHour] = useState<number | null>(null)
+
+  const { data: coach, error: coachError, refetch: refetchCoach } = useApiCall<PublicCoachDetail>(`/coaches/${slug}`)
+  const { data: services, error: servicesError, refetch: refetchServices } = useApiCall<PublicCoachDetail['services']>(`/coaches/${slug}/services`)
+  const { data: availability, error: availabilityError, refetch: refetchAvailability } =
+    useApiCall<PublicAvailabilityResponse>(`/coaches/${slug}/availability?date=${selectedDate}`)
+  const { data: reviews } = useApiCall<PublicReviewResponse>(`/coaches/${slug}/reviews`)
+
+  useEffect(() => {
+    if (!selectedServiceId && services && services.length > 0) {
+      setSelectedServiceId(services[0].id)
+    }
+  }, [selectedServiceId, services])
+
+  if (coachError) {
+    return <APIErrorFallback error={coachError} onRetry={refetchCoach} />
+  }
+  if (servicesError) {
+    return <APIErrorFallback error={servicesError} onRetry={refetchServices} />
+  }
+  if (availabilityError) {
+    return <APIErrorFallback error={availabilityError} onRetry={refetchAvailability} />
   }
 
-  const confirmBookingHref = `/coaches/${coach.slug}/confirm-booking?${new URLSearchParams({
-    date: 'Apr 20, 2026',
-    time: '06:00 PM',
-    duration: '60',
-    type: 'private',
-    location: 'SportBook Club - Main Arena',
-  }).toString()}`
+  const selectedService = services?.find((service) => service.id === selectedServiceId) ?? services?.[0]
+  const dateOptions = Array.from({ length: 7 }, (_, index) => {
+    const target = new Date()
+    target.setDate(target.getDate() + index)
+    return target
+  })
+
+  const availableSlots = useMemo(() => {
+    const date = new Date(selectedDate)
+    const windowForDay = availability?.regularAvailability.filter((window) => window.dayOfWeek === date.getDay()) ?? []
+    const blocked = availability?.exceptions?.find((exception) => exception.date.startsWith(selectedDate) && !exception.isAvailable)
+    if (blocked) return []
+
+    return windowForDay.flatMap((window) => {
+      const slots: number[] = []
+      const stepHours = Math.max(1, Math.round((selectedService?.duration ?? 60) / 60))
+      for (let hour = window.startHour; hour + stepHours <= window.endHour; hour += stepHours) {
+        slots.push(hour)
+      }
+      return slots
+    })
+  }, [availability, selectedDate, selectedService])
+
+  const confirmBookingHref =
+    coach && selectedService && selectedStartHour !== null
+      ? `/coaches/${coach.slug}/confirm-booking?${new URLSearchParams({
+          coachId: coach.id,
+          serviceId: selectedService.id,
+          date: selectedDate,
+          startHour: String(selectedStartHour),
+          endHour: String(selectedStartHour + Math.max(1, Math.round(selectedService.duration / 60))),
+        }).toString()}`
+      : '#'
 
   return (
     <main className="w-full bg-surface min-h-screen pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
@@ -67,124 +111,170 @@ export default async function CoachDetailsPage({ params }: CoachDetailsPageProps
           >
             <ArrowLeft className="w-5 h-5 text-primary-container stroke-[2]" />
           </Link>
-          <h1 className="text-primary-container font-extrabold tracking-tight text-lg md:text-xl">{coach.name}</h1>
+          <h1 className="text-primary-container font-extrabold tracking-tight text-lg md:text-xl">{coach?.user.name ?? 'Coach'}</h1>
         </div>
       </header>
 
-      <div className="md:max-w-4xl md:mx-auto">
-        <section className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden md:rounded-[2rem] md:mt-4 md:shadow-ambient">
-          <Image src={coach.image} alt={coach.name} fill className="object-cover object-center" priority />
-          <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent">
-            <div className="space-y-2 md:space-y-3">
-              <span className="inline-flex items-center gap-1 bg-tertiary-fixed text-primary px-3 py-1 rounded-full text-xs font-bold tracking-wide">
-                <Star className="w-3 h-3 fill-primary" /> 4.9
-              </span>
-              <h2 className="text-3xl font-extrabold text-white leading-none md:text-5xl">{coach.name}</h2>
-              <div className="flex flex-wrap items-center gap-2 text-white/85 text-sm md:text-base">
-                <span className="inline-flex items-center gap-1.5">
-                  <Medal className="w-4 h-4" /> {coach.experienceYears} years experience
+      {coach ? (
+        <div className="md:max-w-4xl md:mx-auto">
+          <section className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden md:rounded-[2rem] md:mt-4 md:shadow-ambient">
+            <Image src={coach.user.avatar ?? '/favicon.ico'} alt={coach.user.name} fill className="object-cover object-center" priority />
+            <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent">
+              <div className="space-y-2 md:space-y-3">
+                <span className="inline-flex items-center gap-1 bg-tertiary-fixed text-primary px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+                  <Star className="w-3 h-3 fill-primary" /> {(reviews?.items?.[0]?.rating ?? 4.9).toFixed?.(1) ?? '4.9'}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock3 className="w-4 h-4" /> {coach.sport} Coach
-                </span>
+                <h2 className="text-3xl font-extrabold text-white leading-none md:text-5xl">{coach.user.name}</h2>
+                <div className="flex flex-wrap items-center gap-2 text-white/85 text-sm md:text-base">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Medal className="w-4 h-4" /> {coach.experienceYears} years experience
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock3 className="w-4 h-4" /> {coach.sport.displayName} Coach
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <div className="px-5 py-8 space-y-10 md:px-0 md:py-10 md:space-y-12">
-          <section className="bg-surface-container-lowest rounded-[1.5rem] p-6 md:p-8 shadow-ambient">
-            <p className="text-xs font-lexend font-bold uppercase tracking-[0.16em] text-primary/50 mb-2">About Coach</p>
-            <p className="text-sm md:text-base text-primary/80 leading-relaxed">{coach.bio}</p>
           </section>
 
-          <section className="space-y-6">
-            <h3 className="text-xl font-extrabold text-primary md:text-[28px]">Available Time Slots</h3>
+          <div className="px-5 py-8 space-y-10 md:px-0 md:py-10 md:space-y-12">
+            <section className="bg-surface-container-lowest rounded-[1.5rem] p-6 md:p-8 shadow-ambient">
+              <p className="text-xs font-lexend font-bold uppercase tracking-[0.16em] text-primary/50 mb-2">About Coach</p>
+              <p className="text-sm md:text-base text-primary/80 leading-relaxed">{coach.bio}</p>
+            </section>
 
-            <div className="space-y-6">
-              <div className="grid grid-cols-8 gap-2 md:gap-3">
-                {slotBands.map((slot) => {
-                  let boxColor = 'bg-[#10b981]'
-                  if (slot.h === 2 || slot.h === 14) boxColor = 'bg-[#d1d5db]'
-                  if (slot.h === 18 || slot.h === 19) boxColor = 'bg-[#ef4444]'
-
+            <section className="space-y-6">
+              <h3 className="text-xl font-extrabold text-primary md:text-[28px]">Choose A Service</h3>
+              <div className="grid gap-3">
+                {(services ?? []).map((service) => {
+                  const active = selectedServiceId === service.id
                   return (
-                    <div key={slot.h} className="flex flex-col gap-[3px] active:scale-95 transition-transform cursor-pointer">
-                      <div
-                        className={`h-10 sm:h-12 md:h-14 ${slot.c} rounded-md flex items-center justify-center text-white font-bold font-lexend text-xs sm:text-sm shadow-sm`}
-                      >
-                        {slot.h}
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => setSelectedServiceId(service.id)}
+                      className={`rounded-[1.5rem] p-4 text-left shadow-ambient ${
+                        active ? 'bg-primary-container text-surface-container-lowest' : 'bg-surface-container-lowest text-primary'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-extrabold">{service.name}</p>
+                          <p className={`text-sm mt-1 ${active ? 'text-surface-container-lowest/80' : 'text-primary/65'}`}>{service.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black">{service.price} EGP</p>
+                          <p className={`text-xs mt-1 ${active ? 'text-surface-container-lowest/80' : 'text-primary/60'}`}>{service.duration} min</p>
+                        </div>
                       </div>
-                      <div className={`h-8 sm:h-10 md:h-12 ${boxColor} rounded-md shadow-sm`} />
-                    </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+
+            <section className="space-y-6">
+              <h3 className="text-xl font-extrabold text-primary md:text-[28px]">Available Time Slots</h3>
+
+              <div className="flex flex-wrap gap-2">
+                {dateOptions.map((date) => {
+                  const value = date.toISOString().slice(0, 10)
+                  const active = selectedDate === value
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDate(value)
+                        setSelectedStartHour(null)
+                      }}
+                      className={`px-4 py-2 rounded-full text-sm font-bold ${
+                        active ? 'bg-primary-container text-surface-container-lowest' : 'bg-surface-container-low text-primary'
+                      }`}
+                    >
+                      {date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </button>
                   )
                 })}
               </div>
 
-              <div className="flex items-center justify-center gap-6 pt-3 md:gap-10">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-primary/60 uppercase tracking-widest font-lexend">unavailable</span>
-                  <span className="w-5 h-5 rounded-full bg-[#d1d5db] shadow-sm" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-primary/60 uppercase tracking-widest font-lexend">booked</span>
-                  <span className="w-5 h-5 rounded-full bg-[#ef4444] shadow-sm" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-primary/60 uppercase tracking-widest font-lexend">available</span>
-                  <span className="w-5 h-5 rounded-full bg-[#10b981] shadow-sm" />
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {availableSlots.map((hour) => {
+                  const active = selectedStartHour === hour
+                  return (
+                    <button
+                      key={hour}
+                      type="button"
+                      onClick={() => setSelectedStartHour(hour)}
+                      className={`rounded-[var(--radius-default)] p-4 font-bold shadow-sm ${
+                        active ? 'bg-secondary-container text-white' : 'bg-surface-container-lowest text-primary'
+                      }`}
+                    >
+                      {formatHour(hour)}
+                    </button>
+                  )
+                })}
               </div>
 
-              <div className="bg-surface-container-low p-4 md:p-6 rounded-[1.5rem] flex flex-wrap items-center justify-center gap-3">
-                <span className="px-5 py-2.5 bg-[#6366f1] text-white rounded-full text-[11px] md:text-sm font-bold font-lexend shadow-sm">Night: 40 EGP/hr</span>
-                <span className="px-5 py-2.5 bg-[#f59e0b] text-white rounded-full text-[11px] md:text-sm font-bold font-lexend shadow-sm">Morning: 50 EGP/hr</span>
-                <span className="px-5 py-2.5 bg-[#10b981] text-white rounded-full text-[11px] md:text-sm font-bold font-lexend shadow-sm">Afternoon: 60 EGP/hr</span>
-                <span className="px-5 py-2.5 bg-[#ef4444] text-white rounded-full text-[11px] md:text-sm font-bold font-lexend shadow-sm">Evening: 70 EGP/hr</span>
+              {availableSlots.length === 0 && (
+                <div className="bg-surface-container-lowest rounded-[1.5rem] p-5 text-sm text-primary/70">
+                  No available slots for the selected date.
+                </div>
+              )}
+            </section>
+
+            <section className="bg-primary text-white rounded-[1.5rem] md:rounded-[2rem] p-7 md:p-10 space-y-6 overflow-hidden relative shadow-lg">
+              <h3 className="text-xl md:text-2xl font-extrabold">Session Notes</h3>
+              <ul className="space-y-5">
+                <li className="flex items-start gap-4">
+                  <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-tertiary-fixed">
+                    <Check className="w-4 h-4 stroke-[3]" />
+                  </span>
+                  <p className="text-white/80 text-sm md:text-base leading-relaxed pt-1 font-medium">
+                    Bring your own equipment and hydration for high-intensity drills.
+                  </p>
+                </li>
+                <li className="flex items-start gap-4">
+                  <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-tertiary-fixed">
+                    <Check className="w-4 h-4 stroke-[3]" />
+                  </span>
+                  <p className="text-white/80 text-sm md:text-base leading-relaxed pt-1 font-medium">
+                    Cancellation and reschedule policies are enforced from the coach settings page.
+                  </p>
+                </li>
+              </ul>
+            </section>
+
+            <section className="bg-surface-container-lowest rounded-[1.5rem] p-5 md:p-6 shadow-ambient flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Next Step</p>
+                <h3 className="text-xl font-extrabold text-primary mt-1">Confirm this coach session</h3>
+                <p className="text-sm text-primary/65 mt-1">Review session setup, then continue to secure checkout.</p>
               </div>
-            </div>
-          </section>
-
-          <section className="bg-primary text-white rounded-[1.5rem] md:rounded-[2rem] p-7 md:p-10 space-y-6 overflow-hidden relative shadow-lg">
-            <h3 className="text-xl md:text-2xl font-extrabold">Session Notes</h3>
-            <ul className="space-y-5">
-              <li className="flex items-start gap-4">
-                <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-tertiary-fixed">
-                  <Check className="w-4 h-4 stroke-[3]" />
-                </span>
-                <p className="text-white/80 text-sm md:text-base leading-relaxed pt-1 font-medium">
-                  Bring your own racket and hydration for high-intensity drills.
-                </p>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-tertiary-fixed">
-                  <Check className="w-4 h-4 stroke-[3]" />
-                </span>
-                <p className="text-white/80 text-sm md:text-base leading-relaxed pt-1 font-medium">
-                  Minimum notice for cancellation is 12 hours before slot start.
-                </p>
-              </li>
-            </ul>
-          </section>
-
-          <section className="bg-surface-container-lowest rounded-[1.5rem] p-5 md:p-6 shadow-ambient flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Next Step</p>
-              <h3 className="text-xl font-extrabold text-primary mt-1">Confirm this coach session</h3>
-              <p className="text-sm text-primary/65 mt-1">Review session setup, then continue to secure checkout.</p>
-            </div>
-            <Link
-              href={confirmBookingHref}
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-secondary to-secondary-container text-white px-6 py-3.5 rounded-full font-extrabold text-sm md:text-base whitespace-nowrap"
-            >
-              Confirm Booking
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </section>
+              <Link
+                href={confirmBookingHref}
+                aria-disabled={!selectedService || selectedStartHour === null}
+                className={`inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-extrabold text-sm md:text-base whitespace-nowrap ${
+                  selectedService && selectedStartHour !== null
+                    ? 'bg-gradient-to-br from-secondary to-secondary-container text-white'
+                    : 'bg-surface-container-low text-primary/50 pointer-events-none'
+                }`}
+              >
+                Confirm Booking
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </section>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <FloatingNav />
     </main>
   )
+}
+
+function formatHour(hour: number) {
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  const normalized = hour % 12 === 0 ? 12 : hour % 12
+  return `${normalized}:00 ${suffix}`
 }

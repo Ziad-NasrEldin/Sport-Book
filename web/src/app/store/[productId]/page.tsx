@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -17,7 +17,10 @@ import {
   Truck,
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { storeProducts } from '@/lib/storeProducts'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useApiCall } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
 import { addStoreCartItem, getStoreCartItems } from '@/lib/storeCart'
 
 export default function ProductDetailsPage() {
@@ -25,10 +28,8 @@ export default function ProductDetailsPage() {
   const params = useParams<{ productId: string }>()
   const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId
 
-  const product = useMemo(
-    () => storeProducts.find((item) => item.id === productId),
-    [productId],
-  )
+  const { data: productData, loading, error } = useApiCall(`/store/products/${productId}`)
+  const product = productData?.data || productData
 
   const [quantity, setQuantity] = useState(1)
   const [fulfillment, setFulfillment] = useState<'pickup' | 'delivery'>('pickup')
@@ -36,20 +37,18 @@ export default function ProductDetailsPage() {
     getStoreCartItems().some((item) => item.productId === productId),
   )
 
-  if (!product) {
+  if (error) {
     return (
-      <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] px-5 md:px-10 lg:px-14">
-        <div className="max-w-3xl mx-auto pt-16 md:pt-20 text-center">
-          <h1 className="text-2xl md:text-4xl font-extrabold text-primary">Product Not Found</h1>
-          <p className="mt-2 text-primary/70">The item you are trying to open does not exist.</p>
-          <Link
-            href="/store"
-            className="mt-6 inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary-container text-surface-container-lowest font-bold"
-          >
-            Back To Store
-          </Link>
-        </div>
-        <FloatingNav />
+      <main className="w-full min-h-screen bg-surface-container-low flex items-center justify-center px-5">
+        <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+      </main>
+    )
+  }
+
+  if (loading || !product) {
+    return (
+      <main className="w-full min-h-screen bg-surface-container-low flex items-center justify-center px-5">
+        <LoadingSpinner size="lg" />
       </main>
     )
   }
@@ -99,7 +98,7 @@ export default function ProductDetailsPage() {
       <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-5 md:space-y-6 pb-2">
         <article className="bg-surface-container-lowest rounded-[var(--radius-xl)] overflow-hidden shadow-ambient">
           <div className="relative w-full aspect-[4/3]">
-            <Image src={product.image} alt={product.title} fill className="object-cover" />
+            <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
 
             <span
               className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
@@ -114,8 +113,8 @@ export default function ProductDetailsPage() {
           </div>
 
           <div className="p-5 md:p-6">
-            <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{product.category}</p>
-            <h2 className="text-xl md:text-3xl font-extrabold text-primary mt-2 leading-tight">{product.title}</h2>
+            <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{stringValue(product.category)}</p>
+            <h2 className="text-xl md:text-3xl font-extrabold text-primary mt-2 leading-tight">{product.title || product.name}</h2>
 
             <p className="mt-3 text-sm md:text-base text-primary/75">{product.description}</p>
 
@@ -187,11 +186,11 @@ export default function ProductDetailsPage() {
             <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Sold By</p>
             <p className="font-bold text-primary inline-flex items-center gap-2">
               <Store className="w-4 h-4" />
-              {product.facility}
+              {stringValue(product.facility || product.facilityName)}
             </p>
             <p className="text-sm text-primary/70 inline-flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-primary/45" />
-              {product.location}
+              {stringValue(product.location)}
             </p>
           </div>
 

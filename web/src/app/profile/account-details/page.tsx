@@ -1,14 +1,39 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Camera, UserRound, Mail, Phone, Globe, ShieldCheck, Save } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 const favoriteSports = ['Tennis', 'Padel']
 
 export default function AccountDetailsPage() {
   const router = useRouter()
+  const { data: userData, loading, error, refetch } = useApiCall<any>('/users/me')
+  const user = userData?.data || userData
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+
+  useEffect(() => {
+    if (user) {
+      const fullName = user.name || ''
+      const parts = fullName.split(' ')
+      setFirstName(parts[0] || '')
+      setLastName(parts.slice(1).join(' ') || '')
+      setEmail(user.email || '')
+      setPhone(user.phone || '')
+    }
+  }, [user])
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -18,6 +43,49 @@ export default function AccountDetailsPage() {
 
     router.push('/profile')
   }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+
+    try {
+      await api.patch('/users/me', {
+        name: `${firstName} ${lastName}`.trim(),
+        phone,
+      })
+      setSaveSuccess(true)
+      refetch()
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch {
+      setSaveError('Failed to save changes. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (error) {
+    return (
+      <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans flex items-center justify-center">
+        <APIErrorFallback error={error} onRetry={refetch} />
+      </main>
+    )
+  }
+
+  if (loading) {
+    return (
+      <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans">
+        <section className="w-full h-[34vh] md:h-[42vh] bg-surface-container-high animate-pulse" />
+        <section className="relative z-20 -mt-6 md:-mt-8 max-w-4xl mx-auto px-4 md:px-8 flex flex-col gap-5 md:gap-7">
+          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 animate-pulse h-48" />
+          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 animate-pulse h-64" />
+          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 animate-pulse h-40" />
+        </section>
+      </main>
+    )
+  }
+
+  const avatarUrl = user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
 
   return (
     <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans">
@@ -55,7 +123,7 @@ export default function AccountDetailsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-surface-container-high shrink-0">
               <Image
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
+                src={avatarUrl}
                 alt="User profile photo"
                 fill
                 className="object-cover"
@@ -66,7 +134,10 @@ export default function AccountDetailsPage() {
               <p className="text-sm md:text-base text-primary/70 mb-4">
                 Use a clear headshot so teammates and facility staff can identify you quickly.
               </p>
-              <button className="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold hover:bg-primary transition-colors">
+              <button
+                onClick={() => alert('Coming soon — photo upload is not yet available.')}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold hover:bg-primary transition-colors"
+              >
                 <Camera className="w-4 h-4" />
                 Change Photo
               </button>
@@ -83,7 +154,8 @@ export default function AccountDetailsPage() {
               <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
                 <UserRound className="w-4 h-4 text-primary/50" />
                 <input
-                  defaultValue="Alex"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className="w-full bg-transparent outline-none font-semibold text-primary"
                   type="text"
                 />
@@ -95,7 +167,8 @@ export default function AccountDetailsPage() {
               <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
                 <UserRound className="w-4 h-4 text-primary/50" />
                 <input
-                  defaultValue="Rivera"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="w-full bg-transparent outline-none font-semibold text-primary"
                   type="text"
                 />
@@ -107,8 +180,9 @@ export default function AccountDetailsPage() {
               <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
                 <Mail className="w-4 h-4 text-primary/50" />
                 <input
-                  defaultValue="alex.rivera@example.com"
-                  className="w-full bg-transparent outline-none font-semibold text-primary"
+                  value={email}
+                  readOnly
+                  className="w-full bg-transparent outline-none font-semibold text-primary/60"
                   type="email"
                 />
               </div>
@@ -119,7 +193,8 @@ export default function AccountDetailsPage() {
               <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
                 <Phone className="w-4 h-4 text-primary/50" />
                 <input
-                  defaultValue="+1 (555) 123-4567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   className="w-full bg-transparent outline-none font-semibold text-primary"
                   type="tel"
                 />
@@ -171,20 +246,39 @@ export default function AccountDetailsPage() {
               </span>
               <div>
                 <p className="font-bold text-primary">Password & Sign-in</p>
-                <p className="text-sm text-primary/65">Last changed 45 days ago</p>
+                <p className="text-sm text-primary/65">Manage your password and authentication</p>
               </div>
             </div>
 
-            <button className="px-5 py-2.5 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold hover:bg-primary transition-colors">
+            <button
+              onClick={() => router.push('/auth/forgot-password')}
+              className="px-5 py-2.5 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold hover:bg-primary transition-colors"
+            >
               Change Password
             </button>
           </div>
         </article>
 
+        {saveError && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold">
+            {saveError}
+          </div>
+        )}
+
+        {saveSuccess && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-green-400 font-semibold">
+            Changes saved successfully!
+          </div>
+        )}
+
         <div className="pb-1">
-          <button className="w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          >
             <Save className="w-5 h-5" />
-            Save Changes
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </section>

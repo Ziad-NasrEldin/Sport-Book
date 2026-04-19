@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import {
   FAVORITES_UPDATED_EVENT,
@@ -27,9 +28,11 @@ function CourtsPageContent() {
   const searchParams = useSearchParams()
   const initialSport = searchParams.get('sport')
 
-  const courtsData = courtsResponse?.data || courtsResponse || []
+  const courtsData = Array.isArray(courtsResponse) ? courtsResponse : (Array.isArray(courtsResponse?.data) ? courtsResponse.data : [])
+  const sportLabel = (sport: any): string => stringValue(sport)
+
   const courtSports = useMemo(() => {
-    const sports = new Set(courtsData.map((court: any) => court.sport))
+    const sports = new Set(courtsData.map((court: any) => sportLabel(court.sport)))
     return Array.from(sports) as string[]
   }, [courtsData])
 
@@ -60,7 +63,7 @@ function CourtsPageContent() {
 
   const filteredCourts = useMemo(() => {
     return courtsData
-      .filter((court: any) => court.sport === selectedSport)
+      .filter((court: any) => sportLabel(court.sport) === selectedSport)
       .filter((court: any) => {
         if (priceFilter === 'lt500') return court.price < 500
         if (priceFilter === '500to1000') return court.price >= 500 && court.price <= 1000
@@ -68,7 +71,7 @@ function CourtsPageContent() {
       })
       .filter((court: any) => (distanceFilter === 'lt5' ? court.distance < 5 : true))
       .filter((court: any) => {
-        const text = `${court.title || ''} ${court.location || ''} ${court.sportLabel || ''}`.toLowerCase()
+        const text = `${court.title || ''} ${stringValue(court.location)} ${court.sportLabel || ''}`.toLowerCase()
         return text.includes(query.toLowerCase())
       })
   }, [courtsData, distanceFilter, priceFilter, query, selectedSport])
@@ -91,7 +94,7 @@ function CourtsPageContent() {
       id: court.id,
       name: court.title,
       surface: court.sportLabel,
-      location: court.location,
+      location: stringValue(court.location),
       rating: court.rating,
       image: court.image,
     })
@@ -257,7 +260,7 @@ function CourtsPageContent() {
 
                 <p className="mt-4 text-base text-primary/80 inline-flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-primary/40" />
-                  {court.distance} km away • {court.location}
+                  {stringValue(court.distance)} km away • {stringValue(court.location)}
                 </p>
 
                 <Link

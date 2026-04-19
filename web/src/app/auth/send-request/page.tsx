@@ -80,6 +80,7 @@ export default function SendRequestPage() {
   const [loadingRequests, setLoadingRequests] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const hasPendingRequest = submittedRequests.some((request) => request.status === 'pending')
 
   useEffect(() => {
     if (sessionLoading) return
@@ -138,6 +139,11 @@ export default function SendRequestPage() {
 
     if (!user) {
       setError('You need to sign in before submitting a role upgrade request.')
+      return
+    }
+
+    if (hasPendingRequest) {
+      setError('You already have a pending role upgrade request.')
       return
     }
 
@@ -220,6 +226,12 @@ export default function SendRequestPage() {
             </div>
           ) : null}
 
+          {hasPendingRequest ? (
+            <div className="mt-5 rounded-[var(--radius-default)] border border-amber-500/25 bg-amber-500/10 p-3 text-sm text-amber-900">
+              You already have a pending role upgrade request. Our team will review it before you can submit another.
+            </div>
+          ) : null}
+
           {isSubmitted ? (
             <div className="mt-5 rounded-[var(--radius-default)] border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm text-emerald-800 flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
@@ -266,7 +278,7 @@ export default function SendRequestPage() {
                 value={requestedRole}
                 onChange={(event) => setRequestedRole(event.target.value as RequestedRole)}
                 className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
-                disabled={!user || sessionLoading || submitting}
+                disabled={!user || sessionLoading || submitting || hasPendingRequest}
               >
                 <option value="coach">Coach</option>
                 <option value="facility">Facility</option>
@@ -282,7 +294,7 @@ export default function SendRequestPage() {
                   value={formState.fullName}
                   onChange={(event) => updateField('fullName', event.target.value)}
                   placeholder="Your full name"
-                  disabled={!user || sessionLoading || submitting}
+                  disabled={!user || sessionLoading || submitting || hasPendingRequest}
                   className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
@@ -295,7 +307,7 @@ export default function SendRequestPage() {
                   value={formState.email}
                   onChange={(event) => updateField('email', event.target.value)}
                   placeholder="name@example.com"
-                  disabled={!user || sessionLoading || submitting}
+                  disabled={!user || sessionLoading || submitting || hasPendingRequest}
                   className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
@@ -308,7 +320,7 @@ export default function SendRequestPage() {
                   value={formState.phone}
                   onChange={(event) => updateField('phone', event.target.value)}
                   placeholder="+20 10 0000 0000"
-                  disabled={!user || sessionLoading || submitting}
+                  disabled={!user || sessionLoading || submitting || hasPendingRequest}
                   className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
@@ -321,7 +333,7 @@ export default function SendRequestPage() {
                   value={formState.city}
                   onChange={(event) => updateField('city', event.target.value)}
                   placeholder="Cairo"
-                  disabled={!user || sessionLoading || submitting}
+                  disabled={!user || sessionLoading || submitting || hasPendingRequest}
                   className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                 />
               </label>
@@ -337,7 +349,7 @@ export default function SendRequestPage() {
                     value={formState.specialization}
                     onChange={(event) => updateField('specialization', event.target.value)}
                     placeholder="Padel, Tennis, Squash"
-                    disabled={!user || sessionLoading || submitting}
+                    disabled={!user || sessionLoading || submitting || hasPendingRequest}
                     className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
@@ -351,7 +363,7 @@ export default function SendRequestPage() {
                     value={formState.experienceYears}
                     onChange={(event) => updateField('experienceYears', event.target.value)}
                     placeholder="4"
-                    disabled={!user || sessionLoading || submitting}
+                    disabled={!user || sessionLoading || submitting || hasPendingRequest}
                     className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
@@ -363,7 +375,7 @@ export default function SendRequestPage() {
                     value={formState.certifications}
                     onChange={(event) => updateField('certifications', event.target.value)}
                     placeholder="PTR, ITF level, national federation certificate"
-                    disabled={!user || sessionLoading || submitting}
+                    disabled={!user || sessionLoading || submitting || hasPendingRequest}
                     className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
@@ -378,7 +390,7 @@ export default function SendRequestPage() {
                     value={formState.facilityName}
                     onChange={(event) => updateField('facilityName', event.target.value)}
                     placeholder="Your venue or business name"
-                    disabled={!user || sessionLoading || submitting}
+                    disabled={!user || sessionLoading || submitting || hasPendingRequest}
                     className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
@@ -391,7 +403,7 @@ export default function SendRequestPage() {
                     value={formState.registrationNumber}
                     onChange={(event) => updateField('registrationNumber', event.target.value)}
                     placeholder="Business registration ID"
-                    disabled={!user || sessionLoading || submitting}
+                    disabled={!user || sessionLoading || submitting || hasPendingRequest}
                     className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
@@ -404,7 +416,7 @@ export default function SendRequestPage() {
                     value={formState.facilityAddress}
                     onChange={(event) => updateField('facilityAddress', event.target.value)}
                     placeholder="Street, district, city"
-                    disabled={!user || sessionLoading || submitting}
+                    disabled={!user || sessionLoading || submitting || hasPendingRequest}
                     className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container disabled:opacity-60"
                   />
                 </label>
@@ -419,7 +431,7 @@ export default function SendRequestPage() {
                 onChange={(event) => updateField('requestMessage', event.target.value)}
                 rows={4}
                 placeholder="Share your background and why you want to join SportBook."
-                disabled={!user || sessionLoading || submitting}
+                disabled={!user || sessionLoading || submitting || hasPendingRequest}
                 className="w-full px-3 py-2 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container resize-y disabled:opacity-60"
               />
             </label>
@@ -432,7 +444,7 @@ export default function SendRequestPage() {
 
             <button
               type="submit"
-              disabled={!user || sessionLoading || submitting}
+              disabled={!user || sessionLoading || submitting || hasPendingRequest}
               className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (

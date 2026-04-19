@@ -9,6 +9,7 @@ import { AdminStatCard } from '@/components/admin/AdminStatCard'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { useApiCall } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
@@ -161,7 +162,7 @@ export default function OperatorBranchDetailsPage() {
             {
               key: 'sport',
               header: 'Sport',
-              render: (court: any) => <p className="text-sm font-semibold text-primary">{court.sport}</p>,
+              render: (court: any) => <p className="text-sm font-semibold text-primary">{stringValue(court.sport)}</p>,
             },
             {
               key: 'pricing',

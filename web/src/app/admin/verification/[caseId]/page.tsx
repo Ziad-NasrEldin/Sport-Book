@@ -91,7 +91,7 @@ export default function AdminVerificationCasePage() {
   const persistCase = async (patch: Partial<VerificationCase> & { adminNote?: string }) => {
     if (!caseId) return
 
-    const response = await api.put(`/admin-workspace/verification/${caseId}/status`, {
+    const response = await api.put(`/admin-workspace/verification/${caseId}`, {
       status: patch.status ?? status,
       assignee: patch.assignee ?? assignee,
       checklist: patch.checklist ?? checklist,

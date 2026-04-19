@@ -1,4 +1,4 @@
-import { type ReactNode, memo } from 'react'
+import { type ReactNode } from 'react'
 
 type Column<T> = {
   key: string
@@ -14,7 +14,7 @@ type AdminTableProps<T> = {
   emptyMessage?: string
 }
 
-export const AdminTable = memo(function AdminTable<T>({
+export function AdminTable<T>({
   items,
   columns,
   getRowKey,
@@ -54,4 +54,4 @@ export const AdminTable = memo(function AdminTable<T>({
       </table>
     </div>
   )
-})
+}

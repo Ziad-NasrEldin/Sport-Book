@@ -16,7 +16,10 @@ import {
   Plus,
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { storeProducts } from '@/lib/storeProducts'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useApiCall } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
 import {
   STORE_CART_UPDATED_EVENT,
   clearStoreCart,
@@ -27,9 +30,14 @@ import {
 } from '@/lib/storeCart'
 
 export default function StorePage() {
+  const { data: productsData, loading, error } = useApiCall('/store/products')
+  const products: any[] = useMemo(() => Array.isArray(productsData) ? productsData : (Array.isArray(productsData?.data) ? productsData.data : []), [productsData])
+
+  const categoryLabel = (cat: any): string => stringValue(cat)
+
   const productCategories = useMemo(
-    () => ['All Items', ...Array.from(new Set(storeProducts.map((product) => product.category)))],
-    [],
+    () => ['All Items', ...Array.from(new Set(products.map((product: any) => categoryLabel(product.category))))],
+    [products],
   )
 
   const [activeCategory, setActiveCategory] = useState('All Items')
@@ -56,26 +64,26 @@ export default function StorePage() {
   }, [])
 
   const filteredProducts = useMemo(() => {
-    return storeProducts
-      .filter((product) => activeCategory === 'All Items' || product.category === activeCategory)
-      .filter((product) => {
+    return products
+      .filter((product: any) => activeCategory === 'All Items' || categoryLabel(product.category) === activeCategory)
+      .filter((product: any) => {
         if (!searchQuery.trim()) return true
 
-        const searchableText = `${product.title} ${product.category} ${product.facility} ${product.location}`.toLowerCase()
+        const searchableText = `${product.title || product.name} ${categoryLabel(product.category)} ${stringValue(product.facility || product.facilityName)} ${stringValue(product.location)}`.toLowerCase()
         return searchableText.includes(searchQuery.toLowerCase().trim())
       })
-  }, [activeCategory, searchQuery])
+  }, [products, activeCategory, searchQuery])
 
   const cartDetails = useMemo(
     () =>
       cartItems
         .map((item) => {
-          const product = storeProducts.find((entry) => entry.id === item.productId)
+          const product = products.find((entry: any) => entry.id === item.productId)
           if (!product) return null
           return { item, product }
         })
-        .filter((entry): entry is { item: StoreCartItem; product: (typeof storeProducts)[number] } => entry !== null),
-    [cartItems],
+        .filter((entry: any) => entry !== null),
+    [cartItems, products],
   )
 
   const cartCount = useMemo(
@@ -85,7 +93,7 @@ export default function StorePage() {
 
   const cartSubtotal = useMemo(
     () =>
-      cartDetails.reduce((sum, entry) => {
+      cartDetails.reduce((sum: number, entry: any) => {
         return sum + entry.product.price * entry.item.quantity
       }, 0),
     [cartDetails],
@@ -110,6 +118,14 @@ export default function StorePage() {
   const handleClearCart = () => {
     clearStoreCart()
     setCartItems([])
+  }
+
+  if (error) {
+    return (
+      <main className="w-full min-h-screen bg-surface-container-low flex items-center justify-center px-5">
+        <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+      </main>
+    )
   }
 
   return (
@@ -159,80 +175,86 @@ export default function StorePage() {
         </div>
       </header>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-6xl md:mx-auto space-y-5 md:space-y-6">
-        <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-1">
-          {productCategories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`shrink-0 px-5 py-2.5 rounded-full text-[12px] font-lexend font-bold uppercase tracking-widest transition-colors ${
-                activeCategory === category
-                  ? 'bg-tertiary-fixed text-primary'
-                  : 'bg-surface-container-high text-primary/75 hover:text-primary'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+      {loading ? (
+        <section className="px-5 md:px-10 lg:px-14 md:max-w-6xl md:mx-auto py-12 flex items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </section>
+      ) : (
+        <section className="px-5 md:px-10 lg:px-14 md:max-w-6xl md:mx-auto space-y-5 md:space-y-6">
+          <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-1">
+            {productCategories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`shrink-0 px-5 py-2.5 rounded-full text-[12px] font-lexend font-bold uppercase tracking-widest transition-colors ${
+                  activeCategory === category
+                    ? 'bg-tertiary-fixed text-primary'
+                    : 'bg-surface-container-high text-primary/75 hover:text-primary'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6 pb-2">
-          {filteredProducts.map((product) => (
-            <article key={product.id} className="bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient">
-              <div className="relative w-full aspect-[4/3]">
-                <Image src={product.image} alt={product.title} fill className="object-cover" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6 pb-2">
+            {filteredProducts.map((product: any) => (
+              <article key={product.id} className="bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient">
+                <div className="relative w-full aspect-[4/3]">
+                  <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
 
-                <span
-                  className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
-                    product.status === 'In Stock'
-                      ? 'bg-[#d8f7e8] text-[#0d7a44]'
-                      : 'bg-[#ffe8cc] text-[#8c4a00]'
-                  }`}
-                >
-                  {product.status === 'In Stock' ? <CircleCheck className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
-                  {product.status}
-                </span>
-              </div>
+                  <span
+                    className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
+                      product.status === 'In Stock'
+                        ? 'bg-[#d8f7e8] text-[#0d7a44]'
+                        : 'bg-[#ffe8cc] text-[#8c4a00]'
+                    }`}
+                  >
+                    {product.status === 'In Stock' ? <CircleCheck className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
+                    {product.status}
+                  </span>
+                </div>
 
-              <div className="p-5">
-                <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{product.category}</p>
-                <h3 className="text-lg md:text-xl font-bold text-primary mt-2 leading-tight">{product.title}</h3>
+                <div className="p-5">
+                  <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{categoryLabel(product.category)}</p>
+                  <h3 className="text-lg md:text-xl font-bold text-primary mt-2 leading-tight">{product.title || product.name}</h3>
 
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                  <div>
-                    <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Price</p>
-                    <p className="text-2xl font-black text-primary">{product.price} EGP</p>
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                      <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Price</p>
+                      <p className="text-2xl font-black text-primary">{product.price} EGP</p>
+                    </div>
+
+                    <Link
+                      href={`/store/${product.id}`}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-secondary-container text-on-secondary-container font-bold text-sm hover:opacity-90 transition-opacity text-center"
+                    >
+                      View Item
+                    </Link>
                   </div>
 
-                  <Link
-                    href={`/store/${product.id}`}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-secondary-container text-on-secondary-container font-bold text-sm hover:opacity-90 transition-opacity text-center"
-                  >
-                    View Item
-                  </Link>
+                  <div className="mt-4 text-sm text-primary/70 min-w-0">
+                    <p className="font-semibold text-primary break-words">{stringValue(product.facility || product.facilityName)}</p>
+                    <p className="inline-flex items-center gap-1.5 mt-1 break-words">
+                      <MapPin className="w-4 h-4 text-primary/40" />
+                      {stringValue(product.location)}
+                    </p>
+                  </div>
                 </div>
+              </article>
+            ))}
 
-                <div className="mt-4 text-sm text-primary/70 min-w-0">
-                  <p className="font-semibold text-primary break-words">{product.facility}</p>
-                  <p className="inline-flex items-center gap-1.5 mt-1 break-words">
-                    <MapPin className="w-4 h-4 text-primary/40" />
-                    {product.location}
-                  </p>
-                </div>
+            {filteredProducts.length === 0 && !loading && (
+              <div className="md:col-span-2 xl:col-span-3 bg-surface-container-lowest rounded-[var(--radius-lg)] p-8 text-center shadow-ambient">
+                <p className="text-lg font-bold text-primary">No matching products</p>
+                <p className="text-sm text-primary/65 mt-1">
+                  Try another category or search term to find facility-listed items.
+                </p>
               </div>
-            </article>
-          ))}
-
-          {filteredProducts.length === 0 && (
-            <div className="md:col-span-2 xl:col-span-3 bg-surface-container-lowest rounded-[var(--radius-lg)] p-8 text-center shadow-ambient">
-              <p className="text-lg font-bold text-primary">No matching products</p>
-              <p className="text-sm text-primary/65 mt-1">
-                Try another category or search term to find facility-listed items.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
       {isCartOpen && (
         <div
@@ -267,16 +289,16 @@ export default function StorePage() {
                 </div>
               )}
 
-              {cartDetails.map(({ item, product }) => (
+              {cartDetails.map(({ item, product }: any) => (
                 <article key={item.productId} className="bg-surface-container-high rounded-[var(--radius-md)] p-3">
                   <div className="flex items-start gap-3">
                     <div className="relative w-16 h-16 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                      <Image src={product.image} alt={product.title} fill className="object-cover" />
+                      <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-bold text-primary truncate">{product.title}</h3>
-                      <p className="text-xs text-primary/60 mt-0.5 truncate">{product.facility}</p>
+                      <h3 className="text-sm font-bold text-primary truncate">{product.title || product.name}</h3>
+                      <p className="text-xs text-primary/60 mt-0.5 truncate">{stringValue(product.facility || product.facilityName)}</p>
                       <p className="text-sm font-black text-primary mt-1">{product.price * item.quantity} EGP</p>
                     </div>
                   </div>

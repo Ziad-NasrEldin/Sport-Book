@@ -291,7 +291,7 @@ describe('POST /api/v1/auth/send-request', () => {
   })
 
   it('returns 200 with a valid token', async () => {
-    vi.mocked(requestRoleUpgrade).mockResolvedValue()
+    vi.mocked(requestRoleUpgrade).mockResolvedValue({ id: 'req_1' })
     const token = await app.jwt.sign({ userId: 'user_1', email: 'test@example.com', role: 'PLAYER' })
 
     const res = await app.inject({
@@ -301,5 +301,6 @@ describe('POST /api/v1/auth/send-request', () => {
       payload: { requestedRole: 'COACH' },
     })
     expect(res.statusCode).toBe(200)
+    expect(res.json().data).toMatchObject({ id: 'req_1' })
   })
 })

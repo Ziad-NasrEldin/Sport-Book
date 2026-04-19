@@ -107,7 +107,7 @@ export default function Home() {
       <section className="px-5 md:px-10 lg:px-14">
         <div className="flex items-end justify-between mb-6 md:mb-7">
           <h2 className="text-xl font-bold text-primary md:text-[32px]">Courts Nearby</h2>
-          <button className="text-secondary-container font-lexend text-[10px] uppercase font-bold tracking-wider flex items-center gap-1 hover:text-secondary transition-colors pb-0.5 md:text-xs md:gap-2">
+          <button onClick={() => router.push('/courts')} className="text-secondary-container font-lexend text-[10px] uppercase font-bold tracking-wider flex items-center gap-1 hover:text-secondary transition-colors pb-0.5 md:text-xs md:gap-2">
             View Map <Map className="w-3 h-3 stroke-[2.5]" />
           </button>
         </div>

@@ -11,6 +11,7 @@ import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { exportToCsv } from '@/lib/export'
 
 const colorMap: Record<string, string> = {
   Padel: '#002366',
@@ -47,7 +48,8 @@ export default function OperatorDashboardPage() {
     .reduce((total: number, booking: any) => total + (booking.amount || 0), 0)
 
   const bySport = courtsData.reduce((acc: Record<string, number>, court: any) => {
-    acc[court.sport] = (acc[court.sport] ?? 0) + 1
+    const sportName = typeof court.sport === 'string' ? court.sport : (court.sport?.displayName || court.sport?.name || '')
+    acc[sportName] = (acc[sportName] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
 
@@ -73,6 +75,11 @@ export default function OperatorDashboardPage() {
             </button>
             <button
               type="button"
+              onClick={() => {
+                const headers = ['ID', 'Label', 'Value', 'Delta', 'Trend']
+                const rows = operatorMetrics.map((m: any) => [m.id || '', m.label || '', String(m.value || ''), String(m.delta || ''), m.trend || ''])
+                exportToCsv('dashboard-summary.csv', headers, rows)
+              }}
               className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
             >
               <Download className="w-4 h-4" />

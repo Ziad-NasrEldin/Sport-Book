@@ -3,15 +3,17 @@
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, LockKeyhole, Mail, Eye } from 'lucide-react'
+import { ArrowLeft, LockKeyhole, Mail, Eye, EyeOff } from 'lucide-react'
 import { api, setAccessToken, APIError } from '@/lib/api/client'
 import { getPostLoginRoute } from '@/lib/auth/session'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { showToast } from '@/lib/toast'
 
 export default function SignInPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -24,7 +26,9 @@ export default function SignInPage() {
 
     try {
       const response = await api.post('/auth/login', { email, password })
-      const { accessToken, user } = response.data || response
+      const data = response.data || response
+      const accessToken = data.accessToken
+      const user = data.user || data
 
       setAccessToken(accessToken)
       router.push(getPostLoginRoute(user.role))
@@ -76,12 +80,20 @@ export default function SignInPage() {
               <div className="relative">
                 <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   placeholder="Enter your password"
                   className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
                 />
-                <Eye className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/45 hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </label>
 
@@ -125,6 +137,7 @@ export default function SignInPage() {
           <div className="space-y-3">
             <button
               type="button"
+              onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
               className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
             >
               <span className="w-6 h-6 rounded-full bg-white text-primary-container text-sm font-black inline-flex items-center justify-center">
@@ -134,6 +147,7 @@ export default function SignInPage() {
             </button>
             <button
               type="button"
+              onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
               className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
             >
               <span className="w-6 h-6 rounded-full bg-[#1877F2] text-white text-sm font-black inline-flex items-center justify-center">

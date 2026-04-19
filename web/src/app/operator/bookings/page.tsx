@@ -11,6 +11,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { exportToCsv } from '@/lib/export'
 import type { OperatorBookingRecord, OperatorBookingStatus } from '@/lib/operator/mockData'
 
 const statusOptions = ['All', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as const
@@ -61,10 +62,6 @@ export default function OperatorBookingsPage() {
     return found?.name || 'Unknown Court'
   }
 
-  if (error) {
-    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
-  }
-
   const visibleBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
 
@@ -82,6 +79,10 @@ export default function OperatorBookingsPage() {
       return matchesSearch && matchesStatus && matchesBranch
     })
   }, [operatorBookingsData, search, selectedStatus, selectedBranch, branchesData, courtsData])
+
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
   const advanceStatus = async (id: string, status: BookingStatus) => {
     const nextStatus: BookingStatus =
@@ -103,6 +104,20 @@ export default function OperatorBookingsPage() {
         actions={
           <button
             type="button"
+            onClick={() => {
+              const headers = ['ID', 'Customer', 'Date', 'Slot', 'Court', 'Branch', 'Amount', 'Status']
+              const rows = visibleBookings.map((b: any) => [
+                b.id || '',
+                b.customer || b.user?.name || '',
+                b.date || '',
+                b.slot || '',
+                getCourtNameById(b.courtId),
+                getBranchNameById(b.branchId),
+                String(b.amount || 0),
+                b.status || '',
+              ])
+              exportToCsv('bookings.csv', headers, rows)
+            }}
             className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
           >
             <Download className="w-4 h-4" />

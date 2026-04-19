@@ -1,198 +1,305 @@
 'use client'
 
+import { Suspense, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, CreditCard, Smartphone, Wallet, CheckCircle2, Circle, Banknote } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import {
+  ArrowLeft,
+  Circle,
+  CheckCircle2,
+  CreditCard,
+  Wallet,
+  Banknote,
+  ShieldCheck,
+  Percent,
+} from 'lucide-react'
+import { useApiCall } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { api, APIError } from '@/lib/api/client'
+import type { CourtDetail, WalletResponse } from '@/lib/court/types'
+import { formatHour } from '@/lib/court/types'
 
-type PaymentMethod = 'card' | 'applepay' | 'wallet'
+type PaymentMethod = 'card' | 'wallet' | 'cash'
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter()
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('card')
+  const searchParams = useSearchParams()
+
+  const courtId = searchParams.get('courtId') ?? ''
+  const dateParam = searchParams.get('date') ?? new Date().toISOString().slice(0, 10)
+  const startHour = Number(searchParams.get('startHour') ?? '9')
+  const endHour = Number(searchParams.get('endHour') ?? '10')
+
+  const { data: court, error: courtError, refetch: refetchCourt } = useApiCall<CourtDetail>(
+    courtId ? `/courts/${courtId}` : '',
+    { immediate: !!courtId },
+  )
+
+  const { data: walletData, error: walletError } = useApiCall<WalletResponse>(
+    '/users/me/wallet',
+    { immediate: true },
+  )
+
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
+  const [promoCode, setPromoCode] = useState('')
+  const [isPromoApplied, setIsPromoApplied] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const duration = endHour - startHour
+  const basePrice = court?.basePrice ?? 0
+  const subtotal = basePrice * duration
+  const serviceFee = 20
+  const vat = Math.round(subtotal * 0.14)
+  const promoDiscount = isPromoApplied ? Math.round(subtotal * 0.1) : 0
+  const total = subtotal + serviceFee + vat - promoDiscount
+
+  const walletBalance = walletData?.balance ?? 0
+
+  if (!courtId) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <div className="text-center">
+          <p className="text-lg font-bold text-primary">No court selected</p>
+          <Link href="/" className="mt-4 inline-block px-6 py-3 rounded-full bg-primary-container text-surface-container-lowest font-bold">
+            Browse Courts
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
+  if (courtError) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <APIErrorFallback error={courtError} onRetry={refetchCourt} />
+      </main>
+    )
+  }
+
+  if (!court) {
+    return (
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
+        <p className="text-lg font-bold text-primary">Loading checkout...</p>
+      </main>
+    )
+  }
 
   const handleBack = () => {
     if (window.history.length > 1) {
       router.back()
       return
     }
-
-    router.push('/book')
+    router.push(`/book?courtId=${courtId}`)
   }
 
+  const handleCheckout = async () => {
+    setSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const booking = await api.post<{ id: string; paymentStatus: string }>('/bookings', {
+        type: 'COURT',
+        courtId,
+        date: dateParam,
+        startHour,
+        endHour,
+        playerCount: 1,
+        couponCode: isPromoApplied ? 'COURT10' : undefined,
+      })
+
+      if (paymentMethod === 'wallet') {
+        await api.post('/payments/wallet', { bookingId: booking.id })
+      } else if (paymentMethod === 'card') {
+        const intent = await api.post<{ paymentIntent: { id: string } }>('/payments/intent', {
+          bookingId: booking.id,
+          paymentMethod: 'PAYMOB_CARD',
+        })
+        await api.post('/payments/process', {
+          paymentIntentId: intent.paymentIntent.id,
+          paymentRef: `mock-card-${Date.now()}`,
+        })
+      }
+
+      router.push(
+        `/confirmation?${new URLSearchParams({
+          bookingId: booking.id,
+          payment: paymentMethod,
+        }).toString()}`,
+      )
+    } catch (caught) {
+      const apiError = caught as APIError
+      setSubmitError(apiError.message || 'Failed to complete checkout.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: typeof CreditCard; sublabel?: string }> = [
+    { id: 'card', label: 'Credit / Debit Card', icon: CreditCard },
+    { id: 'wallet', label: 'Wallet Balance', icon: Wallet, sublabel: `${walletBalance.toFixed(2)} EGP Available` },
+    { id: 'cash', label: 'Pay At Venue', icon: Banknote },
+  ]
+
   return (
-    <main className="w-full bg-surface min-h-screen pb-36 relative">
-      {/* Top Navigation */}
-      <header className="flex justify-between items-center w-full px-5 py-4 sticky top-0 z-50 bg-surface/80 backdrop-blur-xl md:px-10 lg:px-14">
+    <main className="w-full min-h-screen bg-surface-container-low pb-36 md:pb-40 relative">
+      <header className="sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-xl px-5 py-4 md:px-10 lg:px-14 md:py-5">
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={handleBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-transparent hover:bg-black/5 transition-colors active:scale-95 duration-200"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-lowest transition-colors"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-6 h-6 text-primary stroke-[2]" />
+            <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
-          <h1 className="text-primary font-extrabold tracking-tight text-xl">
-            Checkout
-          </h1>
+          <div>
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Court Checkout</h1>
+            <p className="text-sm text-primary/60 mt-0.5">Secure your court booking</p>
+          </div>
         </div>
       </header>
 
-      <div className="px-5 md:max-w-2xl md:mx-auto md:px-0">
-        {/* Court Summary Card */}
-        <section className="bg-surface-container-lowest rounded-[2rem] shadow-ambient overflow-hidden mt-2 mb-8">
-          <div className="relative w-full h-[200px]">
-            <Image
-              src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80"
-              alt="Tennis Court"
-              fill
-              className="object-cover object-bottom"
-            />
-          </div>
-          <div className="p-6">
-            <h3 className="text-[10px] font-lexend font-bold uppercase tracking-[0.2em] text-secondary mb-1">
-              The Regent&apos;s Park
-            </h3>
-            <h2 className="text-2xl font-extrabold text-primary mb-6">
-              Court 04 –<br />Championship
-            </h2>
-
-            <div className="grid grid-cols-2 gap-y-5 gap-x-4">
-              <div>
-                <p className="text-[10px] font-lexend font-bold uppercase tracking-widest text-primary/40 mb-1">
-                  Date
-                </p>
-                <p className="font-semibold text-primary">Oct 24, 2023</p>
+      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto grid grid-cols-1 lg:grid-cols-[1.15fr,0.85fr] gap-5 md:gap-6 mt-5">
+        <div className="space-y-5">
+          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient">
+            <h2 className="text-lg md:text-xl font-bold text-primary mb-4">Booking Details</h2>
+            <div className="flex items-start gap-4">
+              <div className="relative w-24 h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
+                <Image src={court.images?.[0] ?? '/favicon.ico'} alt={court.name} fill className="object-cover" />
               </div>
-              <div>
-                <p className="text-[10px] font-lexend font-bold uppercase tracking-widest text-primary/40 mb-1">
-                  Time
-                </p>
-                <p className="font-semibold text-primary">09:00 AM</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-lexend font-bold uppercase tracking-widest text-primary/40 mb-1">
-                  Duration
-                </p>
-                <p className="font-semibold text-primary">1 hour</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-lexend font-bold uppercase tracking-widest text-primary/40 mb-1">
-                  Price
-                </p>
-                <p className="font-bold text-secondary font-lexend">400 EGP</p>
+              <div className="flex-1 min-w-0 space-y-1.5 text-sm">
+                <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{court.sport?.displayName ?? 'Court'}</p>
+                <h3 className="text-lg font-extrabold text-primary">{court.name}</h3>
+                <p className="text-primary/75">{new Date(dateParam).toLocaleDateString()} • {formatHour(startHour)}</p>
+                <p className="text-primary/75">{duration} hour{duration > 1 ? 's' : ''} • {formatHour(startHour)} - {formatHour(endHour)}</p>
+                <p className="text-primary/60">{court.branch?.facility?.name ?? ''}{court.branch?.name ? ` - ${court.branch.name}` : ''}</p>
               </div>
             </div>
-          </div>
-        </section>
+          </article>
 
-        {/* Payment Method */}
-        <section className="mb-8">
-          <h3 className="text-lg font-bold text-primary mb-4">Payment Method</h3>
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setSelectedPayment('card')}
-              className={`flex items-center justify-between w-full p-4 md:p-5 rounded-3xl shadow-sm active:scale-[0.98] transition-transform ${selectedPayment === 'card' ? 'bg-tertiary-fixed' : 'bg-surface-container-lowest shadow-ambient'}`}
-            >
-              <div className="flex items-center gap-4">
-                <CreditCard className="w-6 h-6 text-primary" />
-                <span className="font-semibold text-primary">Credit/Debit Card</span>
-              </div>
-              {selectedPayment === 'card'
-                ? <CheckCircle2 className="w-6 h-6 text-primary fill-primary text-tertiary-fixed" />
-                : <Circle className="w-6 h-6 text-primary/20" />}
-            </button>
+          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4">
+            <h2 className="text-lg md:text-xl font-bold text-primary">Payment Method</h2>
+            <div className="space-y-3">
+              {paymentOptions.map((option) => {
+                const Icon = option.icon
+                const active = paymentMethod === option.id
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(option.id)}
+                    className={`w-full flex items-center justify-between rounded-[var(--radius-md)] px-4 py-3 transition-colors ${
+                      active ? 'bg-tertiary-fixed text-primary' : 'bg-surface-container-high text-primary/80'
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2 font-semibold">
+                      <Icon className="w-4 h-4" />
+                      <div>
+                        <span>{option.label}</span>
+                        {option.sublabel && (
+                          <span className="block text-[10px] font-lexend font-medium text-primary/40">{option.sublabel}</span>
+                        )}
+                      </div>
+                    </span>
+                    {active ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                  </button>
+                )
+              })}
+            </div>
+          </article>
+        </div>
 
-            <button
-              onClick={() => setSelectedPayment('applepay')}
-              className={`flex items-center justify-between w-full p-4 md:p-5 rounded-3xl active:scale-[0.98] transition-transform ${selectedPayment === 'applepay' ? 'bg-tertiary-fixed shadow-sm' : 'bg-surface-container-lowest shadow-ambient'}`}
-            >
-              <div className="flex items-center gap-4 text-primary/70">
-                <Smartphone className="w-5 h-5" />
-                <span className="font-medium text-primary">Apple Pay</span>
-              </div>
-              {selectedPayment === 'applepay'
-                ? <CheckCircle2 className="w-6 h-6 text-primary fill-primary" />
-                : <Circle className="w-6 h-6 text-primary/20" />}
-            </button>
+        <aside className="space-y-4">
+          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4 lg:sticky lg:top-28">
+            <h2 className="text-lg md:text-xl font-bold text-primary">Order Summary</h2>
 
-            <button
-              onClick={() => setSelectedPayment('wallet')}
-              className={`flex items-center justify-between w-full p-4 md:p-5 rounded-3xl active:scale-[0.98] transition-transform ${selectedPayment === 'wallet' ? 'bg-tertiary-fixed shadow-sm' : 'bg-surface-container-lowest shadow-ambient'}`}
-            >
-              <div className="flex items-center gap-4 text-primary/70">
-                <Wallet className="w-5 h-5" />
-                <div className="text-left">
-                  <span className="font-medium text-primary block">Wallet Balance</span>
-                  <span className="text-[10px] font-lexend font-medium text-primary/40">850.00 EGP Available</span>
-                </div>
-              </div>
-              {selectedPayment === 'wallet'
-                ? <CheckCircle2 className="w-6 h-6 text-primary fill-primary" />
-                : <Circle className="w-6 h-6 text-primary/20" />}
-            </button>
-          </div>
-        </section>
-
-        {/* Promo Code */}
-        <section className="mb-8">
-          <h3 className="text-lg font-bold text-primary mb-4">Promo Code</h3>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 bg-surface-container-high rounded-full overflow-hidden px-5 py-4 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-              <input 
-                type="text" 
-                placeholder="Enter code"
-                className="w-full bg-transparent border-none outline-none text-primary placeholder:text-primary/30 font-medium"
+            <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-3 py-2.5">
+              <Percent className="w-4 h-4 text-primary/60" />
+              <input
+                value={promoCode}
+                onChange={(event) => setPromoCode(event.target.value)}
+                placeholder="Promo code"
+                className="flex-1 bg-transparent outline-none text-sm text-primary placeholder:text-primary/45"
               />
+              <button
+                type="button"
+                onClick={() => setIsPromoApplied(promoCode.trim().toUpperCase() === 'COURT10')}
+                className="px-3 py-1.5 rounded-full bg-primary text-white text-xs font-bold"
+              >
+                Apply
+              </button>
             </div>
-            <button className="bg-primary text-white font-bold tracking-wide px-8 py-4 rounded-full active:scale-95 transition-transform">
-              APPLY
-            </button>
-          </div>
-        </section>
 
-        {/* Order Summary */}
-        <section className="bg-surface-container-low rounded-[2rem] p-6 mb-4 relative overflow-hidden">
-          <h3 className="text-lg font-bold text-primary mb-4">Order Summary</h3>
-          
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-primary/70 font-medium">Subtotal</span>
-              <span className="font-lexend font-bold text-primary">400.00 EGP</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-primary/70 font-medium">Service Fee</span>
-              <span className="font-lexend font-bold text-primary">15.00 EGP</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-primary/70 font-medium">VAT 14%</span>
-              <span className="font-lexend font-bold text-primary">56.00 EGP</span>
-            </div>
-          </div>
-          
-          {/* Faux divider using a pseudo-element rather than a 1px border so it feels "printed" */}
-          <div className="h-4 w-[110%] -ml-[5%] border-b-[2px] border-dashed border-primary/10 mb-6" />
+            {promoCode.length > 0 && (
+              <p className={`text-xs ${isPromoApplied ? 'text-[#0d7a44]' : 'text-secondary'}`}>
+                {isPromoApplied ? 'Promo applied: 10% discount.' : 'Use code COURT10 for 10% off.'}
+              </p>
+            )}
 
-          <div className="flex justify-between items-center">
-            <span className="text-xl font-extrabold text-primary">Total</span>
-            <span className="text-xl font-black font-lexend text-primary">471.00 EGP</span>
-          </div>
-        </section>
-      </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-primary/70">Subtotal ({duration}hr × {basePrice} EGP)</span>
+                <span className="font-lexend font-bold text-primary">{subtotal} EGP</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-primary/70">Service Fee</span>
+                <span className="font-lexend font-bold text-primary">{serviceFee} EGP</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-primary/70">VAT 14%</span>
+                <span className="font-lexend font-bold text-primary">{vat} EGP</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-primary/70">Discount</span>
+                <span className="font-lexend font-bold text-[#0d7a44]">-{promoDiscount} EGP</span>
+              </div>
+              <div className="h-4 w-[110%] -ml-[5%] border-b-[2px] border-dashed border-primary/10" />
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-extrabold text-primary">Total</span>
+                <span className="text-xl font-black font-lexend text-primary">{total} EGP</span>
+              </div>
+            </div>
 
-      {/* Sticky Bottom Action */}
+            {submitError ? <p className="text-sm text-secondary">{submitError}</p> : null}
+
+            <div className="inline-flex items-center gap-2 text-xs text-primary/70 bg-surface-container-high rounded-full px-3 py-2">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              SSL encrypted checkout session
+            </div>
+          </article>
+        </aside>
+      </section>
+
       <div className="fixed bottom-0 left-0 right-0 p-5 md:p-8 bg-surface/80 backdrop-blur-xl z-50">
-        <div className="w-full max-w-2xl mx-auto">
-          <Link href="/confirmation" className="w-full block">
-            <button className="w-full bg-gradient-to-br from-secondary to-secondary-container text-white py-4 md:py-5 px-10 rounded-full font-extrabold text-lg md:text-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_-5px_rgba(253,139,0,0.35)]">
-              Pay Now
-              <Banknote className="w-6 h-6 stroke-[2]" />
-            </button>
-          </Link>
+        <div className="w-full max-w-5xl mx-auto">
+          <button
+            type="button"
+            onClick={() => void handleCheckout()}
+            disabled={submitting}
+            className="w-full inline-flex items-center justify-center py-4 px-6 rounded-full bg-gradient-to-br from-secondary to-secondary-container text-white font-extrabold text-lg disabled:opacity-60"
+          >
+            {submitting ? 'Processing...' : 'Pay Now'}
+          </button>
         </div>
       </div>
     </main>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="w-full min-h-screen bg-surface px-5 py-12">
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-lg font-bold text-primary">Loading checkout...</p>
+          </div>
+        </main>
+      }
+    >
+      <CheckoutPageContent />
+    </Suspense>
   )
 }

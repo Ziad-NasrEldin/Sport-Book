@@ -13,6 +13,9 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
+import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 const quickAmounts = [100, 200, 300, 500, 800, 1000]
 
@@ -20,9 +23,14 @@ type PaymentMethod = 'card' | 'apple-pay' | 'wallet'
 
 export default function WalletTopUpPage() {
   const router = useRouter()
+  const { data: walletData, loading: walletLoading, error: walletError, refetch: refetchWallet } = useApiCall<any>('/users/me/wallet')
   const [selectedAmount, setSelectedAmount] = useState<number>(200)
   const [customAmount, setCustomAmount] = useState('')
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('card')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const wallet = (!walletData || Array.isArray(walletData)) ? {} : (walletData.data && typeof walletData.data === 'object' && !Array.isArray(walletData.data) ? walletData.data : walletData)
 
   const activeAmount = useMemo(() => {
     const parsedCustom = Number(customAmount)
@@ -43,6 +51,41 @@ export default function WalletTopUpPage() {
     }
 
     router.push('/profile')
+  }
+
+  const handleConfirmTopUp = async () => {
+    setSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const intent = await api.post('/payments/intent', {
+        amount: total,
+        paymentMethod: 'WALLET_TOPUP',
+      })
+
+      if (intent?.clientSecret || intent?.id) {
+        await api.post('/payments/process', {
+          paymentIntentId: intent.id || intent.paymentIntentId,
+          paymentMethod: selectedMethod === 'apple-pay' ? 'APPLE_PAY' : selectedMethod === 'wallet' ? 'SAVED_CARD' : 'CARD',
+          amount: total,
+        })
+      }
+
+      refetchWallet()
+      router.push('/profile/wallet')
+    } catch {
+      setSubmitError('Payment failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (walletError) {
+    return (
+      <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans flex items-center justify-center">
+        <APIErrorFallback error={walletError} onRetry={refetchWallet} />
+      </main>
+    )
   }
 
   return (
@@ -74,7 +117,9 @@ export default function WalletTopUpPage() {
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
               <p className="text-[11px] md:text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Current Balance</p>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-primary mt-1">240 EGP</h2>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-primary mt-1">
+                {walletLoading ? '...' : (wallet.balance ?? 0)} EGP
+              </h2>
             </div>
             <div className="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary-container">
               <Wallet className="w-6 h-6" />
@@ -198,11 +243,19 @@ export default function WalletTopUpPage() {
             </div>
           </div>
 
+          {submitError && (
+            <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold">
+              {submitError}
+            </div>
+          )}
+
           <button
             type="button"
-            className="w-full mt-5 py-4 bg-gradient-to-br from-secondary to-secondary-container text-on-secondary-container font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:opacity-90"
+            onClick={handleConfirmTopUp}
+            disabled={submitting}
+            className="w-full mt-5 py-4 bg-gradient-to-br from-secondary to-secondary-container text-on-secondary-container font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:opacity-90 disabled:opacity-60"
           >
-            Confirm Top Up
+            {submitting ? 'Processing...' : 'Confirm Top Up'}
           </button>
 
           <p className="mt-3 inline-flex items-center gap-2 text-xs md:text-sm text-primary/60">

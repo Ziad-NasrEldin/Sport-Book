@@ -6,6 +6,7 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
 export default function AdminSettingsPage() {
   const [commissionRate, setCommissionRate] = useState('18')
@@ -17,7 +18,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  const { data: settingsResponse, loading, refetch } = useApiCall('/admin-workspace/settings')
+  const { data: settingsResponse, loading, error, refetch } = useApiCall('/admin-workspace/settings')
 
   useEffect(() => {
     const settings = settingsResponse?.data || settingsResponse
@@ -63,23 +64,27 @@ export default function AdminSettingsPage() {
     }
   }
 
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => refetch()} />
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Platform Settings"
-          subtitle="Control marketplace defaults, governance safeguards, and booking policy behavior used by all operator modules."
-          actions={
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          }
-        />
+        subtitle="Control marketplace defaults, governance safeguards, and booking policy behavior used by all operator modules."
+        actions={
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        }
+      />
 
       {saved ? (
         <div className="rounded-[var(--radius-default)] bg-tertiary-fixed px-4 py-3 text-sm font-semibold text-primary">

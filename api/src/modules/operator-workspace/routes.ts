@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import {
+  getOperatorDashboard,
   getOperatorFacility,
   updateOperatorFacility,
   getOperatorBookings,
@@ -11,6 +12,14 @@ import {
   createCourtPricingRule,
   createCourtClosure,
   getOperatorCourts,
+  createBranch,
+  updateBranch,
+  deleteBranch,
+  getStaff,
+  inviteStaff,
+  getPendingBookings,
+  approveBooking,
+  getOperatorBranches,
 } from './service'
 import {
   updateFacilitySchema,
@@ -18,6 +27,10 @@ import {
   updateCourtSchema,
   createCourtPricingRuleSchema,
   createCourtClosureSchema,
+  createBranchSchema,
+  updateBranchSchema,
+  inviteStaffSchema,
+  approvalActionSchema,
 } from './schema'
 import { success } from '@common/response'
 
@@ -38,6 +51,12 @@ export async function operatorWorkspaceRoutes(app: FastifyInstance) {
         code: 'FORBIDDEN'
       })
     }
+  })
+
+  // GET /operator/dashboard - Get operator dashboard summary
+  app.get('/dashboard', async (request: FastifyRequest) => {
+    const dashboard = await getOperatorDashboard(request.user!.userId)
+    return success(dashboard)
   })
 
   // GET /operator-workspace/facility - Get operator's facility
@@ -114,5 +133,60 @@ export async function operatorWorkspaceRoutes(app: FastifyInstance) {
     const data = createCourtClosureSchema.parse(request.body)
     const closure = await createCourtClosure(request.user!.userId, data)
     return success(closure)
+  })
+
+  // GET /operator/branches - List branches
+  app.get('/branches', async (request: FastifyRequest) => {
+    const branches = await getOperatorBranches(request.user!.userId)
+    return success(branches)
+  })
+
+  // POST /operator/branches - Create branch
+  app.post('/branches', async (request: FastifyRequest) => {
+    const data = createBranchSchema.parse(request.body)
+    const branch = await createBranch(request.user!.userId, data)
+    return success(branch)
+  })
+
+  // PATCH /operator/branches/:id - Update branch
+  app.patch('/branches/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateBranchSchema.parse(request.body)
+    const branch = await updateBranch(request.user!.userId, id, data)
+    return success(branch)
+  })
+
+  // DELETE /operator/branches/:id - Delete branch
+  app.delete('/branches/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const result = await deleteBranch(request.user!.userId, id)
+    return success(result)
+  })
+
+  // GET /operator/staff - List staff
+  app.get('/staff', async (request: FastifyRequest) => {
+    const staff = await getStaff(request.user!.userId)
+    return success(staff)
+  })
+
+  // POST /operator/staff - Invite staff
+  app.post('/staff', async (request: FastifyRequest) => {
+    const data = inviteStaffSchema.parse(request.body)
+    const result = await inviteStaff(request.user!.userId, data)
+    return success(result)
+  })
+
+  // GET /operator/approvals - List pending bookings for approval
+  app.get('/approvals', async (request: FastifyRequest) => {
+    const bookings = await getPendingBookings(request.user!.userId)
+    return success(bookings)
+  })
+
+  // PATCH /operator/approvals/:id - Approve or reject booking
+  app.patch('/approvals/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = approvalActionSchema.parse(request.body)
+    const result = await approveBooking(request.user!.userId, id, data)
+    return success(result)
   })
 }

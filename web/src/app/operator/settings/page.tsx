@@ -1,11 +1,19 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
+import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
 export default function OperatorSettingsPage() {
+  const { data: settingsResponse, loading, error, refetch } = useApiCall('/operator/settings')
+  const saveMutation = useApiMutation('/operator/settings', 'PUT')
+
+  const settingsData = settingsResponse?.data || settingsResponse || {}
+
   const [defaultSlotDuration, setDefaultSlotDuration] = useState('60')
   const [bufferTime, setBufferTime] = useState('10')
   const [lateCancellationFee, setLateCancellationFee] = useState('80')
@@ -14,33 +22,39 @@ export default function OperatorSettingsPage() {
   const [strictMaintenanceBlocks, setStrictMaintenanceBlocks] = useState(true)
   const [saved, setSaved] = useState(false)
 
-  const handleDefaultSlotDurationChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setDefaultSlotDuration(event.target.value)
-  }, [])
+  useEffect(() => {
+    if (settingsData.defaultSlotDuration !== undefined) setDefaultSlotDuration(String(settingsData.defaultSlotDuration))
+    if (settingsData.bufferTime !== undefined) setBufferTime(String(settingsData.bufferTime))
+    if (settingsData.lateCancellationFee !== undefined) setLateCancellationFee(String(settingsData.lateCancellationFee))
+    if (settingsData.autoConfirmBookings !== undefined) setAutoConfirmBookings(settingsData.autoConfirmBookings)
+    if (settingsData.allowCashPayments !== undefined) setAllowCashPayments(settingsData.allowCashPayments)
+    if (settingsData.strictMaintenanceBlocks !== undefined) setStrictMaintenanceBlocks(settingsData.strictMaintenanceBlocks)
+  }, [settingsData])
 
-  const handleBufferTimeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setBufferTime(event.target.value)
-  }, [])
+  if (error) {
+    return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
 
-  const handleLateCancellationFeeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setLateCancellationFee(event.target.value)
-  }, [])
+  if (loading) {
+    return <SkeletonStat />
+  }
 
-  const handleAutoConfirmBookingsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setAutoConfirmBookings(event.target.checked)
-  }, [])
-
-  const handleAllowCashPaymentsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setAllowCashPayments(event.target.checked)
-  }, [])
-
-  const handleStrictMaintenanceBlocksChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setStrictMaintenanceBlocks(event.target.checked)
-  }, [])
-
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1800)
+  const handleSave = async () => {
+    try {
+      await saveMutation.mutate({
+        defaultSlotDuration: Number(defaultSlotDuration),
+        bufferTime: Number(bufferTime),
+        lateCancellationFee: Number(lateCancellationFee),
+        autoConfirmBookings,
+        allowCashPayments,
+        strictMaintenanceBlocks,
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1800)
+      refetch()
+    } catch (err) {
+      console.error('Failed to save settings:', err)
+    }
   }
 
   return (
@@ -52,7 +66,8 @@ export default function OperatorSettingsPage() {
           <button
             type="button"
             onClick={handleSave}
-            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+            disabled={saveMutation.loading}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Save Settings
@@ -76,7 +91,7 @@ export default function OperatorSettingsPage() {
                 min={30}
                 max={180}
                 value={defaultSlotDuration}
-                onChange={handleDefaultSlotDurationChange}
+                onChange={(event) => setDefaultSlotDuration(event.target.value)}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -88,7 +103,7 @@ export default function OperatorSettingsPage() {
                 min={0}
                 max={45}
                 value={bufferTime}
-                onChange={handleBufferTimeChange}
+                onChange={(event) => setBufferTime(event.target.value)}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -100,7 +115,7 @@ export default function OperatorSettingsPage() {
                 min={0}
                 max={500}
                 value={lateCancellationFee}
-                onChange={handleLateCancellationFeeChange}
+                onChange={(event) => setLateCancellationFee(event.target.value)}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
               />
             </label>
@@ -117,7 +132,7 @@ export default function OperatorSettingsPage() {
               <input
                 type="checkbox"
                 checked={autoConfirmBookings}
-                onChange={handleAutoConfirmBookingsChange}
+                onChange={(event) => setAutoConfirmBookings(event.target.checked)}
                 className="h-5 w-5 accent-primary-container"
               />
             </label>
@@ -130,7 +145,7 @@ export default function OperatorSettingsPage() {
               <input
                 type="checkbox"
                 checked={allowCashPayments}
-                onChange={handleAllowCashPaymentsChange}
+                onChange={(event) => setAllowCashPayments(event.target.checked)}
                 className="h-5 w-5 accent-primary-container"
               />
             </label>
@@ -143,7 +158,7 @@ export default function OperatorSettingsPage() {
               <input
                 type="checkbox"
                 checked={strictMaintenanceBlocks}
-                onChange={handleStrictMaintenanceBlocksChange}
+                onChange={(event) => setStrictMaintenanceBlocks(event.target.checked)}
                 className="h-5 w-5 accent-primary-container"
               />
             </label>

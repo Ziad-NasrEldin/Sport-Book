@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Settings, 
   Wallet, 
@@ -17,6 +18,7 @@ import {
 import Image from 'next/image';
 import { FloatingNav } from '@/components/layout/FloatingNav';
 import { useApiCall } from '@/lib/api/hooks';
+import { api, clearTokens } from '@/lib/api/client';
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary';
 import { SkeletonStat } from '@/components/ui/SkeletonLoader';
 import {
@@ -25,7 +27,8 @@ import {
 } from '@/lib/favorites';
 
 export default function ProfilePage() {
-  const { data: profileResponse, loading, error } = useApiCall('/player/profile')
+  const router = useRouter()
+  const { data: profileResponse, loading, error, refetch } = useApiCall('/player/profile')
   const profileData = profileResponse?.data || profileResponse || {}
   const [favorites, setFavorites] = useState(() => {
     if (typeof window === 'undefined') return { courts: [], coaches: [] }
@@ -284,9 +287,17 @@ export default function ProfilePage() {
           </Link>
 
           {/* Logout */}
-          <Link
-            href="/auth/sign-in"
-            className="bg-surface-container-lowest rounded-[var(--radius-md)] p-6 shadow-ambient transition-transform hover:scale-[1.02] cursor-pointer group block"
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await api.post('/auth/logout')
+              } catch {
+              }
+              clearTokens()
+              router.push('/auth/sign-in')
+            }}
+            className="w-full bg-surface-container-lowest rounded-[var(--radius-md)] p-6 shadow-ambient transition-transform hover:scale-[1.02] cursor-pointer group block text-left"
           >
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-5">
@@ -296,7 +307,7 @@ export default function ProfilePage() {
                 <h3 className="text-lg md:text-xl font-bold text-red-500 group-hover:text-red-600 transition-colors">Log Out</h3>
               </div>
             </div>
-          </Link>
+          </button>
         </div>
       </section>
 

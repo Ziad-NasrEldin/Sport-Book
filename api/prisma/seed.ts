@@ -240,19 +240,76 @@ async function main() {
         create: {
           slug: 'omar-hassan',
           bio: 'Match strategy and serve consistency specialist for intermediate and advanced players. With 9 years of experience coaching both juniors and adults.',
+          headline: 'Match strategy and serve consistency specialist',
+          city: 'Cairo',
           experienceYears: 9,
           certifications: JSON.stringify(['ITF Level 2', 'PTR Certified']),
           specialties: JSON.stringify(['Match Strategy', 'Serve Technique', 'Mental Game']),
+          languages: JSON.stringify(['English', 'Arabic']),
+          settings: JSON.stringify({
+            payoutCycle: 'weekly',
+            notifications: {
+              bookingRequests: true,
+              bookingChanges: true,
+              payoutUpdates: true,
+              athleteMessages: false,
+            },
+            policies: {
+              autoConfirmFollowUps: false,
+              allowLateCancellation: true,
+              allowRescheduleRequests: true,
+            },
+          }),
           sessionRate: 180,
           commissionRate: 20,
           sportId: tennis.id,
           isActive: true,
           isVerified: true,
+          sessionTypes: {
+            create: [
+              {
+                name: 'Private Session',
+                description: '1 athlete focused coaching.',
+                minParticipants: 1,
+                maxParticipants: 1,
+                durationOptions: JSON.stringify([60, 90, 120]),
+                baseRate: 180,
+                multiplier: 1,
+                visibility: 'Public',
+                status: 'ACTIVE',
+                sortOrder: 1,
+              },
+              {
+                name: 'Duo Session',
+                description: '2 athletes with shared drills.',
+                minParticipants: 2,
+                maxParticipants: 2,
+                durationOptions: JSON.stringify([60, 90]),
+                baseRate: 150,
+                multiplier: 1.65,
+                visibility: 'Public',
+                status: 'ACTIVE',
+                sortOrder: 2,
+              },
+              {
+                name: 'Group Clinic',
+                description: 'Small-group tactical session.',
+                minParticipants: 3,
+                maxParticipants: 6,
+                durationOptions: JSON.stringify([90]),
+                baseRate: 120,
+                multiplier: 1.25,
+                visibility: 'Members',
+                status: 'DRAFT',
+                sortOrder: 3,
+              },
+            ]
+          },
           services: {
             create: [
-              { name: 'Private Session (1 hour)', duration: 60, price: 180 },
-              { name: 'Private Session (2 hours)', duration: 120, price: 320 },
-              { name: 'Group Session (3-4 players)', duration: 90, price: 120 },
+              { name: 'Private Session (1 hour)', description: 'One-on-one focus on serve and rally patterns.', duration: 60, price: 180 },
+              { name: 'Private Session (2 hours)', description: 'Extended tactical and technical block.', duration: 120, price: 320 },
+              { name: 'Group Session (3-4 players)', description: 'Shared intensity block for advanced juniors.', duration: 90, price: 120 },
             ]
           },
           availability: {
@@ -266,10 +323,23 @@ async function main() {
         }
       }
     },
-    include: { coachProfile: { include: { services: true } } }
+    include: { coachProfile: { include: { services: true, sessionTypes: true } } }
   })
 
   const coach = coachUser.coachProfile!
+
+  await prisma.coachService.update({
+    where: { id: coach.services[0].id },
+    data: { sessionTypeId: coach.sessionTypes[0].id },
+  })
+  await prisma.coachService.update({
+    where: { id: coach.services[1].id },
+    data: { sessionTypeId: coach.sessionTypes[0].id },
+  })
+  await prisma.coachService.update({
+    where: { id: coach.services[2].id },
+    data: { sessionTypeId: coach.sessionTypes[2].id },
+  })
 
   console.log('Created coach')
 
@@ -288,21 +358,69 @@ async function main() {
         create: {
           slug: 'lina-farouk',
           bio: 'Footwork-first coaching with doubles positioning systems and fast transition drills. Padel specialist with tournament experience.',
+          headline: 'Padel footwork and doubles positioning coach',
+          city: 'New Cairo',
           experienceYears: 6,
+          languages: JSON.stringify(['English', 'Arabic']),
+          settings: JSON.stringify({
+            payoutCycle: 'biweekly',
+            notifications: { bookingRequests: true, bookingChanges: true, payoutUpdates: true, athleteMessages: true },
+            policies: { autoConfirmFollowUps: true, allowLateCancellation: false, allowRescheduleRequests: true },
+          }),
           sessionRate: 150,
           sportId: padel.id,
           isActive: true,
           isVerified: true,
+          sessionTypes: {
+            create: [
+              {
+                name: 'Private Session',
+                description: '1 athlete technique and movement work.',
+                minParticipants: 1,
+                maxParticipants: 1,
+                durationOptions: JSON.stringify([60, 90]),
+                baseRate: 150,
+                multiplier: 1,
+                visibility: 'Public',
+                status: 'ACTIVE',
+                sortOrder: 1,
+              },
+              {
+                name: 'Doubles Training',
+                description: '2-4 players doubles rotation and positioning.',
+                minParticipants: 2,
+                maxParticipants: 4,
+                durationOptions: JSON.stringify([90]),
+                baseRate: 200,
+                multiplier: 1.2,
+                visibility: 'Public',
+                status: 'ACTIVE',
+                sortOrder: 2,
+              },
+            ]
+          },
           services: {
             create: [
-              { name: 'Padel Private Session', duration: 60, price: 150 },
-              { name: 'Padel Doubles Training', duration: 90, price: 200 },
+              { name: 'Padel Private Session', description: '1:1 padel coaching for technique and transitions.', duration: 60, price: 150 },
+              { name: 'Padel Doubles Training', description: 'Shared doubles drills and movement.', duration: 90, price: 200 },
             ]
           }
         }
       }
-    }
+    },
+    include: { coachProfile: { include: { services: true, sessionTypes: true } } }
   })
+
+  if (coach2.coachProfile) {
+    await prisma.coachService.update({
+      where: { id: coach2.coachProfile.services[0].id },
+      data: { sessionTypeId: coach2.coachProfile.sessionTypes[0].id },
+    })
+    await prisma.coachService.update({
+      where: { id: coach2.coachProfile.services[1].id },
+      data: { sessionTypeId: coach2.coachProfile.sessionTypes[1].id },
+    })
+  }
 
   const coach3 = await prisma.user.create({
     data: {
@@ -318,21 +436,53 @@ async function main() {
         create: {
           slug: 'youssef-adel',
           bio: 'Conditioning and rally-intensity coach focused on movement efficiency and endurance. Former professional player.',
+          headline: 'Conditioning and rally-intensity specialist',
+          city: 'Giza',
           experienceYears: 11,
+          languages: JSON.stringify(['English']),
+          settings: JSON.stringify({
+            payoutCycle: 'monthly',
+            notifications: { bookingRequests: true, bookingChanges: false, payoutUpdates: true, athleteMessages: false },
+            policies: { autoConfirmFollowUps: false, allowLateCancellation: true, allowRescheduleRequests: false },
+          }),
           sessionRate: 200,
           sportId: squash.id,
           isActive: true,
           isVerified: true,
+          sessionTypes: {
+            create: [
+              {
+                name: 'Private Session',
+                description: 'Solo squash performance block.',
+                minParticipants: 1,
+                maxParticipants: 1,
+                durationOptions: JSON.stringify([60]),
+                baseRate: 200,
+                multiplier: 1,
+                visibility: 'Public',
+                status: 'ACTIVE',
+                sortOrder: 1,
+              },
+            ]
+          },
           services: {
             create: [
-              { name: 'Squash Private Session', duration: 60, price: 200 },
-              { name: 'Fitness for Squash', duration: 60, price: 180 },
+              { name: 'Squash Private Session', description: 'Court session focused on rally construction.', duration: 60, price: 200 },
+              { name: 'Fitness for Squash', description: 'Conditioning session for endurance and movement efficiency.', duration: 60, price: 180 },
             ]
           }
         }
       }
-    }
+    },
+    include: { coachProfile: { include: { services: true, sessionTypes: true } } }
   })
+
+  if (coach3.coachProfile) {
+    await prisma.coachService.updateMany({
+      where: { coachId: coach3.coachProfile.id },
+      data: { sessionTypeId: coach3.coachProfile.sessionTypes[0].id },
+    })
+  }
 
   console.log('Created additional coaches')
 

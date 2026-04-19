@@ -16,6 +16,63 @@ export const updateUserSchema = z.object({
   country: z.string().min(2).optional(),
 })
 
+export const createFacilitySchema = z.object({
+  name: z.string().min(2),
+  city: z.string().min(2),
+  address: z.string().min(2).optional(),
+  description: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED']).default('PENDING'),
+  operatorName: z.string().min(2).optional(),
+  operatorEmail: z.string().email().optional(),
+  operatorPhone: z.string().optional(),
+  branchName: z.string().min(2).optional(),
+  branchAddress: z.string().min(2).optional(),
+  sportIds: z.array(z.string()).default([]),
+})
+
+export const createCoachSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  city: z.string().min(2).optional(),
+  bio: z.string().optional(),
+  sportId: z.string().min(1),
+  experienceYears: z.coerce.number().int().min(0).default(0),
+  sessionRate: z.coerce.number().min(0).default(0),
+  commissionRate: z.coerce.number().min(0).max(100).default(20),
+  status: z.enum(['APPROVED', 'PENDING', 'SUSPENDED']).default('APPROVED'),
+  certifications: z.array(z.string()).default([]),
+  specialties: z.array(z.string()).default([]),
+})
+
+export const createStoreProductSchema = z.object({
+  facilityId: z.string().min(1),
+  name: z.string().min(2),
+  category: z.string().min(2),
+  description: z.string().optional(),
+  imageUrl: z.string().url().optional(),
+  price: z.coerce.number().min(0),
+  quantity: z.coerce.number().int().min(0),
+  status: z.enum(['IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK']).optional(),
+})
+
+export const updateStoreProductSchema = z.object({
+  facilityId: z.string().min(1).optional(),
+  name: z.string().min(2).optional(),
+  category: z.string().min(2).optional(),
+  description: z.string().optional(),
+  imageUrl: z.string().url().optional(),
+  price: z.coerce.number().min(0).optional(),
+  quantity: z.coerce.number().int().min(0).optional(),
+  status: z.enum(['IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK']).optional(),
+})
+
+export const updateStoreOrderStatusSchema = z.object({
+  status: z.enum(['PENDING', 'PROCESSING', 'DELIVERED', 'CANCELLED']),
+})
+
 export const updateBookingStatusSchema = z.object({
   status: z.string().min(1),
 })
@@ -112,6 +169,11 @@ export const listAuditLogsSchema = z.object({
 
 export type ListUsersInput = z.infer<typeof listUsersSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
+export type CreateFacilityInput = z.infer<typeof createFacilitySchema>
+export type CreateCoachInput = z.infer<typeof createCoachSchema>
+export type CreateStoreProductInput = z.infer<typeof createStoreProductSchema>
+export type UpdateStoreProductInput = z.infer<typeof updateStoreProductSchema>
+export type UpdateStoreOrderStatusInput = z.infer<typeof updateStoreOrderStatusSchema>
 export type UpdateBookingStatusInput = z.infer<typeof updateBookingStatusSchema>
 export type CreateSportInput = z.infer<typeof createSportSchema>
 export type UpdateSportInput = z.infer<typeof updateSportSchema>

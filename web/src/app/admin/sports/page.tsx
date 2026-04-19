@@ -9,6 +9,7 @@ import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
+import { stringValue } from '@/lib/api/extract'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
@@ -68,7 +69,7 @@ export default function AdminSportsPage() {
               {
                 key: 'categories',
                 header: 'Categories',
-                render: (row: any) => <p className="text-sm text-primary/75">{row.categories || 'N/A'}</p>,
+                render: (row: any) => <p className="text-sm text-primary/75">{stringValue(row.categories) || 'N/A'}</p>,
               },
               {
                 key: 'listings',

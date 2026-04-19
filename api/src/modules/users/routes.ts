@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
+import { prisma } from '@lib/prisma'
+import { listCoaches } from '@modules/coaches/service'
 import {
   getMe,
   updateProfile,
@@ -15,11 +17,14 @@ import {
   getNotifications,
   markNotificationsAsRead,
   getUnreadNotificationsCount,
+  walletTopup,
 } from './service'
 import {
   updateProfileSchema,
   updatePreferencesSchema,
   addFavoriteSchema,
+  walletTopupSchema,
+  markNotificationsReadSchema,
 } from './schema'
 import { success } from '@common/response'
 
@@ -77,6 +82,13 @@ export async function userRoutes(app: FastifyInstance) {
     return success(transactions)
   })
 
+  // POST /users/me/wallet/topup
+  app.post('/me/wallet/topup', async (request: FastifyRequest) => {
+    const data = walletTopupSchema.parse(request.body)
+    const paymentIntent = await walletTopup(request.user!.userId, data)
+    return success({ paymentIntent })
+  })
+
   // GET /users/me/favorites
   app.get('/me/favorites', async (request: FastifyRequest) => {
     const favorites = await getFavorites(request.user!.userId)
@@ -129,8 +141,9 @@ export async function userRoutes(app: FastifyInstance) {
 
   // PATCH /users/me/notifications/read-all
   app.patch('/me/notifications/read-all', async (request: FastifyRequest) => {
-    const notificationIds = (request.body as { notificationIds?: string[] })?.notificationIds
-    await markNotificationsAsRead(request.user!.userId, notificationIds)
+    const parsed = markNotificationsReadSchema.parse(request.body)
+    const ids = parsed?.ids
+    await markNotificationsAsRead(request.user!.userId, ids)
     return success({ message: 'Notifications marked as read' })
   })
 }
@@ -152,15 +165,136 @@ export async function playerRoutes(app: FastifyInstance) {
     return success(user)
   })
 
-  app.get('/categories', async () => success([]))
+  app.get('/categories', async () => {
+    const sports = await prisma.sport.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        icon: true,
+        description: true,
+      },
+    })
+    return success(sports)
+  })
 
-  app.get('/courts', async () => success([]))
+  app.get('/courts', async (request: FastifyRequest) => {
+    const city = (request.query as { city?: string })?.city
+    const sportId = (request.query as { sportId?: string })?.sportId
+    const page = z.coerce.number().default(1).parse((request.query as { page?: string })?.page)
+    const limit = z.coerce.number().min(1).max(50).default(20).parse((request.query as { limit?: string })?.limit)
 
-  app.get('/courts/nearby', async () => success([]))
+    const where: any = {}
+    if (city) where.branch = { city }
+    if (sportId) where.sportId = sportId
 
-  app.get('/teams', async () => success([]))
+    const [courts, total] = await Promise.all([
+      prisma.court.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          sport: { select: { id: true, name: true, displayName: true } },
+          branch: {
+            select: {
+              id: true,
+              name: true,
+              city: true,
+              facility: { select: { id: true, name: true } },
+            },
+          },
+          _count: { select: { reviews: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.court.count({ where }),
+    ])
 
-  app.get('/coaches', async () => success([]))
+    return success({ items: courts, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } })
+  })
+
+  app.get('/courts/nearby', async (request: FastifyRequest) => {
+    const city = (request.query as { city?: string })?.city
+    if (!city) {
+      return success({ items: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } })
+    }
+
+    const where = { branch: { city } }
+    const [courts, total] = await Promise.all([
+      prisma.court.findMany({
+        where,
+        take: 20,
+        include: {
+          sport: { select: { id: true, name: true, displayName: true } },
+          branch: {
+            select: {
+              id: true,
+              name: true,
+              city: true,
+              address: true,
+              facility: { select: { id: true, name: true } },
+            },
+          },
+          _count: { select: { reviews: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.court.count({ where }),
+    ])
+
+    return success({ items: courts, pagination: { page: 1, limit: 20, total, totalPages: Math.ceil(total / 20) } })
+  })
+
+  app.get('/teams', async (request: FastifyRequest) => {
+    const page = z.coerce.number().default(1).parse((request.query as { page?: string })?.page)
+    const limit = z.coerce.number().min(1).max(50).default(20).parse((request.query as { limit?: string })?.limit)
+
+    const where = { status: 'OPEN' }
+
+    const [teamPosts, total] = await Promise.all([
+      prisma.teamPost.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          court: {
+            select: {
+              id: true,
+              name: true,
+              sport: { select: { id: true, name: true, displayName: true } },
+              branch: { select: { id: true, name: true, city: true } },
+            },
+          },
+          createdBy: {
+            select: { id: true, name: true, avatar: true },
+          },
+          _count: { select: { members: true, joinRequests: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.teamPost.count({ where }),
+    ])
+
+    return success({ items: teamPosts, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } })
+  })
+
+  app.get('/coaches', async () => {
+    const result = await listCoaches({ page: 1, limit: 50 })
+    return success(
+      result.items.map((coach) => ({
+        id: coach.id,
+        slug: coach.slug,
+        name: coach.user.name,
+        sport: coach.sport.displayName,
+        bio: coach.bio ?? '',
+        image: coach.user.avatar ?? 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=1200&q=80',
+        sessionRate: `${Number(coach.sessionRate)} EGP / hr`,
+        experienceYears: coach.experienceYears,
+      })),
+    )
+  })
 
   app.get('/notifications/unread-count', async (request: FastifyRequest) => {
     const count = await getUnreadNotificationsCount(request.user!.userId)
