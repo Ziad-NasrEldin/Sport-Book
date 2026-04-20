@@ -8,23 +8,14 @@ type DashboardPageProps = {
   params: Promise<{ role: string }>
 }
 
-type DashboardConfig = {
-  title: string
-  subtitle: string
-  primaryHref: string
-  primaryLabel: string
-  secondaryHref: string
-  secondaryLabel: string
-}
-
-const dashboardByRole: Record<DashboardRole, DashboardConfig> = {
+const dashboardByRole: Record<DashboardRole, { title: string; subtitle: string; primaryHref: string; primaryLabel: string; secondaryHref: string; secondaryLabel: string }> = {
   admin: {
     title: 'Admin Dashboard',
     subtitle: 'Manage users, operations, and platform sections quickly.',
-    primaryHref: '/profile',
-    primaryLabel: 'Open Profile Center',
-    secondaryHref: '/teams',
-    secondaryLabel: 'Open Teams Moderation',
+    primaryHref: '/admin/dashboard',
+    primaryLabel: 'Open Admin Suite',
+    secondaryHref: '/admin/settings',
+    secondaryLabel: 'Open Platform Settings',
   },
   coach: {
     title: 'Coach Dashboard',
@@ -37,10 +28,10 @@ const dashboardByRole: Record<DashboardRole, DashboardConfig> = {
   facility: {
     title: 'Facility Dashboard',
     subtitle: 'Manage listed products, orders, and facility storefront.',
-    primaryHref: '/store',
-    primaryLabel: 'Open Facility Store',
-    secondaryHref: '/profile/store-purchases',
-    secondaryLabel: 'Open Purchase History',
+    primaryHref: '/operator/dashboard',
+    primaryLabel: 'Open Operator Suite',
+    secondaryHref: '/operator/bookings',
+    secondaryLabel: 'Open Operator Bookings',
   },
   operator: {
     title: 'Operator Dashboard',

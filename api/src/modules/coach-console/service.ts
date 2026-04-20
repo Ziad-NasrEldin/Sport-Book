@@ -716,6 +716,63 @@ export async function getCoachReportsView(userId: string) {
   }
 }
 
+export async function listCoachAvailabilityTemplates(userId: string) {
+  const coach = await getCoachRecord(userId)
+
+  const sportName = coach.sport?.displayName ?? coach.sport?.name ?? 'General'
+
+  const templates = [
+    {
+      id: 'competition-week',
+      title: 'Competition Week Template',
+      description: `Optimized for competitive ${sportName} athletes. Shifts evening sessions to match-play slots and blocks Friday recovery window.`,
+    },
+    {
+      id: 'academy-launch',
+      title: 'Academy Launch Template',
+      description: `Ideal for starting a ${sportName} training program. Adds additional beginner windows on Tuesday and Thursday afternoons.`,
+    },
+    {
+      id: 'travel-week',
+      title: 'Travel Week Template',
+      description: `Consolidates ${sportName} sessions to two days and auto-markets limited availability for maximum demand.`,
+    },
+  ]
+
+  return templates
+}
+
+export async function getCoachSecurityInfo(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      emailVerified: true,
+      createdAt: true,
+      refreshTokens: {
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { createdAt: true },
+      },
+    },
+  })
+
+  if (!user) {
+    throw new NotFoundError('User not found')
+  }
+
+  const lastLogin = user.refreshTokens.length > 0 ? user.refreshTokens[0].createdAt : user.createdAt
+  const activeDeviceSessions = user.refreshTokens.length
+
+  return {
+    twoFactorEnabled: false,
+    apiTokenCount: 0,
+    activeDeviceSessions,
+    lastLoginAt: lastLogin.toISOString(),
+    lastLoginIp: null,
+  }
+}
+
 export async function assertCoachOwnsCoachRecord(userId: string, coachId: string) {
   const coach = await prisma.coach.findUnique({ where: { userId } })
   if (!coach || coach.id !== coachId) {

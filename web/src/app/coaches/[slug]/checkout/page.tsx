@@ -33,10 +33,10 @@ function CoachCheckoutPageContent() {
   const sessionDate = searchParams.get('date') ?? new Date().toISOString().slice(0, 10)
   const startHour = Number(searchParams.get('startHour') ?? '9')
   const endHour = Number(searchParams.get('endHour') ?? '10')
-  const sessionLocation = 'SportBook Club - Main Arena'
 
   const { data: coach, error, refetch } = useApiCall<PublicCoachDetail>(`/coaches/${slug}`)
   const selectedService = useMemo(() => coach?.services.find((service) => service.id === serviceId), [coach, serviceId])
+  const sessionLocation = coach?.city ? `${coach.city} — Session venue` : 'Session venue TBD'
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
   const [promoCode, setPromoCode] = useState('')
@@ -53,8 +53,9 @@ function CoachCheckoutPageContent() {
   }
 
   const sessionSubtotal = selectedService.price
-  const bookingFee = 20
-  const vat = Math.round(sessionSubtotal * 0.14)
+  const bookingFee = Math.round(sessionSubtotal * 0.05) || 20
+  const vatRate = 0.14
+  const vat = Math.round(sessionSubtotal * vatRate)
   const promoDiscount = isPromoApplied ? Math.round(sessionSubtotal * 0.1) : 0
   const total = sessionSubtotal + bookingFee + vat - promoDiscount
 
@@ -216,7 +217,7 @@ function CoachCheckoutPageContent() {
                 <span className="font-lexend font-bold text-primary">{bookingFee} EGP</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-primary/70">VAT 14%</span>
+                <span className="text-primary/70">VAT {Math.round(vatRate * 100)}%</span>
                 <span className="font-lexend font-bold text-primary">{vat} EGP</span>
               </div>
               <div className="flex items-center justify-between">

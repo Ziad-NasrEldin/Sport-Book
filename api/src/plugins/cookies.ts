@@ -8,7 +8,7 @@ export async function registerCookies(app: FastifyInstance) {
     parseOptions: {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
       path: '/',
     },
   })

@@ -1,4 +1,6 @@
 import { type ReactNode } from 'react'
+import { clsx } from 'clsx'
+import { AdminEmptyState } from './AdminEmptyState'
 
 type Column<T> = {
   key: string
@@ -12,6 +14,9 @@ type AdminTableProps<T> = {
   columns: Column<T>[]
   getRowKey: (item: T) => string
   emptyMessage?: string
+  zebraStriping?: boolean
+  hover?: boolean
+  emptyVariant?: 'search' | 'default'
 }
 
 export function AdminTable<T>({
@@ -19,11 +24,18 @@ export function AdminTable<T>({
   columns,
   getRowKey,
   emptyMessage = 'No records match the current filters.',
+  zebraStriping = true,
+  hover = true,
+  emptyVariant = 'search',
 }: AdminTableProps<T>) {
   if (items.length === 0) {
     return (
-      <div className="rounded-[var(--radius-md)] bg-surface-container-low p-8 text-center">
-        <p className="text-sm font-semibold text-primary/70">{emptyMessage}</p>
+      <div className="rounded-[var(--radius-md)] bg-surface-container-low">
+        <AdminEmptyState
+          variant={emptyVariant}
+          title={emptyVariant === 'search' ? 'No results found' : 'Nothing here yet'}
+          description={emptyMessage}
+        />
       </div>
     )
   }
@@ -32,7 +44,7 @@ export function AdminTable<T>({
     <div className="overflow-x-auto rounded-[var(--radius-md)] bg-surface-container-low">
       <table className="min-w-full text-sm text-primary">
         <thead>
-          <tr className="text-left text-[11px] uppercase tracking-[0.14em] font-lexend text-primary/55">
+          <tr className="text-left text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/55 border-b border-primary/5">
             {columns.map((column) => (
               <th key={column.key} className={`px-4 py-3.5 whitespace-nowrap ${column.className ?? ''}`}>
                 {column.header}
@@ -41,8 +53,15 @@ export function AdminTable<T>({
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={getRowKey(item)} className="border-t border-primary/5 align-top">
+          {items.map((item, index) => (
+            <tr
+              key={getRowKey(item)}
+              className={clsx(
+                'border-b border-primary/5 align-top transition-colors duration-150',
+                zebraStriping && index % 2 === 1 && 'bg-primary/[0.02]',
+                hover && 'hover:bg-primary/[0.04] cursor-pointer'
+              )}
+            >
               {columns.map((column) => (
                 <td key={column.key} className={`px-4 py-3.5 ${column.className ?? ''}`}>
                   {column.render(item)}

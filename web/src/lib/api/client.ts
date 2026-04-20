@@ -76,12 +76,31 @@ async function handleResponse(response: Response): Promise<any> {
 
   if (!response.ok) {
     if (response.status === 401) {
+      const url = response.url || ''
+      const isAuthEndpoint =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/forgot-password') ||
+        url.includes('/auth/reset-password')
+
+      if (isAuthEndpoint) {
+        const errorData = isJson ? await response.json().catch(() => ({})) : {}
+        throw new APIError(401, errorData.error || errorData.message || 'Invalid credentials', errorData.code)
+      }
+
+      if (!getAccessToken()) {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
+          window.location.href = '/auth/sign-in'
+        }
+        throw new AuthenticationError('Please log in to continue.')
+      }
+
       try {
         await refreshAccessToken()
         return null // Signal to retry with new access token
       } catch {
         clearTokens()
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
           window.location.href = '/auth/sign-in'
         }
         throw new AuthenticationError('Session expired. Please log in again.')

@@ -11,24 +11,6 @@ import { statusTone } from '@/lib/admin/ui'
 import type { CoachAvailabilityData, CoachAvailabilityException, CoachAvailabilityWindow } from '@/lib/coach/types'
 import { api } from '@/lib/api/client'
 
-const templateCards = [
-  {
-    id: 'temp-1',
-    title: 'Competition Week Template',
-    description: 'Shifts evening sessions to match-play slots and blocks Friday recovery window.',
-  },
-  {
-    id: 'temp-2',
-    title: 'Academy Launch Template',
-    description: 'Adds additional beginner windows on Tuesday and Thursday afternoons.',
-  },
-  {
-    id: 'temp-3',
-    title: 'Travel Week Template',
-    description: 'Consolidates sessions to two days and auto-markets limited availability.',
-  },
-]
-
 const EMPTY_WINDOW: {
   day: string
   start: string
@@ -52,6 +34,9 @@ const EMPTY_EXCEPTION = {
 
 export default function CoachAvailabilityPage() {
   const { data: availabilityData, error, refetch } = useApiCall<CoachAvailabilityData>('/coach/availability')
+  const { data: templatesData } = useApiCall<{ id: string; title: string; description: string }[]>('/coach/availability-templates')
+
+  const templateCards = templatesData || []
 
   const [windowForm, setWindowForm] = useState(EMPTY_WINDOW)
   const [editingWindowId, setEditingWindowId] = useState<string | null>(null)

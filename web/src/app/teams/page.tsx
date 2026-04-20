@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock3, MapPin, Plus, Users } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { CourtSport, courts } from '@/lib/courts'
-import { useApiCall, useApiMutation } from '@/lib/api/hooks'
+import { CourtSport, courtSports, courts } from '@/lib/courts'
+import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
@@ -42,22 +43,114 @@ function getNoticeFeedbackFromUrl() {
   return ''
 }
 
-export default function TeamsPage() {
-  const { data: teamsResponse, loading, error, refetch } = useApiCall('/player/teams')
-  const { data: usersResponse } = useApiCall('/player/users')
-  const createMutation = useApiMutation('/player/teams', 'POST')
-  const joinMutation = useApiMutation('/player/teams/join', 'POST')
+type CurrentUser = {
+  id: string
+  name: string
+}
 
-  const teamsData = teamsResponse?.data || teamsResponse || []
-  const usersData = usersResponse?.data || usersResponse || []
+type TeamPost = {
+  id: string
+  createdByUserId: string
+  createdByName: string
+  sport: CourtSport
+  courtId: string
+  courtTitle: string
+  courtLocation: string
+  date: string
+  startHour: number
+  endHour: number
+  neededPlayers: number
+  memberUserIds: string[]
+  requestedUserIds: string[]
+  status: 'open' | 'full'
+}
+
+type TeamPostApiResponse = {
+  id: string
+  createdByUserId: string
+  courtId: string
+  date: string
+  startHour: number
+  endHour: number
+  neededPlayers: number
+  memberUserIds?: string | string[]
+  status: string
+  court?: {
+    name?: string
+    branch?: {
+      name?: string
+      city?: string
+    }
+    sport?: {
+      displayName?: string
+      name?: string
+    }
+  }
+  createdBy?: {
+    name?: string
+  }
+}
+
+function normalizeSport(value: string | undefined): CourtSport {
+  const normalized = value?.toLowerCase()
+  if (normalized === 'padel') return 'Padel'
+  if (normalized === 'football') return 'Football'
+  return 'Tennis'
+}
+
+function parseUserIds(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value
+  if (!value) return []
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((entry): entry is string => typeof entry === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function normalizeTeamPost(post: TeamPostApiResponse): TeamPost {
+  const memberUserIds = parseUserIds(post.memberUserIds)
+  const normalizedStatus = post.status?.toUpperCase() === 'FULL' ? 'full' : 'open'
+
+  return {
+    id: post.id,
+    createdByUserId: post.createdByUserId,
+    createdByName: post.createdBy?.name ?? 'Unknown',
+    sport: normalizeSport(post.court?.sport?.displayName ?? post.court?.sport?.name),
+    courtId: post.courtId,
+    courtTitle: post.court?.name ?? 'Selected Court',
+    courtLocation: [post.court?.branch?.name, post.court?.branch?.city].filter(Boolean).join(', ') || 'Location unavailable',
+    date: post.date.slice(0, 10),
+    startHour: post.startHour,
+    endHour: post.endHour,
+    neededPlayers: post.neededPlayers,
+    memberUserIds,
+    requestedUserIds: [],
+    status: normalizedStatus,
+  }
+}
+
+export default function TeamsPage() {
+  const { data: teamsResponse, loading, error, refetch } = useApiCall('/teams')
+  const { data: currentUser } = useApiCall<CurrentUser>('/users/me')
+
+  const teamsData = useMemo(
+    () => (Array.isArray(teamsResponse?.data) ? teamsResponse.data.map(normalizeTeamPost) : []),
+    [teamsResponse],
+  )
+  const usersData = useMemo(
+    () => (currentUser ? [currentUser] : []),
+    [currentUser],
+  )
 
   const availableSports = useMemo(() => {
-    const sports = new Set(teamsData.map((team: any) => stringValue(team.sport)))
-    return Array.from(sports) as CourtSport[]
-  }, [teamsData])
+    return courtSports
+  }, [])
 
   const [activeUserId, setActiveUserState] = useState('')
-  const [teamPosts, setTeamPosts] = useState<any[]>(teamsData)
+  const [teamPosts, setTeamPosts] = useState<TeamPost[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [feedback, setFeedback] = useState(getNoticeFeedbackFromUrl)
   const [selectedSportFilter, setSelectedSportFilter] = useState<'All' | CourtSport>('All')
@@ -76,9 +169,7 @@ export default function TeamsPage() {
   })
 
   useEffect(() => {
-    if (teamsData.length > 0) {
-      setTeamPosts(teamsData)
-    }
+    setTeamPosts(teamsData)
   }, [teamsData])
 
   useEffect(() => {
@@ -116,13 +207,11 @@ export default function TeamsPage() {
     event.preventDefault()
 
     try {
-      await createMutation.mutate({
-        createdByUserId: activeUserId,
-        sport: createForm.sport,
+      await api.post('/teams', {
         courtId: createForm.courtId,
         date: createForm.date,
         startHour: createForm.startHour,
-        durationHours: createForm.durationHours,
+        endHour: createForm.startHour + createForm.durationHours,
         neededPlayers: createForm.neededPlayers,
       })
       setFeedback('Team post published successfully.')
@@ -139,10 +228,7 @@ export default function TeamsPage() {
 
   const handleJoinTeam = async (postId: string) => {
     try {
-      await joinMutation.mutate({
-        postId,
-        userId: activeUserId,
-      })
+      await api.post(`/teams/${postId}/join`)
       setFeedback('Join request sent. Waiting for creator approval.')
       refetch()
     } catch (err) {
@@ -150,11 +236,11 @@ export default function TeamsPage() {
     }
   }
 
-  const activeUserName = usersData.find((u: any) => u.id === activeUserId)?.name || 'You'
+  const activeUserName = usersData.find((u) => u.id === activeUserId)?.name || 'You'
 
   const getUserNameById = (userId: string) => {
-    const user = usersData.find((u: any) => u.id === userId)
-    return user?.name || 'Unknown'
+    const user = usersData.find((u) => u.id === userId)
+    return user?.name || teamPosts.find((post) => post.createdByUserId === userId)?.createdByName || 'Unknown'
   }
 
   if (error) {
@@ -191,10 +277,10 @@ export default function TeamsPage() {
                 setActiveUserState(nextUserId)
               }}
             >
-              {usersData.map((user: any) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
+            {usersData.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
               ))}
             </select>
           </label>
@@ -365,7 +451,7 @@ export default function TeamsPage() {
                 className="bg-surface-container-high rounded-full px-4 py-2.5 text-sm font-semibold text-primary outline-none"
               >
                 <option value="All">All Sports</option>
-                {availableSports.map((sport: any) => (
+                {availableSports.map((sport) => (
                   <option key={sport} value={sport}>
                     {sport}
                   </option>
@@ -389,8 +475,7 @@ export default function TeamsPage() {
               <p className="text-sm text-primary/70 mt-1">Try another sport/date filter or create a new post.</p>
             </div>
           ) : (
-            filteredPosts.map((post: any) => {
-            const court = courts.find((item) => item.id === post.courtId)
+            filteredPosts.map((post) => {
             const joinedPlayers = 1 + post.memberUserIds.length
             const totalPlayers = 1 + post.neededPlayers
             const spotsLeft = Math.max(0, totalPlayers - joinedPlayers)
@@ -417,11 +502,11 @@ export default function TeamsPage() {
                       </span>
                     </div>
 
-                    <h3 className="text-lg md:text-xl font-black text-primary leading-tight">{court?.title ?? 'Selected Court'}</h3>
+                    <h3 className="text-lg md:text-xl font-black text-primary leading-tight">{post.courtTitle}</h3>
 
                     <p className="text-sm text-primary/70 inline-flex items-center gap-1.5">
                       <MapPin className="w-4 h-4" />
-                      {court?.location ?? 'Location unavailable'}
+                      {post.courtLocation}
                     </p>
 
                     <div className="flex flex-wrap gap-2 text-xs text-primary/75">

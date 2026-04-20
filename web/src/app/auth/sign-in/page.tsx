@@ -4,10 +4,22 @@ import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, LockKeyhole, Mail, Eye, EyeOff } from 'lucide-react'
-import { api, setAccessToken, APIError } from '@/lib/api/client'
+import { api, setAccessToken, APIError, NetworkError } from '@/lib/api/client'
 import { getPostLoginRoute } from '@/lib/auth/session'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { showToast } from '@/lib/toast'
+
+function getSignInErrorMessage(error: unknown): string {
+  if (error instanceof NetworkError) {
+    return 'The API is not reachable on localhost:3001. Start the backend and try again.'
+  }
+
+  if (error instanceof APIError) {
+    return error.message || 'Failed to sign in. Please check your credentials.'
+  }
+
+  return 'Failed to sign in. Please try again.'
+}
 
 export default function SignInPage() {
   const router = useRouter()
@@ -33,8 +45,7 @@ export default function SignInPage() {
       setAccessToken(accessToken)
       router.push(getPostLoginRoute(user.role))
     } catch (err) {
-      const apiError = err as APIError
-      setError(apiError.message || 'Failed to sign in. Please check your credentials.')
+      setError(getSignInErrorMessage(err))
     } finally {
       setLoading(false)
     }

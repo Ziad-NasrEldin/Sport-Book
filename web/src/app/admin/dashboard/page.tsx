@@ -12,14 +12,6 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
-const bookingVelocity = [41, 56, 62, 58, 71, 68, 79, 87, 91, 85, 98, 102]
-
-const revenueShare = [
-  { label: 'Facilities', value: 52, color: '#002366' },
-  { label: 'Coaching', value: 31, color: '#fd8b00' },
-  { label: 'Marketplace', value: 17, color: '#c3f400' },
-]
-
 function formatEgp(value: number) {
   return new Intl.NumberFormat('en-EG', {
     style: 'currency',
@@ -40,7 +32,17 @@ export default function AdminDashboardPage() {
 
   const dashboardMetrics = dashboardData?.metrics || []
   const pendingRefunds = transactions?.data?.filter?.((item: any) => item.type === 'Refund')?.length || 0
-  const pendingBookings = bookings?.data?.filter?.((item: any) => item.status === 'PENDING')?.length || 0
+  const pendingBookings = dashboardData?.pendingBookingsCount ?? (bookings?.data?.filter?.((item: any) => item.status === 'PENDING')?.length || 0)
+
+  const bookingVelocity = dashboardData?.bookingVelocity || []
+  const revenueShare = dashboardData?.revenueShare || [
+    { label: 'Facilities', value: 52, color: '#002366' },
+    { label: 'Coaching', value: 31, color: '#fd8b00' },
+    { label: 'Marketplace', value: 17, color: '#c3f400' },
+  ]
+  const averageOrder = dashboardData?.averageOrder ?? 0
+  const successRate = dashboardData?.successRate ?? '0%'
+  const operationalRisks: string[] = dashboardData?.operationalRisks || ['No critical risks identified. All systems operating normally.']
 
   return (
     <div className="space-y-6">
@@ -112,11 +114,11 @@ export default function AdminDashboardPage() {
             </div>
             <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Average Order</p>
-              <p className="mt-1 text-lg font-extrabold text-primary">{formatEgp(580)}</p>
+              <p className="mt-1 text-lg font-extrabold text-primary">{formatEgp(averageOrder)}</p>
             </div>
             <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Success Rate</p>
-              <p className="mt-1 text-lg font-extrabold text-primary">96.4%</p>
+              <p className="mt-1 text-lg font-extrabold text-primary">{successRate}</p>
             </div>
           </div>
         </AdminPanel>
@@ -154,11 +156,7 @@ export default function AdminDashboardPage() {
 
         <AdminPanel eyebrow="Live alerts" title="Operational Risks">
           <div className="space-y-3">
-            {[
-              'Two payout batches are waiting secondary approval from finance.',
-              'One suspicious payment pattern detected in Apple Pay transactions.',
-              'Three facilities exceeded cancellation ratio threshold this week.',
-            ].map((message) => (
+            {operationalRisks.map((message) => (
               <article key={message} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
                 <p className="inline-flex items-center gap-2 text-xs font-lexend uppercase tracking-[0.14em] text-amber-800">
                   <AlertTriangle className="w-3.5 h-3.5" />

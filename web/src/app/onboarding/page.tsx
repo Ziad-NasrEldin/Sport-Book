@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Bolt, CircleOff, Sparkles, Star, Users2 } from 'lucide-react'
 import { hasCompletedOnboarding, markOnboardingCompleted } from '@/lib/onboarding'
+import { useApiCall } from '@/lib/api/hooks'
 
 type OnboardingSlide = {
   id: 'instant-booking' | 'expert-coaching' | 'e-commerce' | 'team-matchmaking'
@@ -22,7 +23,7 @@ type OnboardingSlide = {
   statB: { label: string; value: string }
 }
 
-const slides: OnboardingSlide[] = [
+const defaultSlides: OnboardingSlide[] = [
   {
     id: 'instant-booking',
     kicker: 'Speed Mode',
@@ -35,8 +36,8 @@ const slides: OnboardingSlide[] = [
     badgeIcon: 'bolt',
     panelToneClass: 'bg-surface/90',
     heroOverlayClass: 'bg-gradient-to-b from-surface/15 via-surface/35 to-surface/75',
-    statA: { label: 'Live Availability', value: '24 Courts' },
-    statB: { label: 'Fastest Slot', value: '11:30 AM' },
+    statA: { label: 'Live Courts', value: '...' },
+    statB: { label: 'Active Coaches', value: '...' },
   },
   {
     id: 'expert-coaching',
@@ -50,7 +51,7 @@ const slides: OnboardingSlide[] = [
     badgeIcon: 'star',
     panelToneClass: 'bg-surface-container-lowest',
     heroOverlayClass: 'bg-gradient-to-b from-primary/10 via-surface/20 to-surface/72',
-    statA: { label: 'Certified Experts', value: '120+' },
+    statA: { label: 'Certified Experts', value: '...' },
     statB: { label: 'Avg. Rating', value: '4.9/5' },
   },
   {
@@ -65,8 +66,8 @@ const slides: OnboardingSlide[] = [
     badgeIcon: 'shop',
     panelToneClass: 'bg-surface',
     heroOverlayClass: 'bg-gradient-to-b from-primary/70 via-primary/60 to-surface/70',
-    statA: { label: 'Active Products', value: '8K+' },
-    statB: { label: 'Top Category', value: 'Rackets' },
+    statA: { label: 'Active Products', value: '...' },
+    statB: { label: 'Active Cities', value: '...' },
   },
   {
     id: 'team-matchmaking',
@@ -79,7 +80,7 @@ const slides: OnboardingSlide[] = [
     badgeIcon: 'team',
     panelToneClass: 'bg-surface/92',
     heroOverlayClass: 'bg-gradient-to-b from-surface/25 via-surface/40 to-surface/84',
-    statA: { label: 'Active Cities', value: '12' },
+    statA: { label: 'Active Cities', value: '...' },
     statB: { label: 'Weekly Matches', value: '3.4K' },
   },
 ]
@@ -89,6 +90,40 @@ export default function OnboardingPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [canRender, setCanRender] = useState(false)
   const touchStartXRef = useRef<number | null>(null)
+
+  const { data: onboardingStats } = useApiCall<{ courts: number; coaches: number; cities: number; products: number }>('/onboarding/stats')
+
+  const slides = defaultSlides.map((slide) => {
+    const stats = onboardingStats
+    if (!stats) return slide
+
+    switch (slide.id) {
+      case 'instant-booking':
+        return {
+          ...slide,
+          statA: { ...slide.statA, value: `${stats.courts} Courts` },
+          statB: { ...slide.statB, value: `${stats.coaches}+ Coaches` },
+        }
+      case 'expert-coaching':
+        return {
+          ...slide,
+          statA: { ...slide.statA, value: `${stats.coaches}+` },
+        }
+      case 'e-commerce':
+        return {
+          ...slide,
+          statA: { ...slide.statA, value: `${stats.products}+` },
+          statB: { ...slide.statB, value: `${stats.cities} Cities` },
+        }
+      case 'team-matchmaking':
+        return {
+          ...slide,
+          statA: { ...slide.statA, value: `${stats.cities}` },
+        }
+      default:
+        return slide
+    }
+  })
 
   const isLastSlide = currentIndex === slides.length - 1
 

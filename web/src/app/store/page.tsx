@@ -20,6 +20,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
+import { getStoreProductImage } from '@/lib/storeProductMedia'
 import {
   STORE_CART_UPDATED_EVENT,
   clearStoreCart,
@@ -29,14 +30,36 @@ import {
   updateStoreCartItemQuantity,
 } from '@/lib/storeCart'
 
-export default function StorePage() {
-  const { data: productsData, loading, error } = useApiCall('/store/products')
-  const products: any[] = useMemo(() => Array.isArray(productsData) ? productsData : (Array.isArray(productsData?.data) ? productsData.data : []), [productsData])
+type StoreApiProduct = {
+  id: string
+  title?: string
+  name?: string
+  category?: unknown
+  price: number
+  facility?: unknown
+  facilityName?: unknown
+  location?: unknown
+  status?: string
+  image?: string
+  images?: string[]
+}
 
-  const categoryLabel = (cat: any): string => stringValue(cat)
+type CartDetail = {
+  item: StoreCartItem
+  product: StoreApiProduct
+}
+
+export default function StorePage() {
+  const { data: productsData, loading, error } = useApiCall<{ data?: StoreApiProduct[] } | StoreApiProduct[]>('/store/products')
+  const products = useMemo<StoreApiProduct[]>(
+    () => Array.isArray(productsData) ? productsData : (Array.isArray(productsData?.data) ? productsData.data : []),
+    [productsData],
+  )
+
+  const categoryLabel = (cat: unknown): string => stringValue(cat)
 
   const productCategories = useMemo(
-    () => ['All Items', ...Array.from(new Set(products.map((product: any) => categoryLabel(product.category))))],
+    () => ['All Items', ...Array.from(new Set(products.map((product) => categoryLabel(product.category))))],
     [products],
   )
 
@@ -65,8 +88,8 @@ export default function StorePage() {
 
   const filteredProducts = useMemo(() => {
     return products
-      .filter((product: any) => activeCategory === 'All Items' || categoryLabel(product.category) === activeCategory)
-      .filter((product: any) => {
+      .filter((product) => activeCategory === 'All Items' || categoryLabel(product.category) === activeCategory)
+      .filter((product) => {
         if (!searchQuery.trim()) return true
 
         const searchableText = `${product.title || product.name} ${categoryLabel(product.category)} ${stringValue(product.facility || product.facilityName)} ${stringValue(product.location)}`.toLowerCase()
@@ -75,14 +98,13 @@ export default function StorePage() {
   }, [products, activeCategory, searchQuery])
 
   const cartDetails = useMemo(
-    () =>
-      cartItems
-        .map((item) => {
-          const product = products.find((entry: any) => entry.id === item.productId)
-          if (!product) return null
-          return { item, product }
-        })
-        .filter((entry: any) => entry !== null),
+    (): CartDetail[] =>
+      cartItems.reduce<CartDetail[]>((entries, item) => {
+        const product = products.find((entry) => entry.id === item.productId)
+        if (!product) return entries
+        entries.push({ item, product })
+        return entries
+      }, []),
     [cartItems, products],
   )
 
@@ -93,7 +115,7 @@ export default function StorePage() {
 
   const cartSubtotal = useMemo(
     () =>
-      cartDetails.reduce((sum: number, entry: any) => {
+      cartDetails.reduce((sum: number, entry) => {
         return sum + entry.product.price * entry.item.quantity
       }, 0),
     [cartDetails],
@@ -198,10 +220,10 @@ export default function StorePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6 pb-2">
-            {filteredProducts.map((product: any) => (
+            {filteredProducts.map((product) => (
               <article key={product.id} className="bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient">
                 <div className="relative w-full aspect-[4/3]">
-                  <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
+                  <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
 
                   <span
                     className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
@@ -289,11 +311,11 @@ export default function StorePage() {
                 </div>
               )}
 
-              {cartDetails.map(({ item, product }: any) => (
+              {cartDetails.map(({ item, product }) => (
                 <article key={item.productId} className="bg-surface-container-high rounded-[var(--radius-md)] p-3">
                   <div className="flex items-start gap-3">
                     <div className="relative w-16 h-16 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                      <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
+                      <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
                     </div>
 
                     <div className="flex-1 min-w-0">

@@ -57,7 +57,7 @@ function CoachConfirmBookingPageContent() {
   }
 
   const participants = 1
-  const platformFee = 20
+  const platformFee = selectedService?.price ? Math.round(selectedService.price * 0.05) : 20
   const sessionSubtotal = selectedService?.price ?? 0
   const total = sessionSubtotal + platformFee
 
@@ -127,7 +127,7 @@ function CoachConfirmBookingPageContent() {
                 </div>
                 <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 text-primary/80 inline-flex items-center gap-2 sm:col-span-2">
                   <MapPin className="w-4 h-4" />
-                  SportBook Club - Main Arena
+                  {coach?.city ? `${coach.city} — Session location will be confirmed by coach` : 'Session location will be confirmed by coach'}
                 </div>
               </div>
 

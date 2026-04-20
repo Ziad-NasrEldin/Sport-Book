@@ -2,6 +2,8 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import {
   getOperatorDashboard,
+  getOperatorProfile,
+  updateOperatorProfile,
   getOperatorFacility,
   updateOperatorFacility,
   getOperatorBookings,
@@ -57,6 +59,35 @@ export async function operatorWorkspaceRoutes(app: FastifyInstance) {
   app.get('/dashboard', async (request: FastifyRequest) => {
     const dashboard = await getOperatorDashboard(request.user!.userId)
     return success(dashboard)
+  })
+
+  // GET /operator-workspace/profile - Get operator profile
+  app.get('/profile', async (request: FastifyRequest) => {
+    const profile = await getOperatorProfile(request.user!.userId)
+    return success(profile)
+  })
+
+  // PATCH /operator-workspace/profile - Update operator profile
+  app.patch('/profile', async (request: FastifyRequest) => {
+    const { fullName, title, email, phone, notifyApprovals, notifyIncidents, notifyReports } = request.body as {
+      fullName?: string
+      title?: string
+      email?: string
+      phone?: string
+      notifyApprovals?: boolean
+      notifyIncidents?: boolean
+      notifyReports?: boolean
+    }
+    const profile = await updateOperatorProfile(request.user!.userId, {
+      fullName,
+      title,
+      email,
+      phone,
+      notifyApprovals,
+      notifyIncidents,
+      notifyReports,
+    })
+    return success(profile)
   })
 
   // GET /operator-workspace/facility - Get operator's facility

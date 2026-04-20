@@ -41,6 +41,8 @@ export default function OperatorDashboardPage() {
   const courtsData = dashboardData.courts || []
   const operatorBookingsData = dashboardData.bookings || []
   const utilizationVelocity = dashboardData.utilizationVelocity || []
+  const cancellationRatio = dashboardData.cancellationRatio ?? '0%'
+  const attentionItems: Array<{ message: string; severity: string }> = dashboardData.attentionItems || []
 
   const pendingApprovals = approvalsData.filter((item: any) => item.status === 'PENDING')
   const todayRevenue = operatorBookingsData
@@ -134,7 +136,7 @@ export default function OperatorDashboardPage() {
             </div>
             <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Cancellation Ratio</p>
-              <p className="mt-1 text-lg font-extrabold text-primary">4.8%</p>
+              <p className="mt-1 text-lg font-extrabold text-primary">{cancellationRatio}</p>
             </div>
           </div>
         </AdminPanel>
@@ -170,17 +172,13 @@ export default function OperatorDashboardPage() {
 
         <AdminPanel eyebrow="Risk watch" title="Attention Needed">
           <div className="space-y-3">
-            {[
-              'Football Field C1 is blocked for urgent maintenance and needs reassignment plan.',
-              'Alex Seaview branch setup is still pending compliance checklist completion.',
-              'Two high-priority discount overrides are awaiting manager approval.',
-            ].map((message) => (
-              <article key={message} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+            {attentionItems.map((item) => (
+              <article key={item.message} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
                 <p className="inline-flex items-center gap-2 text-xs font-lexend uppercase tracking-[0.14em] text-amber-800">
                   <AlertTriangle className="w-3.5 h-3.5" />
                   Attention
                 </p>
-                <p className="mt-2 text-sm font-semibold text-primary">{message}</p>
+                <p className="mt-2 text-sm font-semibold text-primary">{item.message}</p>
               </article>
             ))}
           </div>

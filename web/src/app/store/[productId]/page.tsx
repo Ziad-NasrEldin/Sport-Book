@@ -21,6 +21,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
+import { getStoreProductImage } from '@/lib/storeProductMedia'
 import { addStoreCartItem, getStoreCartItems } from '@/lib/storeCart'
 
 export default function ProductDetailsPage() {
@@ -98,7 +99,7 @@ export default function ProductDetailsPage() {
       <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-5 md:space-y-6 pb-2">
         <article className="bg-surface-container-lowest rounded-[var(--radius-xl)] overflow-hidden shadow-ambient">
           <div className="relative w-full aspect-[4/3]">
-            <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
+            <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
 
             <span
               className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${

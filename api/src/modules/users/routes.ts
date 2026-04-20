@@ -18,6 +18,7 @@ import {
   markNotificationsAsRead,
   getUnreadNotificationsCount,
   walletTopup,
+  getUserSecurityInfo,
 } from './service'
 import {
   updateProfileSchema,
@@ -87,6 +88,12 @@ export async function userRoutes(app: FastifyInstance) {
     const data = walletTopupSchema.parse(request.body)
     const paymentIntent = await walletTopup(request.user!.userId, data)
     return success({ paymentIntent })
+  })
+
+  // GET /users/me/security - Get security info
+  app.get('/me/security', async (request: FastifyRequest) => {
+    const securityInfo = await getUserSecurityInfo(request.user!.userId)
+    return success(securityInfo)
   })
 
   // GET /users/me/favorites

@@ -22,6 +22,8 @@ import {
   deleteCoachServiceView,
   deleteCoachSessionType,
   getCoachAvailabilityView,
+  getCoachSecurityInfo,
+  listCoachAvailabilityTemplates,
   getCoachDashboard,
   getCoachProfileView,
   getCoachReportsView,
@@ -125,6 +127,10 @@ export async function coachConsoleRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string }
     return success(await deleteCoachAvailabilityExceptionView(request.user!.userId, id))
   })
+
+  app.get('/availability-templates', async (request) => success(await listCoachAvailabilityTemplates(request.user!.userId)))
+
+  app.get('/security', async (request) => success(await getCoachSecurityInfo(request.user!.userId)))
 
   app.get('/bookings', async (request) => success(await listCoachBookingsView(request.user!.userId)))
   app.get('/reports', async (request) => success(await getCoachReportsView(request.user!.userId)))

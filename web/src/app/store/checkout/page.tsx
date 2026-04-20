@@ -2,7 +2,6 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -20,9 +19,29 @@ import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { getStoreProductImage } from '@/lib/storeProductMedia'
 import { showToast } from '@/lib/toast'
 
 const SHIPPING_FEE = 45
+
+type StoreApiProduct = {
+  id: string
+  title?: string
+  name?: string
+  category?: unknown
+  price: number
+  facility?: unknown
+  facilityName?: unknown
+  image?: string
+  images?: string[]
+}
+
+type CreateOrderResponse = {
+  id?: string
+  data?: {
+    id?: string
+  }
+}
 
 function StoreCheckoutPageContent() {
   const router = useRouter()
@@ -33,8 +52,10 @@ function StoreCheckoutPageContent() {
   const initialQty = Number.isFinite(rawQty) && rawQty > 0 ? Math.floor(rawQty) : 1
   const queryFulfillment = searchParams.get('fulfillment')
 
-  const { data: productData, loading: productLoading, error: productError } = useApiCall(productId ? `/store/products/${productId}` : '')
-  const product = useMemo(() => {
+  const { data: productData, loading: productLoading, error: productError } = useApiCall<{ data?: StoreApiProduct } | StoreApiProduct>(
+    productId ? `/store/products/${productId}` : '',
+  )
+  const product = useMemo<StoreApiProduct | null>(() => {
     if (!productData) return null
     return productData?.data || productData
   }, [productData])
@@ -48,18 +69,12 @@ function StoreCheckoutPageContent() {
   const [isPromoApplied, setIsPromoApplied] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const createOrderMutation = useApiMutation('/store/orders', 'POST')
+  const createOrderMutation = useApiMutation<CreateOrderResponse, Record<string, unknown>>('/store/orders', 'POST')
 
   const subtotal = product ? product.price * quantity : 0
   const shipping = deliveryMethod === 'delivery' ? SHIPPING_FEE : 0
   const promoDiscount = isPromoApplied ? Math.round(subtotal * 0.1) : 0
   const total = subtotal + shipping - promoDiscount
-
-  const deliveryAddress = useMemo(() => {
-    if (typeof window === 'undefined') return ''
-    const el = document.querySelector<HTMLInputElement>('input[placeholder="Street address"]')
-    return el?.value || ''
-  }, [])
 
   if (productError) {
     return (
@@ -80,7 +95,7 @@ function StoreCheckoutPageContent() {
   const handlePlaceOrder = async () => {
     setSubmitting(true)
     try {
-      const orderBody: any = {
+      const orderBody: Record<string, unknown> = {
         items: [{ productId: product.id, quantity }],
         fulfillment: deliveryMethod,
       }
@@ -94,7 +109,7 @@ function StoreCheckoutPageContent() {
       const result = await createOrderMutation.mutate(orderBody)
       const orderId = result?.id || result?.data?.id || ''
       router.push(`/store/confirmation?orderId=${encodeURIComponent(orderId)}`)
-    } catch (err) {
+    } catch {
       showToast('Failed to place order. Please try again.', 'error')
     } finally {
       setSubmitting(false)
@@ -131,7 +146,7 @@ function StoreCheckoutPageContent() {
             <h2 className="text-lg md:text-xl font-bold text-primary mb-4">Item Details</h2>
             <div className="flex items-start gap-4">
               <div className="relative w-24 h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                <Image src={product.image} alt={product.title || product.name} fill className="object-cover" />
+                <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{stringValue(product.category)}</p>

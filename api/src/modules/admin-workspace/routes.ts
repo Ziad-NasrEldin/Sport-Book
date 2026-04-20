@@ -15,6 +15,7 @@ import {
   createCoach,
   listBookings,
   listFinance,
+  getFinanceSummary,
   listSports,
   createSport,
   updateSport,
@@ -210,6 +211,12 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
 
     const result = await listFinance({ page, limit })
     return success(result)
+  })
+
+  // GET /admin-workspace/finance/summary - Get finance summary analytics
+  app.get('/finance/summary', async () => {
+    const summary = await getFinanceSummary()
+    return success(summary)
   })
 
   // GET /admin-workspace/sports - List sports

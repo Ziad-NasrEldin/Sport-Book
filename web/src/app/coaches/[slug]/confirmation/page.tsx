@@ -17,6 +17,7 @@ type BookingResponse = {
   playerCount: number
   paymentMethod: string | null
   totalPrice: number
+  location: string | null
   coach: {
     user: {
       name: string
@@ -24,6 +25,16 @@ type BookingResponse = {
     }
     sport: {
       displayName: string
+    }
+  } | null
+  court: {
+    name: string
+    branch: {
+      name: string
+      facility: {
+        name: string
+        address: string | null
+      }
     }
   } | null
 }
@@ -84,7 +95,7 @@ function CoachConfirmationPageContent() {
             </p>
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              <span><span className="font-bold text-primary">Location:</span> SportBook Club - Main Arena</span>
+              <span><span className="font-bold text-primary">Location:</span> {booking.location || booking.court?.branch?.facility?.name || 'Location TBD'}</span>
             </p>
             <p className="text-sm text-primary/75 inline-flex items-center gap-2">
               <CreditCard className="w-4 h-4" />

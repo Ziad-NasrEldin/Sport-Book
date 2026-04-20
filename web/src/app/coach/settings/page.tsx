@@ -10,6 +10,13 @@ import type { CoachSettingsData } from '@/lib/coach/types'
 
 export default function CoachSettingsPage() {
   const { data: settingsData, error, refetch } = useApiCall<CoachSettingsData>('/coach/settings')
+  const { data: securityInfo } = useApiCall<{
+    twoFactorEnabled: boolean
+    apiTokenCount: number
+    activeDeviceSessions: number
+    lastLoginAt: string
+    lastLoginIp: string | null
+  }>('/coach/security')
   const saveMutation = useApiMutation('/coach/settings', 'PUT')
 
   const [notifications, setNotifications] = useState<Record<string, boolean>>({})
@@ -133,15 +140,15 @@ export default function CoachSettingsPage() {
           <div className="space-y-3">
             <article className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3">
               <p className="font-bold text-primary">Two-factor authentication</p>
-              <p className="text-xs text-primary/60 mt-1">Enabled on all sign-ins and payout actions.</p>
+              <p className="text-xs text-primary/60 mt-1">{securityInfo?.twoFactorEnabled ? 'Enabled on all sign-ins and payout actions.' : 'Not yet enabled. Consider enabling for enhanced security.'}</p>
             </article>
             <article className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3">
               <p className="font-bold text-primary">API token access</p>
-              <p className="text-xs text-primary/60 mt-1">Rotate tokens every 90 days for external integrations.</p>
+              <p className="text-xs text-primary/60 mt-1">{securityInfo?.apiTokenCount ?? 0} active API token{((securityInfo?.apiTokenCount ?? 0) !== 1) ? 's' : ''}. Rotate tokens every 90 days for external integrations.</p>
             </article>
             <article className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3">
               <p className="font-bold text-primary">Device sessions</p>
-              <p className="text-xs text-primary/60 mt-1">3 active devices currently trusted.</p>
+              <p className="text-xs text-primary/60 mt-1">{securityInfo?.activeDeviceSessions ?? 0} active device{((securityInfo?.activeDeviceSessions ?? 0) !== 1) ? 's' : ''} currently trusted.</p>
             </article>
           </div>
         </AdminPanel>

@@ -1,87 +1,61 @@
-'use client'
+"use client"
 
-import { Component, ReactNode, useEffect } from 'react'
-import { APIError } from '@/lib/api/client'
+import { type ReactNode } from "react"
+import { AlertTriangle, RefreshCw, Home } from "lucide-react"
+import { AdminButton } from "@/components/admin/AdminButton"
 
-interface Props {
-  children: ReactNode
-  fallback?: ReactNode
+type APIErrorFallbackProps = {
+  error?: Error | { message?: string }
+  title?: string
+  message?: string
+  onRetry?: () => void
 }
 
-interface State {
-  hasError: boolean
-  error: Error | null
+const friendlyMessages = [
+  "Something went wrong. Let's try again.",
+  "The system is taking a moment. Want to retry?",
+  "We hit a small bump. No worries, let's recover.",
+  "Things got a bit tangled. Want to try once more?",
+]
+
+function getRandomMessage(): string {
+  if (typeof window === "undefined") return friendlyMessages[0]
+  const index = Math.floor(Math.random() * friendlyMessages.length)
+  return friendlyMessages[index]
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = { hasError: false, error: null }
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: { componentStack: string }) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback
-      }
-
-      return (
-        <div className="flex items-center justify-center min-h-screen bg-surface px-5">
-          <div className="max-w-md w-full bg-surface-container-lowest rounded-lg p-6 shadow-ambient">
-            <h2 className="text-xl font-bold text-primary mb-2">Something went wrong</h2>
-            <p className="text-sm text-primary/70 mb-4">
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full py-3 rounded-full bg-primary-container text-surface-container-lowest font-semibold hover:opacity-90 transition-opacity"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-
-export function APIErrorFallback({ error, onRetry }: { error: APIError; onRetry?: () => void }) {
-  const getErrorMessage = (error: APIError): string => {
-    if (error.status === 401) return 'Please log in to continue'
-    if (error.status === 403) return 'You do not have permission to access this resource'
-    if (error.status === 404) return 'The requested resource was not found'
-    if (error.status >= 500) return 'Server error. Please try again later'
-    return error.message || 'An error occurred'
-  }
-
-  // Redirect to sign-in page on 401 errors
-  useEffect(() => {
-    if (error.status === 401 && typeof window !== 'undefined') {
-      window.location.href = '/auth/sign-in'
-    }
-  }, [error.status])
+export function APIErrorFallback({
+  error,
+  title = "Something went wrong",
+  message,
+  onRetry,
+}: APIErrorFallbackProps) {
+  const displayMessage = message || error?.message || getRandomMessage()
 
   return (
-    <div className="bg-surface-container-low rounded-lg p-4 text-center">
-      <p className="text-sm font-semibold text-primary mb-2">{getErrorMessage(error)}</p>
-      {onRetry && (
-        <button
-          onClick={onRetry}
-          className="text-sm font-bold text-secondary-container hover:text-secondary transition-colors"
+    <div
+      className="flex flex-col items-center justify-center py-16 px-6 text-center animate-fade-in"
+      role="alert"
+    >
+      <div className="w-16 h-16 rounded-full mb-6 bg-red-500/10 flex items-center justify-center">
+        <AlertTriangle className="w-8 h-8 text-red-500/60" />
+      </div>
+      <h3 className="text-lg font-extrabold text-primary mb-2">{title}</h3>
+      <p className="text-sm text-primary/60 max-w-sm mb-6">{displayMessage}</p>
+      <div className="flex items-center gap-3 animate-slide-up">
+        {onRetry && (
+          <AdminButton variant="secondary" icon={<RefreshCw className="w-4 h-4" />} onClick={onRetry}>
+            Try Again
+          </AdminButton>
+        )}
+        <AdminButton
+          variant="ghost"
+          icon={<Home className="w-4 h-4" />}
+          onClick={() => (window.location.href = "/")}
         >
-          Try Again
-        </button>
-      )}
+          Go Home
+        </AdminButton>
+      </div>
     </div>
   )
 }

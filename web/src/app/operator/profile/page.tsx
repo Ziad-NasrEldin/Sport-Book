@@ -22,6 +22,14 @@ export default function OperatorProfilePage() {
   const saveMutation = useApiMutation('/operator/profile', 'PUT')
 
   const profileData = profileResponse?.data || profileResponse || {}
+  const profileSecurity = (profileData as Record<string, unknown>).lastLoginAt
+    ? {
+        lastLoginAt: (profileData as Record<string, unknown>).lastLoginAt as string,
+        lastLoginIp: (profileData as Record<string, unknown>).lastLoginIp as string | null,
+        twoFactorEnabled: (profileData as Record<string, unknown>).twoFactorEnabled as boolean,
+        activeDeviceSessions: (profileData as Record<string, unknown>).activeDeviceSessions as number,
+      }
+    : null
 
   useEffect(() => {
     if (profileData.fullName) setFullName(profileData.fullName)
@@ -200,7 +208,7 @@ export default function OperatorProfilePage() {
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Security level
               </p>
-              <p className="mt-2 text-sm font-semibold text-primary">Two-factor authentication is enabled.</p>
+              <p className="mt-2 text-sm font-semibold text-primary">{profileSecurity?.twoFactorEnabled ? 'Two-factor authentication is enabled.' : 'Two-factor authentication is not enabled yet.'}</p>
             </article>
 
             <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5 mt-3">
@@ -208,7 +216,11 @@ export default function OperatorProfilePage() {
                 <UserCircle2 className="w-3.5 h-3.5" />
                 Last login
               </p>
-              <p className="mt-2 text-sm font-semibold text-primary">2026-04-16 08:42 from Cairo, EG</p>
+              <p className="mt-2 text-sm font-semibold text-primary">
+                {profileSecurity?.lastLoginAt
+                  ? `${new Date(profileSecurity.lastLoginAt).toLocaleString()}${profileSecurity.lastLoginIp ? ` from ${profileSecurity.lastLoginIp}` : ''}`
+                  : 'Not available'}
+              </p>
             </article>
           </AdminPanel>
         </div>

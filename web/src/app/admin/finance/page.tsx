@@ -7,11 +7,10 @@ import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
+import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
-
-const financeBars = [22, 24, 27, 30, 29, 31, 33, 37, 36, 40, 39, 43]
 
 function formatEgp(value: number) {
   return new Intl.NumberFormat('en-EG', {
@@ -21,16 +20,30 @@ function formatEgp(value: number) {
   }).format(value)
 }
 
+type RiskIndicator = {
+  title: string
+  description: string
+  severity: 'low' | 'medium' | 'high'
+}
+
 export default function AdminFinancePage() {
   const { data: transactionsResponse, loading, error } = useApiCall('/admin-workspace/finance')
+  const { data: summaryData, loading: summaryLoading } = useApiCall('/admin-workspace/finance/summary')
   const transactionsData = transactionsResponse?.data || transactionsResponse || []
 
-  const totalSettled = transactionsData
-    .filter((item: any) => item.status === 'SETTLED')
-    .reduce((sum: number, item: any) => sum + (item.amount || 0), 0)
+  const settledTotal = summaryData?.settledTotal ?? 0
+  const payoutDue = summaryData?.payoutDue ?? 0
+  const revenueTrend: number[] = summaryData?.revenueTrend ?? []
+  const riskIndicators: RiskIndicator[] = summaryData?.riskIndicators ?? []
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
+  }
+
+  const severityTone = (severity: string) => {
+    if (severity === 'high') return statusTone('Rejected')
+    if (severity === 'medium') return statusTone('Pending')
+    return statusTone('Healthy')
   }
 
   return (
@@ -51,33 +64,36 @@ export default function AdminFinancePage() {
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.1fr_1fr] gap-4">
         <AdminPanel eyebrow="Monthly net trend" title="Revenue Momentum">
-          <AdminTrendBars values={financeBars} colorClassName="bg-primary-container" />
+          {summaryLoading ? (
+            <SkeletonStat />
+          ) : (
+            <AdminTrendBars values={revenueTrend} colorClassName="bg-primary-container" />
+          )}
           <div className="mt-4 grid grid-cols-2 gap-3">
             <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <p className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Settled amount</p>
-              <p className="mt-1 text-xl font-extrabold text-primary">{formatEgp(totalSettled)}</p>
+              <p className="mt-1 text-xl font-extrabold text-primary">{formatEgp(settledTotal)}</p>
             </article>
             <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <p className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Payout due tomorrow</p>
-              <p className="mt-1 text-xl font-extrabold text-primary">{formatEgp(118000)}</p>
+              <p className="mt-1 text-xl font-extrabold text-primary">{formatEgp(payoutDue)}</p>
             </article>
           </div>
         </AdminPanel>
 
         <AdminPanel eyebrow="Risk snapshot" title="Payment Reliability">
           <div className="space-y-3">
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
-              <p className="text-sm font-bold text-primary">Failed Transactions</p>
-              <p className="text-xs text-primary/60 mt-1">2 detected today, both flagged for manual retry checks.</p>
-            </article>
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
-              <p className="text-sm font-bold text-primary">Chargeback Index</p>
-              <p className="text-xs text-primary/60 mt-1">0.22%, under the warning threshold of 0.35%.</p>
-            </article>
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
-              <p className="text-sm font-bold text-primary">Settlement Delay</p>
-              <p className="text-xs text-primary/60 mt-1">Median settlement time remains at 2.1 days.</p>
-            </article>
+            {riskIndicators.map((risk) => (
+              <article key={risk.title} className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
+                <p className="text-sm font-bold text-primary">{risk.title}</p>
+                <p className="text-xs text-primary/60 mt-1">{risk.description}</p>
+              </article>
+            ))}
+            {riskIndicators.length === 0 && (
+              <article className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
+                <p className="text-sm font-semibold text-primary">No risk indicators available yet.</p>
+              </article>
+            )}
           </div>
         </AdminPanel>
       </section>

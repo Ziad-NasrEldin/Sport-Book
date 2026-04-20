@@ -14,14 +14,18 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { hasCompletedOnboarding } from '@/lib/onboarding'
 
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : []
+}
+
 export default function Home() {
   const router = useRouter()
   const { data: categoriesResponse, loading: categoriesLoading, error: categoriesError } = useApiCall('/player/categories')
   const { data: courtsResponse, loading: courtsLoading, error: courtsError } = useApiCall('/player/courts/nearby')
   const { data: notificationsResponse } = useApiCall('/player/notifications/unread-count')
 
-  const categoriesData = categoriesResponse?.data || categoriesResponse || []
-  const courtsData = courtsResponse?.data || courtsResponse || []
+  const categoriesData = asArray(categoriesResponse)
+  const courtsData = asArray(courtsResponse?.items)
   const unreadCount = notificationsResponse?.count || 0
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -149,4 +153,3 @@ export default function Home() {
     </main>
   )
 }
-

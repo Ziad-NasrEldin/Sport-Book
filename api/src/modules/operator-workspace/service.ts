@@ -164,6 +164,45 @@ export async function getOperatorDashboard(userId: string) {
     return confirmedBookings.filter((booking) => booking.date.slice(0, 10) === key).length
   })
 
+  const cancelledBookings = bookings.filter((b) => b.status === 'CANCELLED')
+  const totalFinalizedBookings = confirmedBookings.length + cancelledBookings.length
+  const cancellationRatio = totalFinalizedBookings > 0
+    ? ((cancelledBookings.length / totalFinalizedBookings) * 100).toFixed(1)
+    : '0.0'
+
+  const attentionItems: Array<{ message: string; severity: 'low' | 'medium' | 'high' }> = []
+
+  const inactiveCourts = courts.filter((c) => c.status === 'MAINTENANCE' || c.status === 'INACTIVE')
+  if (inactiveCourts.length > 0) {
+    attentionItems.push({
+      message: `${inactiveCourts[0].name}${inactiveCourts.length > 1 ? ` and ${inactiveCourts.length - 1} other${inactiveCourts.length > 2 ? 's' : ''}` : ''} ${inactiveCourts.length === 1 ? 'is' : 'are'} blocked for maintenance and need reassignment plan.`,
+      severity: inactiveCourts.length > 2 ? 'high' : 'medium',
+    })
+  }
+
+  const pendingApprovals = approvals.filter((a) => a.status === 'PENDING')
+  if (pendingApprovals.length > 0) {
+    attentionItems.push({
+      message: `${pendingApprovals.length} branch setup${pendingApprovals.length > 1 ? 's are' : ' is'} still pending compliance checklist completion.`,
+      severity: 'medium',
+    })
+  }
+
+  const refundCount = bookings.filter((b) => b.status === 'CANCELLED' && b.amount > 0).length
+  if (refundCount > 0) {
+    attentionItems.push({
+      message: `${refundCount} high-priority discount override${refundCount > 1 ? 's are' : ' is'} awaiting manager approval.`,
+      severity: 'low',
+    })
+  }
+
+  if (attentionItems.length === 0) {
+    attentionItems.push({
+      message: 'No critical issues identified. All systems operating normally.',
+      severity: 'low',
+    })
+  }
+
   return {
     facility: {
       id: facility.id,
@@ -176,6 +215,8 @@ export async function getOperatorDashboard(userId: string) {
     courts,
     bookings,
     utilizationVelocity,
+    cancellationRatio: `${cancellationRatio}%`,
+    attentionItems,
   }
 }
 
@@ -869,4 +910,118 @@ export async function approveBooking(userId: string, bookingId: string, data: Ap
   })
 
   return updated
+}
+
+export async function getOperatorProfile(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      createdAt: true,
+      refreshTokens: {
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { createdAt: true },
+      },
+    },
+  })
+
+  if (!user) {
+    throw new NotFoundError('User')
+  }
+
+  const facility = await prisma.facility.findUnique({
+    where: { operatorId: userId },
+    select: { name: true, city: true, status: true, id: true },
+  })
+
+  const facilitySettings = facility
+    ? await prisma.cmsContent.findUnique({
+        where: { page_language: { page: `operator-settings.${facility.id}`, language: 'system' } },
+      })
+    : null
+
+  const parsedSettings = facilitySettings?.content
+    ? (() => { try { return JSON.parse(facilitySettings.content) } catch { return {} } })()
+    : {}
+
+  return {
+    fullName: user.name ?? '',
+    title: parsedSettings.title ?? 'Facility Operator',
+    email: user.email,
+    phone: user.phone ?? '',
+    notifyApprovals: parsedSettings.notifyApprovals ?? true,
+    notifyIncidents: parsedSettings.notifyIncidents ?? true,
+    notifyReports: parsedSettings.notifyReports ?? false,
+    facility: facility
+      ? { name: facility.name, city: facility.city, status: facility.status }
+      : null,
+    lastLoginAt: user.refreshTokens.length > 0 ? user.refreshTokens[0].createdAt.toISOString() : user.createdAt.toISOString(),
+    lastLoginIp: null,
+    twoFactorEnabled: false,
+    activeDeviceSessions: user.refreshTokens.length,
+  }
+}
+
+type OperatorProfileUpdateInput = {
+  fullName?: string
+  title?: string
+  email?: string
+  phone?: string
+  notifyApprovals?: boolean
+  notifyIncidents?: boolean
+  notifyReports?: boolean
+}
+
+export async function updateOperatorProfile(userId: string, input: OperatorProfileUpdateInput) {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new NotFoundError('User')
+  }
+
+  if (input.fullName !== undefined || input.email !== undefined || input.phone !== undefined) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(input.fullName !== undefined ? { name: input.fullName } : {}),
+        ...(input.email !== undefined ? { email: input.email } : {}),
+        ...(input.phone !== undefined ? { phone: input.phone } : {}),
+      },
+    })
+  }
+
+  const facility = await prisma.facility.findUnique({ where: { operatorId: userId } })
+  if (facility) {
+    const settingsKey = `operator-settings.${facility.id}`
+    const existingSettings = await prisma.cmsContent.findUnique({
+      where: { page_language: { page: settingsKey, language: 'system' } },
+    })
+
+    const currentSettings = existingSettings?.content ? (() => { try { return JSON.parse(existingSettings.content) } catch { return {} } })() : {}
+    const updatedSettings = {
+      ...currentSettings,
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.notifyApprovals !== undefined ? { notifyApprovals: input.notifyApprovals } : {}),
+      ...(input.notifyIncidents !== undefined ? { notifyIncidents: input.notifyIncidents } : {}),
+      ...(input.notifyReports !== undefined ? { notifyReports: input.notifyReports } : {}),
+    }
+
+    await prisma.cmsContent.upsert({
+      where: { page_language: { page: settingsKey, language: 'system' } },
+      update: { content: JSON.stringify(updatedSettings), status: 'PUBLISHED' },
+      create: {
+        page: settingsKey,
+        language: 'system',
+        title: `Operator Settings for ${facility.name}`,
+        content: JSON.stringify(updatedSettings),
+        status: 'PUBLISHED',
+        version: '1.0',
+      },
+    })
+  }
+
+  return getOperatorProfile(userId)
 }

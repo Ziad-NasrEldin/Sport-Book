@@ -377,3 +377,34 @@ export async function walletTopup(userId: string, data: WalletTopupInput) {
     amount: paymentIntent.amount.toNumber(),
   }
 }
+
+export async function getUserSecurityInfo(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      emailVerified: true,
+      createdAt: true,
+      refreshTokens: {
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { createdAt: true },
+      },
+    },
+  })
+
+  if (!user) {
+    throw new NotFoundError('User')
+  }
+
+  const lastLogin = user.refreshTokens.length > 0 ? user.refreshTokens[0].createdAt : user.createdAt
+
+  return {
+    twoFactorEnabled: false,
+    apiTokenCount: 0,
+    activeDeviceSessions: user.refreshTokens.length,
+    lastLoginAt: lastLogin.toISOString(),
+    lastLoginIp: null,
+    emailVerified: user.emailVerified,
+  }
+}
