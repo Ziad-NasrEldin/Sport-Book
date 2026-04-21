@@ -1,7 +1,7 @@
-'use client';
+'use client'
 
 import { useEffect, useState } from 'react'
-import { Home, Users, Store, Medal, User } from 'lucide-react'
+import { Home, Users, Store, Medal, User, LogIn } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -10,9 +10,11 @@ import {
   getActiveUserId,
   getTeamPosts,
 } from '@/lib/teams'
+import { useAuth } from '@/lib/auth/useAuth'
 
 export function FloatingNav() {
   const pathname = usePathname()
+  const { isAuthenticated, loading: authLoading, requireAuth } = useAuth()
   const [pendingTeamRequestsCount, setPendingTeamRequestsCount] = useState(0)
 
   useEffect(() => {
@@ -45,6 +47,33 @@ export function FloatingNav() {
 
     return pathname === path || pathname.startsWith(`${path}/`)
   }
+
+  const authNavItem = isAuthenticated ? (
+    <Link 
+      href="/profile"
+      className={`flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-full transition-transform md:w-20 md:h-20 ${
+        isActive('/profile') 
+          ? 'bg-tertiary-fixed text-primary' 
+          : 'text-primary/60 hover:text-primary transition-colors'
+      }`}
+    >
+      <User className={`w-5 h-5 ${isActive('/profile') ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+      <span className="text-[10px] font-bold uppercase tracking-wider md:text-xs">Profile</span>
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={requireAuth}
+      className={`flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-full transition-transform md:w-20 md:h-20 ${
+        pathname === '/auth/sign-in' || pathname === '/auth/sign-up'
+          ? 'bg-tertiary-fixed text-primary'
+          : 'text-primary/60 hover:text-primary transition-colors'
+      }`}
+    >
+      <LogIn className={`w-5 h-5 ${(pathname === '/auth/sign-in' || pathname === '/auth/sign-up') ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+      <span className="text-[10px] font-bold uppercase tracking-wider md:text-xs">Sign In</span>
+    </button>
+  )
 
   return (
     <nav
@@ -104,17 +133,7 @@ export function FloatingNav() {
         <span className="text-[10px] font-bold uppercase tracking-wider md:text-xs">Coaches</span>
       </Link>
 
-      <Link 
-        href="/profile"
-        className={`flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-full transition-transform md:w-20 md:h-20 ${
-          isActive('/profile') 
-            ? 'bg-tertiary-fixed text-primary' 
-            : 'text-primary/60 hover:text-primary transition-colors'
-        }`}
-      >
-        <User className={`w-5 h-5 ${isActive('/profile') ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
-        <span className="text-[10px] font-bold uppercase tracking-wider md:text-xs">Profile</span>
-      </Link>
+      {authNavItem}
     </nav>
   )
 }

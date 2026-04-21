@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { ProfileBookingsSection } from '@/components/profile/ProfileBookingsSection'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
-export default function ProfileBookingsPage() {
+function ProfileBookingsPageContent() {
   const router = useRouter()
 
   const handleBack = () => {
@@ -48,5 +49,13 @@ export default function ProfileBookingsPage() {
 
       <FloatingNav />
     </main>
+  )
+}
+
+export default function ProfileBookingsPage() {
+  return (
+    <AuthGuard>
+      <ProfileBookingsPageContent />
+    </AuthGuard>
   )
 }

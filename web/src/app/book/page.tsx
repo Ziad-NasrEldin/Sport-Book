@@ -8,6 +8,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import type { CourtDetail, SlotsResponse } from '@/lib/court/types'
 import { formatHour } from '@/lib/court/types'
+import { useAuth } from '@/lib/auth/useAuth'
 import { ReviewModal } from '@/components/modals/ReviewModal'
 import { NotificationsModal } from '@/components/modals/NotificationsModal'
 import {
@@ -27,6 +28,7 @@ function BookingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const courtId = searchParams.get('courtId') ?? ''
+  const { isAuthenticated, requireAuth } = useAuth()
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const [selectedDate, setSelectedDate] = useState(today)
@@ -338,7 +340,13 @@ function BookingPageContent() {
             </p>
           </div>
           <button
-            onClick={() => selectedSlot !== null && setIsReviewOpen(true)}
+            onClick={() => {
+              if (!isAuthenticated) {
+                requireAuth()
+                return
+              }
+              if (selectedSlot !== null) setIsReviewOpen(true)
+            }}
             disabled={selectedSlot === null}
             className="flex-1 max-w-sm ml-auto bg-gradient-to-br from-secondary to-secondary-container text-white py-4 md:py-5 px-10 rounded-[2rem] font-extrabold text-lg md:text-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_15px_40px_-5px_rgba(253,139,0,0.35)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >

@@ -223,7 +223,7 @@ export default function StorePage() {
             {filteredProducts.map((product) => (
               <article key={product.id} className="bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient">
                 <div className="relative w-full aspect-[4/3]">
-                  <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
+                  <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Product image'} fill className="object-cover" />
 
                   <span
                     className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
@@ -315,7 +315,7 @@ export default function StorePage() {
                 <article key={item.productId} className="bg-surface-container-high rounded-[var(--radius-md)] p-3">
                   <div className="flex items-start gap-3">
                     <div className="relative w-16 h-16 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                      <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
+                      <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Product image'} fill className="object-cover" />
                     </div>
 
                     <div className="flex-1 min-w-0">

@@ -10,8 +10,17 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { showToast } from '@/lib/toast'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
 export default function FavoritesPage() {
+  return (
+    <AuthGuard>
+      <FavoritesPageContent />
+    </AuthGuard>
+  )
+}
+
+function FavoritesPageContent() {
   const router = useRouter()
   const { data: favoritesData, loading, error, refetch } = useApiCall('/users/me/favorites')
   const removeMutation = useApiMutation('/users/me/favorites/:id', 'DELETE')

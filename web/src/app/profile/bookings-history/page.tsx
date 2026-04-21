@@ -6,6 +6,7 @@ import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
 const statusMap: Record<string, { label: string; className: string }> = {
   COMPLETED: { label: 'Completed', className: 'bg-tertiary-fixed text-primary' },
@@ -14,6 +15,14 @@ const statusMap: Record<string, { label: string; className: string }> = {
 }
 
 export default function ProfileBookingHistoryPage() {
+  return (
+    <AuthGuard>
+      <ProfileBookingHistoryPageContent />
+    </AuthGuard>
+  )
+}
+
+function ProfileBookingHistoryPageContent() {
   const router = useRouter()
   const { data: bookingsData, loading, error, refetch } = useApiCall<any>('/users/me/bookings?status=COMPLETED,CANCELLED,NO_SHOW')
 

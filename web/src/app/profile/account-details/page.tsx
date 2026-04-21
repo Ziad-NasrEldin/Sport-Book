@@ -8,10 +8,11 @@ import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
 const favoriteSports = ['Tennis', 'Padel']
 
-export default function AccountDetailsPage() {
+function AccountDetailsPageContent() {
   const router = useRouter()
   const { data: userData, loading, error, refetch } = useApiCall<any>('/users/me')
   const user = userData?.data || userData
@@ -285,5 +286,13 @@ export default function AccountDetailsPage() {
 
       <FloatingNav />
     </main>
+  )
+}
+
+export default function AccountDetailsPage() {
+  return (
+    <AuthGuard>
+      <AccountDetailsPageContent />
+    </AuthGuard>
   )
 }

@@ -7,6 +7,7 @@ import { ArrowLeft, UserRound, Mail, LockKeyhole, Eye, EyeOff } from 'lucide-rea
 import { api, setAccessToken } from '@/lib/api/client'
 import { APIError } from '@/lib/api/client'
 import { getPostLoginRoute } from '@/lib/auth/session'
+import { consumeRedirectUrl } from '@/lib/auth/useAuth'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { showToast } from '@/lib/toast'
 
@@ -33,7 +34,12 @@ try {
       const user = responseData?.user
 
 setAccessToken(accessToken)
-      router.push(getPostLoginRoute(user?.role || 'player'))
+      const redirectUrl = consumeRedirectUrl()
+      if (redirectUrl) {
+        router.push(redirectUrl)
+      } else {
+        router.push(getPostLoginRoute(user?.role || 'player'))
+      }
     } catch (err) {
       const apiError = err as APIError
       setError(apiError.message || 'Failed to create account. Please try again.')

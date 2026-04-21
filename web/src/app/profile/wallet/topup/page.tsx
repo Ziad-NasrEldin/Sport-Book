@@ -16,12 +16,21 @@ import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
 const quickAmounts = [100, 200, 300, 500, 800, 1000]
 
 type PaymentMethod = 'card' | 'apple-pay' | 'wallet'
 
 export default function WalletTopUpPage() {
+  return (
+    <AuthGuard>
+      <WalletTopUpPageContent />
+    </AuthGuard>
+  )
+}
+
+function WalletTopUpPageContent() {
   const router = useRouter()
   const { data: walletData, loading: walletLoading, error: walletError, refetch: refetchWallet } = useApiCall<any>('/users/me/wallet')
   const [selectedAmount, setSelectedAmount] = useState<number>(200)

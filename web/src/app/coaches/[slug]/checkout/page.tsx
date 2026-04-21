@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Percent,
 } from 'lucide-react'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { api, APIError } from '@/lib/api/client'
@@ -259,17 +260,19 @@ function CoachCheckoutPageContent() {
 
 export default function CoachCheckoutPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="w-full min-h-screen bg-surface px-5 md:px-10 lg:px-14 py-12">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-lg font-bold text-primary">Loading checkout...</p>
-          </div>
-        </main>
-      }
-    >
-      <CoachCheckoutPageContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense
+        fallback={
+          <main className="w-full min-h-screen bg-surface px-5 md:px-10 lg:px-14 py-12">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="text-lg font-bold text-primary">Loading checkout...</p>
+            </div>
+          </main>
+        }
+      >
+        <CoachCheckoutPageContent />
+      </Suspense>
+    </AuthGuard>
   )
 }
 

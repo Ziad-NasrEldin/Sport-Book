@@ -8,8 +8,17 @@ import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
 export default function ProfileStorePurchasesPage() {
+  return (
+    <AuthGuard>
+      <ProfileStorePurchasesPageContent />
+    </AuthGuard>
+  )
+}
+
+function ProfileStorePurchasesPageContent() {
   const router = useRouter()
   const { data: ordersData, loading, error, refetch } = useApiCall<any>('/users/me/orders')
 

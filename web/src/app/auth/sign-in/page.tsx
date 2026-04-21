@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, LockKeyhole, Mail, Eye, EyeOff } from 'lucide-react'
 import { api, setAccessToken, APIError, NetworkError } from '@/lib/api/client'
 import { getPostLoginRoute } from '@/lib/auth/session'
+import { consumeRedirectUrl } from '@/lib/auth/useAuth'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { showToast } from '@/lib/toast'
 
@@ -43,7 +44,12 @@ export default function SignInPage() {
       const user = data.user || data
 
       setAccessToken(accessToken)
-      router.push(getPostLoginRoute(user.role))
+      const redirectUrl = consumeRedirectUrl()
+      if (redirectUrl) {
+        router.push(redirectUrl)
+      } else {
+        router.push(getPostLoginRoute(user.role))
+      }
     } catch (err) {
       setError(getSignInErrorMessage(err))
     } finally {

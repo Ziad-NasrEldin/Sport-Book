@@ -21,12 +21,13 @@ import { useApiCall } from '@/lib/api/hooks';
 import { api, clearTokens } from '@/lib/api/client';
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary';
 import { SkeletonStat } from '@/components/ui/SkeletonLoader';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import {
   FAVORITES_UPDATED_EVENT,
   getFavorites,
 } from '@/lib/favorites';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const router = useRouter()
   const { data: profileResponse, loading, error, refetch } = useApiCall('/player/profile')
   const profileData = profileResponse?.data || profileResponse || {}
@@ -314,4 +315,12 @@ export default function ProfilePage() {
       <FloatingNav />
     </main>
   );
+}
+
+export default function ProfilePage() {
+  return (
+    <AuthGuard>
+      <ProfilePageContent />
+    </AuthGuard>
+  )
 }

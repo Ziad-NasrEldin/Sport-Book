@@ -23,11 +23,13 @@ import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { getStoreProductImage } from '@/lib/storeProductMedia'
 import { addStoreCartItem, getStoreCartItems } from '@/lib/storeCart'
+import { useAuth } from '@/lib/auth/useAuth'
 
 export default function ProductDetailsPage() {
   const router = useRouter()
   const params = useParams<{ productId: string }>()
   const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId
+  const { isAuthenticated, requireAuth } = useAuth()
 
   const { data: productData, loading, error } = useApiCall(`/store/products/${productId}`)
   const product = productData?.data || productData
@@ -57,6 +59,10 @@ export default function ProductDetailsPage() {
   const subtotal = product.price * quantity
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      requireAuth()
+      return
+    }
     addStoreCartItem({
       productId: product.id,
       quantity,

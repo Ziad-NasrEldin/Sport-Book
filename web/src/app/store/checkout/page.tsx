@@ -18,6 +18,7 @@ import {
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { getStoreProductImage } from '@/lib/storeProductMedia'
 import { showToast } from '@/lib/toast'
@@ -36,6 +37,8 @@ type StoreApiProduct = {
   images?: string[]
 }
 
+type StoreProductResponse = StoreApiProduct | { data?: StoreApiProduct }
+
 type CreateOrderResponse = {
   id?: string
   data?: {
@@ -52,12 +55,13 @@ function StoreCheckoutPageContent() {
   const initialQty = Number.isFinite(rawQty) && rawQty > 0 ? Math.floor(rawQty) : 1
   const queryFulfillment = searchParams.get('fulfillment')
 
-  const { data: productData, loading: productLoading, error: productError } = useApiCall<{ data?: StoreApiProduct } | StoreApiProduct>(
+  const { data: productData, loading: productLoading, error: productError } = useApiCall<StoreProductResponse>(
     productId ? `/store/products/${productId}` : '',
   )
   const product = useMemo<StoreApiProduct | null>(() => {
     if (!productData) return null
-    return productData?.data || productData
+    if ('data' in productData && productData.data) return productData.data
+    return productData as StoreApiProduct
   }, [productData])
 
   const [quantity, setQuantity] = useState(initialQty)
@@ -146,7 +150,7 @@ function StoreCheckoutPageContent() {
             <h2 className="text-lg md:text-xl font-bold text-primary mb-4">Item Details</h2>
             <div className="flex items-start gap-4">
               <div className="relative w-24 h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
+                <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Product image'} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{stringValue(product.category)}</p>
@@ -363,16 +367,18 @@ function StoreCheckoutPageContent() {
 
 export default function StoreCheckoutPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="w-full min-h-screen bg-surface px-5 md:px-10 lg:px-14 py-12">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-lg font-bold text-primary">Loading checkout...</p>
-          </div>
-        </main>
-      }
-    >
-      <StoreCheckoutPageContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense
+        fallback={
+          <main className="w-full min-h-screen bg-surface px-5 md:px-10 lg:px-14 py-12">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="text-lg font-bold text-primary">Loading checkout...</p>
+            </div>
+          </main>
+        }
+      >
+        <StoreCheckoutPageContent />
+      </Suspense>
+    </AuthGuard>
   )
 }
