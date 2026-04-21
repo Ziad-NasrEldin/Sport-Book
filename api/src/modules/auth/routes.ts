@@ -26,7 +26,7 @@ import { authDecorators } from '@plugins/jwt'
 const REFRESH_COOKIE_OPTS = (secure: boolean) => ({
   httpOnly: true,
   secure,
-  sameSite: secure ? 'strict' : ('lax' as const),
+  sameSite: secure ? ('strict' as const) : ('lax' as const),
   path: '/',
   maxAge: 7 * 24 * 60 * 60,
 })
