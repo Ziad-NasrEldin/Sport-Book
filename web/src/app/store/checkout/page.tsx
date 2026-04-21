@@ -46,6 +46,14 @@ type CreateOrderResponse = {
   }
 }
 
+function hasProductData(productData: { data?: StoreApiProduct } | StoreApiProduct): productData is { data: StoreApiProduct } {
+  return 'data' in productData && Boolean(productData.data)
+}
+
+function unwrapProductResponse(productData: { data?: StoreApiProduct } | StoreApiProduct): StoreApiProduct {
+  return hasProductData(productData) ? productData.data : (productData as StoreApiProduct)
+}
+
 function StoreCheckoutPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -60,8 +68,7 @@ function StoreCheckoutPageContent() {
   )
   const product = useMemo<StoreApiProduct | null>(() => {
     if (!productData) return null
-    if ('data' in productData && productData.data) return productData.data
-    return productData as StoreApiProduct
+    return unwrapProductResponse(productData)
   }, [productData])
 
   const [quantity, setQuantity] = useState(initialQty)
@@ -150,11 +157,11 @@ function StoreCheckoutPageContent() {
             <h2 className="text-lg md:text-xl font-bold text-primary mb-4">Item Details</h2>
             <div className="flex items-start gap-4">
               <div className="relative w-24 h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Product image'} fill className="object-cover" />
+                <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Store product'} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{stringValue(product.category)}</p>
-                <h3 className="text-base md:text-lg font-bold text-primary mt-1 leading-tight">{product.title || product.name}</h3>
+                <h3 className="text-base md:text-lg font-bold text-primary mt-1 leading-tight">{product.title || product.name || 'Store product'}</h3>
                 <p className="text-sm text-primary/65 mt-1">Sold by {stringValue(product.facility || product.facilityName)}</p>
 
                 <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3 py-2">

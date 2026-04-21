@@ -223,7 +223,7 @@ export default function StorePage() {
             {filteredProducts.map((product) => (
               <article key={product.id} className="bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient">
                 <div className="relative w-full aspect-[4/3]">
-                  <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Product image'} fill className="object-cover" />
+                  <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Store product'} fill className="object-cover" />
 
                   <span
                     className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
@@ -239,7 +239,7 @@ export default function StorePage() {
 
                 <div className="p-5">
                   <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{categoryLabel(product.category)}</p>
-                  <h3 className="text-lg md:text-xl font-bold text-primary mt-2 leading-tight">{product.title || product.name}</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-primary mt-2 leading-tight">{product.title || product.name || 'Store product'}</h3>
 
                   <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                     <div>
@@ -315,11 +315,11 @@ export default function StorePage() {
                 <article key={item.productId} className="bg-surface-container-high rounded-[var(--radius-md)] p-3">
                   <div className="flex items-start gap-3">
                     <div className="relative w-16 h-16 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                      <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Product image'} fill className="object-cover" />
+                      <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Store product'} fill className="object-cover" />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-bold text-primary truncate">{product.title || product.name}</h3>
+                      <h3 className="text-sm font-bold text-primary truncate">{product.title || product.name || 'Store product'}</h3>
                       <p className="text-xs text-primary/60 mt-0.5 truncate">{stringValue(product.facility || product.facilityName)}</p>
                       <p className="text-sm font-black text-primary mt-1">{product.price * item.quantity} EGP</p>
                     </div>

@@ -5,6 +5,14 @@
   "engines": {
     "node": ">=20.11.0"
   },
+  "_moduleAliases": {
+    "@": "dist",
+    "@config": "dist/config",
+    "@lib": "dist/lib",
+    "@plugins": "dist/plugins",
+    "@modules": "dist/modules",
+    "@common": "dist/common"
+  },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
@@ -29,6 +37,7 @@
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.26.2",
+    "module-alias": "^2.3.4",
     "pino": "^8.19.0",
     "prisma": "^5.10.0",
     "zod": "^3.22.4"
