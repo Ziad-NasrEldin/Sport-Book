@@ -9,6 +9,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { AuthGuard } from '@/components/auth/AuthGuard'
+import { useInView } from '@/lib/useInView'
 
 export default function ProfileStorePurchasesPage() {
   return (
@@ -21,6 +22,7 @@ export default function ProfileStorePurchasesPage() {
 function ProfileStorePurchasesPageContent() {
   const router = useRouter()
   const { data: ordersData, loading, error, refetch } = useApiCall<any>('/users/me/orders')
+  const cardsReveal = useInView({ once: true })
 
   const orders = Array.isArray(ordersData) ? ordersData : (Array.isArray(ordersData?.data) ? ordersData.data : [])
 
@@ -45,7 +47,7 @@ function ProfileStorePurchasesPageContent() {
     <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px] animate-float-blob" />
-        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px] animate-float-blob animation-delay-200" />
+        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px] animate-float-blob animation-delay-350" />
       </div>
 
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
@@ -54,30 +56,33 @@ function ProfileStorePurchasesPageContent() {
             type="button"
             onClick={handleBack}
             aria-label="Go back"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-all duration-200 active:scale-95"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low hover:scale-105 active:scale-95 transition-all duration-200"
           >
             <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
           </button>
 
           <div className="animate-soft-drop">
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Store Purchases</h1>
-            <p className="text-sm md:text-base text-primary/60">Your orders and purchase history from facilities</p>
+            <p className="text-sm md:text-base text-primary/60 animate-fade-in animation-delay-150">Your orders and purchase history from facilities</p>
           </div>
         </div>
       </header>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-4 md:space-y-5">
+      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-4 md:space-y-5" ref={cardsReveal.ref}>
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient animate-pulse h-48" />
           ))
         ) : !Array.isArray(orders) || orders.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 animate-fade-in">
+            <div className="inline-block mb-3 animate-empty-bob">
+              <PackageCheck className="w-10 h-10 text-primary/20 mx-auto" />
+            </div>
             <p className="text-primary/60 text-lg font-semibold">No store purchases yet</p>
             <p className="text-primary/40 text-sm mt-2">Your orders will appear here</p>
           </div>
         ) : (
-          orders.map((order: any) => {
+          orders.map((order: any, i: number) => {
             const statusStyle = order.status === 'DELIVERED' || order.status === 'Delivered'
               ? 'bg-[#d8f7e8] text-[#0d7a44]'
               : order.status === 'PROCESSING' || order.status === 'Processing'
@@ -98,7 +103,11 @@ function ProfileStorePurchasesPageContent() {
             return (
               <article
                 key={orderId}
-                className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient"
+                className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient card-lift"
+                style={{
+                  animation: cardsReveal.inView ? `card-stagger 0.45s cubic-bezier(0.22, 1, 0.36, 1) both` : 'none',
+                  animationDelay: cardsReveal.inView ? `${i * 80}ms` : '0ms',
+                }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="relative h-24 w-24 md:h-28 md:w-28 rounded-[var(--radius-default)] overflow-hidden shrink-0">
@@ -109,7 +118,8 @@ function ProfileStorePurchasesPageContent() {
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <p className="text-[10px] font-lexend uppercase tracking-[0.18em] text-secondary">{stringValue(order.category || order.productCategory)}</p>
                       <span
-                        className={`text-[10px] font-lexend font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${statusStyle}`}
+                        className={`text-[10px] font-lexend font-bold uppercase tracking-wider px-2.5 py-1 rounded-full animate-badge-pop ${statusStyle}`}
+                        style={{ animationDelay: `${i * 80 + 200}ms` }}
                       >
                         {statusLabel}
                       </span>
@@ -140,24 +150,26 @@ function ProfileStorePurchasesPageContent() {
                   </div>
 
                   <div className="sm:text-right">
-                    <p className="text-2xl md:text-3xl font-black text-primary">{price} EGP</p>
-                    <p className="text-xs font-lexend uppercase tracking-widest text-primary/45">
-                      Qty {quantity}
-                    </p>
+                    <div className={loading ? '' : 'animate-number-pop'} style={!loading ? { animationDelay: `${i * 80 + 300}ms` } : undefined}>
+                      <p className="text-2xl md:text-3xl font-black text-primary">{price} EGP</p>
+                      <p className="text-xs font-lexend uppercase tracking-widest text-primary/45">
+                        Qty {quantity}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <Link
                     href={`/store/${order.productId || order.id}`}
-                    className="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-surface-container-high text-primary font-bold text-sm hover:bg-surface-container-low transition-colors"
+                    className="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-surface-container-high text-primary font-bold text-sm hover:bg-surface-container-low hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   >
                     View Product
                   </Link>
 
                   <Link
                     href={`/store/checkout?product=${encodeURIComponent(order.productId || order.id)}&qty=1&fulfillment=${fulfillment === 'PICKUP' || fulfillment === 'Pick Up' ? 'pickup' : 'delivery'}`}
-                    className="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-primary-container text-surface-container-lowest font-bold text-sm hover:bg-primary transition-colors"
+                    className="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-primary-container text-surface-container-lowest font-bold text-sm hover:bg-primary hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   >
                     Buy Again
                   </Link>

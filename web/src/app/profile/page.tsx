@@ -29,7 +29,7 @@ import {
 
 function ProfilePageContent() {
   const router = useRouter()
-  const { data: profileResponse, loading, error, refetch } = useApiCall('/users/profile')
+  const { data: profileResponse, loading, error, refetch } = useApiCall('/player/profile')
   const profileData = profileResponse?.data || profileResponse || {}
   const [favorites, setFavorites] = useState(() => {
     if (typeof window === 'undefined') return { courts: [], coaches: [] }

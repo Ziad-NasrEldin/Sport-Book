@@ -90,15 +90,15 @@ export default function CoachesPage() {
   return (
     <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px]" />
-        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px]" />
+        <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px] animate-float-blob" />
+        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px] animate-float-blob animation-delay-300" />
       </div>
 
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
         <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low active:scale-95 transition-all duration-150"
           >
             <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
           </Link>
@@ -148,10 +148,10 @@ export default function CoachesPage() {
                       key={sport}
                       type="button"
                       onClick={() => setActiveSport(sport)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-colors ${
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-all animate-fade-in ${
                         isActive
-                          ? 'bg-primary-container text-surface-container-lowest'
-                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high'
+                          ? 'bg-primary-container text-surface-container-lowest chip-select'
+                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high active:scale-95'
                       }`}
                     >
                       {sport}
@@ -172,10 +172,10 @@ export default function CoachesPage() {
                       key={years}
                       type="button"
                       onClick={() => setMinExperience(years)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-colors ${
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-all animate-fade-in ${
                         isActive
-                          ? 'bg-secondary-container text-on-secondary-container'
-                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high'
+                          ? 'bg-secondary-container text-on-secondary-container chip-select'
+                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high active:scale-95'
                       }`}
                     >
                       {years === 0 ? 'Any' : `${years}+ Years`}
@@ -194,7 +194,7 @@ export default function CoachesPage() {
         {loading ? (
           <SkeletonStat />
         ) : filteredCoaches.map((coach) => (
-          <article key={coach.slug} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient">
+          <article key={coach.slug} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient animate-spring-in hover:scale-[1.01] transition-transform duration-200">
             <div className="flex gap-3 md:gap-4 items-start">
               <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
                 <Image src={coach.image} alt={coach.name} fill className="object-cover" />
@@ -219,10 +219,10 @@ export default function CoachesPage() {
               <button
                 type="button"
                 onClick={() => handleToggleCoachFavorite(coach)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 ${
                   favoriteCoachSlugs.includes(coach.slug)
-                    ? 'bg-secondary-container text-white'
-                    : 'bg-surface-container-low text-primary/70 hover:text-primary'
+                    ? 'bg-secondary-container text-white heart-burst'
+                    : 'bg-surface-container-low text-primary/70 hover:text-primary hover:scale-110'
                 }`}
                 aria-label={favoriteCoachSlugs.includes(coach.slug) ? 'Remove coach from favorites' : 'Add coach to favorites'}
               >
@@ -234,7 +234,7 @@ export default function CoachesPage() {
               <p className="text-sm md:text-base font-bold text-primary">{coach.sessionRate}</p>
               <Link
                 href={`/coaches/${coach.slug}`}
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-secondary-container hover:text-secondary transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-secondary-container hover:text-secondary transition-all hover:translate-x-1"
               >
                 View Slots <ChevronRight className="w-4 h-4" />
               </Link>

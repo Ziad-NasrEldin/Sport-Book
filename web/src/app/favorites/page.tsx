@@ -24,6 +24,7 @@ function FavoritesPageContent() {
   const router = useRouter()
   const { data: favoritesData, loading, error, refetch } = useApiCall('/users/me/favorites')
   const removeMutation = useApiMutation('/users/me/favorites/:id', 'DELETE')
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
 
   const rawFavorites = favoritesData?.data || favoritesData
   const favorites = rawFavorites && typeof rawFavorites === 'object' && !Array.isArray(rawFavorites) ? rawFavorites : { courts: [], coaches: [], products: [], facilities: [] }
@@ -42,13 +43,23 @@ function FavoritesPageContent() {
   }
 
   const handleRemove = async (id: string) => {
-    try {
-      await removeMutation.mutate({ id } as any)
-      showToast('Removed from favorites', 'success')
-      refetch()
-    } catch {
-      showToast('Failed to remove favorite', 'error')
-    }
+    const itemId = id || String(Date.now())
+    setRemovingIds(prev => new Set([...prev, itemId]))
+    
+    setTimeout(async () => {
+      try {
+        await removeMutation.mutate({ id } as any)
+        showToast('Removed from favorites', 'success')
+        refetch()
+      } catch {
+        showToast('Failed to remove favorite', 'error')
+        setRemovingIds(prev => {
+          const next = new Set(prev)
+          next.delete(itemId)
+          return next
+        })
+      }
+    }, 300)
   }
 
   if (error) {
@@ -66,7 +77,7 @@ function FavoritesPageContent() {
         <div className="absolute bottom-16 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px]" />
       </div>
 
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
+      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5 animate-soft-drop">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -90,7 +101,7 @@ function FavoritesPageContent() {
       ) : (
         <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-6 md:space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
-            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+            <article style={{ animationDelay: '100ms' }} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient animate-soft-rise">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Facilities</span>
                 <Heart className="w-5 h-5 text-secondary-container" />
@@ -98,7 +109,7 @@ function FavoritesPageContent() {
               <p className="text-4xl font-black tracking-tight text-primary">{favoriteCourts.length}</p>
             </article>
 
-            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+            <article style={{ animationDelay: '200ms' }} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient animate-soft-rise">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Coaches</span>
                 <Trophy className="w-5 h-5 text-primary-container" />
@@ -106,7 +117,7 @@ function FavoritesPageContent() {
               <p className="text-4xl font-black tracking-tight text-primary">{favoriteCoaches.length}</p>
             </article>
 
-            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+            <article style={{ animationDelay: '300ms' }} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient animate-soft-rise">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Quick Action</span>
                 <CalendarPlus className="w-5 h-5 text-primary-container" />
@@ -124,10 +135,11 @@ function FavoritesPageContent() {
             <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Favorite Facilities</h2>
 
             <div className="space-y-4">
-              {favoriteCourts.map((facility: any) => (
+              {favoriteCourts.map((facility: any, index: number) => (
                 <article
                   key={facility.id}
-                  className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-3.5 md:p-4 shadow-ambient"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                  className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-3.5 md:p-4 shadow-ambient animate-soft-rise ${removingIds.has(facility.id || facility.courtId || String(index)) ? 'animate-fade-out pointer-events-none' : ''}`}
                 >
                   <div className="flex items-center gap-3 md:gap-4 min-w-0">
                     {facility.image && (
@@ -169,7 +181,8 @@ function FavoritesPageContent() {
               ))}
 
               {favoriteCourts.length === 0 && (
-                <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center">
+                <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center animate-soft-rise animate-float-gentle">
+                  <Heart className="w-10 h-10 mx-auto mb-3 text-primary/30" />
                   <h3 className="text-lg font-extrabold text-primary">No favorite courts yet</h3>
                   <p className="text-sm text-primary/60 mt-2">Tap the heart button on any court to save it here.</p>
                 </article>
@@ -181,10 +194,11 @@ function FavoritesPageContent() {
             <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Favorite Coaches</h2>
 
             <div className="space-y-4">
-              {favoriteCoaches.map((coach: any) => (
+              {favoriteCoaches.map((coach: any, index: number) => (
                 <article
                   key={coach.id || coach.slug}
-                  className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                  className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient animate-soft-rise ${removingIds.has(coach.id || coach.slug || String(index)) ? 'animate-fade-out pointer-events-none' : ''}`}
                 >
                   <div className="flex items-center gap-4">
                     {coach.avatar && (
@@ -217,12 +231,13 @@ function FavoritesPageContent() {
                     >
                       <Heart className="w-4 h-4 fill-primary" />
                     </button>
-                  </div>
+</div>
                 </article>
               ))}
 
               {favoriteCoaches.length === 0 && (
-                <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center">
+                <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center animate-soft-rise animate-float-gentle">
+                  <Heart className="w-10 h-10 mx-auto mb-3 text-primary/30" />
                   <h3 className="text-lg font-extrabold text-primary">No favorite coaches yet</h3>
                   <p className="text-sm text-primary/60 mt-2">Tap the heart button on any coach to save it here.</p>
                 </article>

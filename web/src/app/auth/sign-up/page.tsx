@@ -64,13 +64,13 @@ setAccessToken(accessToken)
         </Link>
       </section>
 
-      <section className="px-5 pb-12 md:px-10 lg:px-14">
-        <div className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5">
+<section className="px-5 pb-12 md:px-10 lg:px-14">
+        <div style={{ animationDelay: '100ms' }} className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5 animate-soft-rise">
           <h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight text-primary">Create Account</h1>
           <p className="mt-2 text-sm md:text-base text-primary/60">Sign up to unlock fast booking and wallet checkout.</p>
 
           <form className="space-y-4 mt-6" onSubmit={handleSignUp}>
-            <label className="block space-y-1.5">
+            <label style={{ animationDelay: '150ms' }} className="block space-y-1.5 animate-soft-rise">
               <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Full Name</span>
               <div className="relative">
                 <UserRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
@@ -79,8 +79,47 @@ setAccessToken(accessToken)
                   type="text"
                   placeholder="Alex Rivera"
                   required
-                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none transition-[border-color,transform,box-shadow] duration-200 focus:border-primary-container focus:-translate-y-0.5 focus:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.35)]"
                 />
+              </div>
+            </label>
+
+            <label style={{ animationDelay: '200ms' }} className="block space-y-1.5 animate-soft-rise">
+              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Email</span>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="alex@example.com"
+                  required
+                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none transition-[border-color,transform,box-shadow] duration-200 focus:border-primary-container focus:-translate-y-0.5 focus:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.35)]"
+                />
+              </div>
+            </label>
+
+            <label style={{ animationDelay: '250ms' }} className="block space-y-1.5 animate-soft-rise">
+              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Password</span>
+              <div className="relative">
+                <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a password"
+                  required
+                  className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none transition-[border-color,transform,box-shadow] duration-200 focus:border-primary-container focus:-translate-y-0.5 focus:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.35)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/45 hover:text-primary transition-colors"
+                >
+                  <span className="transition-transform duration-200 inline-flex">
+                    {showPassword ? <EyeOff className="w-4 h-4 animate-scale-in" /> : <Eye className="w-4 h-4 animate-scale-in" />}
+                  </span>
+                </button>
               </div>
             </label>
 
@@ -114,7 +153,7 @@ setAccessToken(accessToken)
                   onClick={() => setShowPassword((current) => !current)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-pressed={showPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/45 hover:text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center -mr-1 text-primary/45 hover:text-primary transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -122,7 +161,7 @@ setAccessToken(accessToken)
             </label>
 
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg animate-shake">
                 {error}
               </div>
             )}
@@ -130,7 +169,7 @@ setAccessToken(accessToken)
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide transition-all duration-200 hover:shadow-[0_8px_20px_-6px_rgba(253,139,0,0.5)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -153,7 +192,7 @@ setAccessToken(accessToken)
             <button
               type="button"
               onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
-              className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
+              className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high hover:-translate-y-0.5 transition-all duration-200"
             >
               <span className="w-6 h-6 rounded-full bg-white text-primary-container text-sm font-black inline-flex items-center justify-center">
                 G
@@ -163,7 +202,7 @@ setAccessToken(accessToken)
             <button
               type="button"
               onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
-              className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
+              className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high hover:-translate-y-0.5 transition-all duration-200"
             >
               <span className="w-6 h-6 rounded-full bg-[#1877F2] text-white text-sm font-black inline-flex items-center justify-center">
                 f

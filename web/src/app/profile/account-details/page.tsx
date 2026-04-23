@@ -105,7 +105,7 @@ function AccountDetailsPageContent() {
             <button
               type="button"
               onClick={handleBack}
-              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-surface-container-lowest/90 text-primary flex items-center justify-center shadow-ambient hover:scale-105 transition-transform"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-surface-container-lowest/90 text-primary flex items-center justify-center shadow-ambient hover:scale-105 active:scale-95 transition-all duration-150"
               aria-label="Go back"
             >
               <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
@@ -137,7 +137,7 @@ function AccountDetailsPageContent() {
               </p>
               <button
                 onClick={() => alert('Coming soon — photo upload is not yet available.')}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold hover:bg-primary transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-[var(--radius-full)] bg-primary-container text-surface-container-lowest font-bold hover:bg-primary transition-all hover:scale-105 active:scale-95"
               >
                 <Camera className="w-4 h-4" />
                 Change Photo
@@ -288,11 +288,17 @@ function AccountDetailsPageContent() {
         <div className="pb-1">
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60"
+            disabled={saving || saveSuccess}
+            className={`w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br text-white font-black text-lg shadow-ambient inline-flex items-center justify-center gap-2 transition-all ${
+            saveSuccess 
+              ? 'from-green-500 to-green-600' 
+              : saving
+                ? 'from-primary/80 to-primary/80 cursor-wait'
+                : 'from-secondary to-secondary-container hover:scale-[1.02] active:scale-95'
+          } ${saving ? 'animate-pulse' : ''}`}
           >
             <Save className="w-5 h-5" />
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save Changes'}
           </button>
         </div>
       </section>

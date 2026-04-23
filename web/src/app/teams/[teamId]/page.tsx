@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, CalendarDays, Clock3, LogOut, MapPin, Trash2, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, Clock3, LogOut, MapPin, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
@@ -59,9 +59,21 @@ export default function TeamDetailsPage() {
   const { data: post, loading, error, refetch } = useApiCall<TeamData>(`/teams/${teamId}`)
   const { data: currentUserData } = useApiCall<CurrentUser>('/users/me')
 
+  const [mounted, setMounted] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [feedbackVisible, setFeedbackVisible] = useState(false)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    if (!feedback) return
+    setFeedbackVisible(true)
+    const fadeTimer = setTimeout(() => setFeedbackVisible(false), 3800)
+    const clearTimer = setTimeout(() => setFeedback(''), 4200)
+    return () => { clearTimeout(fadeTimer); clearTimeout(clearTimer) }
+  }, [feedback])
 
   const currentUser = (() => {
     if (!currentUserData) return null
@@ -181,21 +193,29 @@ export default function TeamDetailsPage() {
   }
 
   return (
-    <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
-      <header className="sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-6">
+    <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative overflow-hidden">
+      {/* Floating background blobs */}
+      <div className="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full bg-primary/8 blur-3xl pointer-events-none animate-[float-blob_18s_ease-in-out_infinite]" />
+      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-tertiary-fixed/20 blur-3xl pointer-events-none animate-[float-blob_22s_ease-in-out_infinite_reverse]" />
+
+      <header className={`sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-6 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
-            <Link
-              href="/teams"
-              className="inline-flex items-center gap-2 text-sm font-bold text-primary/80 hover:text-primary"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to teams
-            </Link>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Team Details</h1>
+            <div className={`transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
+              <Link
+                href="/teams"
+                className="group inline-flex items-center gap-2 text-sm font-bold text-primary/80 hover:text-primary hover:gap-3 transition-all duration-200"
+              >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-200" /> Back to teams
+              </Link>
+            </div>
+            <div className={`transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] delay-75 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
+              <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Team Details</h1>
+            </div>
           </div>
 
           <span
-            className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest self-center ${
+            className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest self-center animate-badge-pop ${
               post.status === 'full' || post.status === 'FULL' ? 'bg-primary text-white' : 'bg-tertiary-fixed text-primary'
             }`}
           >
@@ -204,7 +224,7 @@ export default function TeamDetailsPage() {
         </div>
 
         {activeUserId && (
-          <div className="mt-4 px-3 py-2 bg-surface-container-high rounded-[var(--radius-md)] inline-flex items-center gap-2">
+          <div className={`mt-4 px-3 py-2 bg-surface-container-high rounded-[var(--radius-md)] inline-flex items-center gap-2 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] delay-120 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
             <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55">Signed in as</span>
             <span className="text-sm font-bold text-primary">{activeUserName || activeUserId}</span>
           </div>
@@ -213,15 +233,15 @@ export default function TeamDetailsPage() {
 
       <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-5">
         {feedback && (
-          <div className="bg-tertiary-fixed rounded-[var(--radius-md)] px-4 py-3 text-sm font-semibold text-primary">
+          <div className={`bg-tertiary-fixed rounded-[var(--radius-md)] px-4 py-3 text-sm font-semibold text-primary animate-slide-in-down transition-opacity duration-300 ${feedbackVisible ? 'opacity-100' : 'opacity-0'}`}>
             {feedback}
           </div>
         )}
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} delay-160`}>
           <div className="space-y-2 min-w-0">
             {post.sport && (
-              <span className="inline-flex px-2.5 py-1 rounded-full bg-surface-container-high text-primary text-[10px] font-lexend font-bold uppercase tracking-widest">
+              <span className="inline-flex px-2.5 py-1 rounded-full bg-surface-container-high text-primary text-[10px] font-lexend font-bold uppercase tracking-widest animate-[chip-select_0.25s_cubic-bezier(0.22,1,0.36,1)_both]">
                 {stringValue(post.sport)}
               </span>
             )}
@@ -251,7 +271,7 @@ export default function TeamDetailsPage() {
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} delay-240`}>
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg md:text-xl font-bold text-primary">Team Members</h3>
             <p className="text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/55">
@@ -260,12 +280,12 @@ export default function TeamDetailsPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex items-center justify-between gap-3">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex items-center justify-between gap-3 hover:-translate-y-0.5 hover:shadow-ambient transition-all duration-200">
               <div>
                 <p className="font-bold text-primary">{creatorName || 'Creator'}</p>
                 <p className="text-xs text-primary/65">Creator</p>
               </div>
-              <span className="inline-flex px-2.5 py-1 rounded-full bg-tertiary-fixed text-primary text-[10px] font-lexend font-bold uppercase tracking-widest">
+              <span className="inline-flex px-2.5 py-1 rounded-full bg-tertiary-fixed text-primary text-[10px] font-lexend font-bold uppercase tracking-widest animate-badge-pop">
                 Host
               </span>
             </div>
@@ -276,11 +296,17 @@ export default function TeamDetailsPage() {
               </div>
             )}
 
-            {memberList.map((member) => (
-              <div key={member.id} className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex items-center justify-between gap-3">
+            {memberList.map((member, i) => (
+              <div
+                key={member.id}
+                className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex items-center justify-between gap-3 hover:-translate-y-0.5 hover:shadow-ambient transition-all duration-200 animate-soft-rise"
+                style={{ animationDelay: `${300 + i * 60}ms`, animationFillMode: 'both' }}
+              >
                 <p className="font-bold text-primary">{member.name}</p>
                 {member.id === activeUserId && (
-                  <span className="text-xs font-semibold text-primary/75">You</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700">
+                    <Check className="w-3.5 h-3.5" /> You
+                  </span>
                 )}
               </div>
             ))}
@@ -288,7 +314,7 @@ export default function TeamDetailsPage() {
         </article>
 
         {isCreator && (
-          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3">
+          <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} delay-320`}>
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-lg md:text-xl font-bold text-primary">Join Requests</h3>
               <p className="text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/55">
@@ -297,15 +323,16 @@ export default function TeamDetailsPage() {
             </div>
 
             {pendingRequests.length === 0 && (
-              <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 text-sm text-primary/75">
+              <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 text-sm text-primary/75 animate-field-group-in">
                 No pending requests yet.
               </div>
             )}
 
-            {pendingRequests.map((request) => (
+            {pendingRequests.map((request, i) => (
               <div
                 key={request.id}
-                className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-soft-rise"
+                style={{ animationDelay: `${300 + i * 60}ms`, animationFillMode: 'both' }}
               >
                 <p className="font-bold text-primary">{request.userName || request.userId}</p>
 
@@ -314,7 +341,7 @@ export default function TeamDetailsPage() {
                     type="button"
                     disabled={actionLoading}
                     onClick={() => handleRejectRequest(request.id, request.userName || request.userId)}
-                    className="px-4 py-2 rounded-full bg-surface-container-lowest text-primary font-semibold"
+                    className="px-4 py-2 rounded-full bg-surface-container-lowest text-primary font-semibold hover:-translate-y-0.5 hover:shadow-ambient active:scale-95 transition-all duration-200"
                   >
                     Decline
                   </button>
@@ -322,7 +349,7 @@ export default function TeamDetailsPage() {
                     type="button"
                     disabled={actionLoading}
                     onClick={() => handleApproveRequest(request.id, request.userName || request.userId)}
-                    className="px-4 py-2 rounded-full bg-primary-container text-surface-container-lowest font-semibold"
+                    className="px-4 py-2 rounded-full bg-primary-container text-surface-container-lowest font-semibold hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_rgba(0,17,58,0.45)] active:scale-95 transition-all duration-200"
                   >
                     Approve
                   </button>
@@ -332,7 +359,7 @@ export default function TeamDetailsPage() {
           </article>
         )}
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-3 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} delay-400`}>
           <h3 className="text-lg md:text-xl font-bold text-primary">Actions</h3>
 
           {canJoin && (
@@ -340,7 +367,7 @@ export default function TeamDetailsPage() {
               type="button"
               disabled={actionLoading}
               onClick={handleJoin}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-surface-container-lowest font-bold"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-surface-container-lowest font-bold hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_rgba(0,17,58,0.45)] active:scale-95 transition-all duration-200"
             >
               <UserPlus className="w-4 h-4" /> Request to Join
             </button>
@@ -355,7 +382,7 @@ export default function TeamDetailsPage() {
               type="button"
               disabled={actionLoading}
               onClick={handleLeave}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-surface-container-high text-primary font-bold"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-surface-container-high text-primary font-bold hover:-translate-y-0.5 hover:bg-surface-container-medium hover:shadow-ambient active:scale-95 transition-all duration-200"
             >
               <LogOut className="w-4 h-4" /> Leave Team
             </button>
@@ -366,7 +393,7 @@ export default function TeamDetailsPage() {
               type="button"
               disabled={actionLoading}
               onClick={() => setIsCancelConfirmOpen(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-red-100 text-red-700 font-bold"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-red-100 text-red-700 font-bold hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_rgba(220,38,38,0.35)] active:scale-95 transition-all duration-200"
             >
               <Trash2 className="w-4 h-4" /> Cancel Team Post
             </button>
@@ -380,16 +407,24 @@ export default function TeamDetailsPage() {
 
       {isCancelConfirmOpen && (
         <div
-          className="fixed inset-0 z-[90] bg-primary/35 backdrop-blur-sm p-4 md:p-6 flex items-center justify-center"
+          className="fixed inset-0 z-[90] bg-primary/35 backdrop-blur-sm p-4 md:p-6 flex items-center justify-center animate-modal-backdrop-in"
           onClick={() => setIsCancelConfirmOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-surface-container-lowest rounded-[var(--radius-lg)] shadow-ambient p-5 md:p-6"
+            className="w-full max-w-md bg-surface-container-lowest rounded-[var(--radius-lg)] shadow-ambient p-5 md:p-6 relative animate-modal-dialog-in"
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label="Confirm team cancellation"
           >
+            <button
+              type="button"
+              onClick={() => setIsCancelConfirmOpen(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-surface-container-high text-primary/60 hover:text-primary active:scale-90 transition-all duration-200"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <h3 className="text-xl font-extrabold text-primary">Cancel Team Post?</h3>
             <p className="text-sm text-primary/70 mt-2">
               This action cannot be undone and all joined members will be notified.
@@ -407,7 +442,7 @@ export default function TeamDetailsPage() {
                 type="button"
                 disabled={actionLoading}
                 onClick={handleCancel}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-red-100 text-red-700 font-bold"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-red-100 text-red-700 font-bold hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_rgba(220,38,38,0.35)] active:scale-95 transition-all duration-200"
               >
                 Yes, Cancel Team
               </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
@@ -23,6 +23,24 @@ export default function PreferencesPage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+  const containerRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    if (containerRef.current) {
+      observer.observe(containerRef.current)
+    }
+    return () => observer.disconnect()
+  }, [])
 
   const [language, setLanguage] = useState('English')
   const [sports, setSports] = useState<string[]>(['Tennis', 'Padel'])
@@ -132,8 +150,8 @@ export default function PreferencesPage() {
         </div>
       </header>
 
-      <section className="max-w-4xl mx-auto px-4 md:px-8 pt-2 flex flex-col gap-5 md:gap-7">
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient">
+      <section className="max-w-4xl mx-auto px-4 md:px-8 pt-2 flex flex-col gap-5 md:gap-7" ref={containerRef}>
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '0ms' }}>
           <div className="flex items-center gap-3 mb-5">
             <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
               <Globe2 className="w-5 h-5" />
@@ -153,10 +171,10 @@ export default function PreferencesPage() {
                   key={item}
                   type="button"
                   onClick={() => setLanguage(item)}
-                  className={`rounded-[var(--radius-md)] px-4 py-4 font-semibold transition-all ${
+                  className={`rounded-[var(--radius-md)] px-4 py-4 font-semibold transition-all duration-300 ${
                     isActive
-                      ? 'bg-tertiary-fixed text-primary shadow-[0_10px_25px_-10px_rgba(195,244,0,0.6)]'
-                      : 'bg-surface-container-high text-primary/70 hover:bg-surface-container-low'
+                      ? 'bg-tertiary-fixed text-primary shadow-[0_10px_25px_-10px_rgba(195,244,0,0.6)] scale-105'
+                      : 'bg-surface-container-high text-primary/70 hover:bg-surface-container-low hover:scale-102 active:scale-95'
                   }`}
                 >
                   {item}
@@ -166,7 +184,7 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
           <div className="flex items-center gap-3 mb-5">
             <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-secondary-container">
               <Sparkles className="w-5 h-5" />
@@ -186,13 +204,13 @@ export default function PreferencesPage() {
                   key={sport}
                   type="button"
                   onClick={() => toggleSport(sport)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${
                     isSelected
-                      ? 'bg-primary-container text-surface-container-lowest'
-                      : 'bg-surface-container-high text-primary/70 hover:text-primary'
+                      ? 'bg-primary-container text-surface-container-lowest scale-105 shadow-lg'
+                      : 'bg-surface-container-high text-primary/70 hover:text-primary hover:scale-105 active:scale-95'
                   }`}
                 >
-                  {isSelected && <Check className="w-3.5 h-3.5" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 animate-scale-in" />}
                   {sport}
                 </button>
               )
@@ -200,7 +218,7 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '200ms' }}>
           <div className="flex items-center gap-3 mb-5">
             <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
               <SlidersHorizontal className="w-5 h-5" />
@@ -220,8 +238,10 @@ export default function PreferencesPage() {
                   key={item}
                   type="button"
                   onClick={() => setDuration(item)}
-                  className={`rounded-full px-3 py-2.5 text-sm font-bold transition-colors ${
-                    isSelected ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-primary/70'
+                  className={`rounded-full px-3 py-2.5 text-sm font-bold transition-all duration-200 ${
+                    isSelected 
+                      ? 'bg-secondary-container text-on-secondary-container scale-105 shadow-md' 
+                      : 'bg-surface-container-high text-primary/70 hover:scale-105 active:scale-95'
                   }`}
                 >
                   {item}
@@ -231,7 +251,7 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
           <div className="flex items-center gap-3 mb-5">
             <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
               <BellRing className="w-5 h-5" />
@@ -279,7 +299,7 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient">
+        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
           <div className="flex items-center gap-3 mb-5">
             <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
               <Shield className="w-5 h-5" />
@@ -317,13 +337,13 @@ export default function PreferencesPage() {
         </article>
 
         {saveError && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold animate-shake">
             {saveError}
           </div>
         )}
 
         {saveSuccess && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-green-400 font-semibold">
+          <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-green-400 font-semibold animate-scale-in">
             Preferences saved successfully!
           </div>
         )}
@@ -332,15 +352,20 @@ export default function PreferencesPage() {
           <button
             onClick={handleSavePreferences}
             disabled={saving}
-            className="w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="group w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
           >
-            {saving ? 'Saving...' : 'Save Preferences'}
+            {saving ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Saving...
+              </span>
+            ) : 'Save Preferences'}
           </button>
 
           <button
             type="button"
             onClick={handleReplayOnboarding}
-            className="mt-3 w-full py-3.5 rounded-[var(--radius-full)] bg-surface-container-lowest border border-primary/10 text-primary font-bold hover:bg-surface-container-high transition-colors"
+            className="mt-3 w-full py-3.5 rounded-[var(--radius-full)] bg-surface-container-lowest border border-primary/10 text-primary font-bold hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
           >
             Replay Onboarding
           </button>
@@ -361,22 +386,24 @@ type ToggleRowProps = {
 
 function ToggleRow({ label, description, enabled, onToggle }: ToggleRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
-      <div>
+    <button
+      type="button"
+      onClick={onToggle}
+      className="group w-full flex items-center justify-between gap-4 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5 transition-all duration-200 hover:bg-surface-container-low active:scale-[0.99]"
+    >
+      <div className="text-left">
         <p className="font-bold text-primary leading-tight">{label}</p>
         <p className="text-xs text-primary/60 mt-1">{description}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`w-12 h-7 rounded-full p-1 transition-colors ${enabled ? 'bg-tertiary-fixed' : 'bg-primary/20'}`}
+      <span
+        className={`w-12 h-7 rounded-full p-1 transition-all duration-300 ${enabled ? 'bg-tertiary-fixed' : 'bg-primary/20'}`}
         aria-pressed={enabled}
       >
         <span
-          className={`block w-5 h-5 rounded-full bg-surface-container-lowest shadow-sm transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
+          className={`block w-5 h-5 rounded-full bg-surface-container-lowest shadow-sm transition-all duration-300 ${enabled ? 'translate-x-5 scale-110' : 'translate-x-0 scale-100'}`}
         />
-      </button>
-    </div>
+      </span>
+    </button>
   )
 }
