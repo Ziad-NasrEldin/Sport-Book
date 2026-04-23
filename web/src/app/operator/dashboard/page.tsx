@@ -62,15 +62,16 @@ export default function OperatorDashboardPage() {
   }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 motion-safe:animate-[var(--animate-fade-in)]">
       <AdminPageHeader
         title="Operator Dashboard"
         subtitle="Run every facility from one command center covering occupancy, booking momentum, approvals, and branch-level risks."
+        className="motion-safe:animate-[var(--animate-soft-drop)]"
         actions={
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <RefreshCw className="w-4 h-4" />
               Refresh Feed
@@ -82,7 +83,7 @@ export default function OperatorDashboardPage() {
                 const rows = operatorMetrics.map((m: any) => [m.id || '', m.label || '', String(m.value || ''), String(m.delta || ''), m.trend || ''])
                 exportToCsv('dashboard-summary.csv', headers, rows)
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               Export Summary
@@ -100,14 +101,15 @@ export default function OperatorDashboardPage() {
             <SkeletonStat />
           </>
         ) : (
-          operatorMetrics.map((metric: any) => (
-            <AdminStatCard
-              key={metric.id}
-              label={metric.label}
-              value={metric.value}
-              delta={metric.delta}
-              trend={metric.trend}
-            />
+          operatorMetrics.map((metric: any, index: number) => (
+            <div key={metric.id} className="motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: `${index * 80}ms` }}>
+              <AdminStatCard
+                label={metric.label}
+                value={metric.value}
+                delta={metric.delta}
+                trend={metric.trend}
+              />
+            </div>
           ))
         )}
       </section>
@@ -117,45 +119,46 @@ export default function OperatorDashboardPage() {
           eyebrow="Operations"
           title="Utilization Velocity"
           actions={<span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Last 12 days</span>}
+          className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-100"
         >
           <AdminTrendBars values={utilizationVelocity} colorClassName="bg-secondary-container" />
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
+            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5 motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '120ms' }}>
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Pending Approvals</p>
               <p className="mt-1 text-lg font-extrabold text-primary">{pendingApprovals.length}</p>
             </div>
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
+            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5 motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '150ms' }}>
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Live Courts</p>
               <p className="mt-1 text-lg font-extrabold text-primary">
                 {courtsData.filter((court: any) => court.status === 'ACTIVE').length}
               </p>
             </div>
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
+            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5 motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '180ms' }}>
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Revenue Today</p>
               <p className="mt-1 text-lg font-extrabold text-primary">{formatEgp(todayRevenue)}</p>
             </div>
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
+            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5 motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '210ms' }}>
               <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Cancellation Ratio</p>
               <p className="mt-1 text-lg font-extrabold text-primary">{cancellationRatio}</p>
             </div>
           </div>
         </AdminPanel>
 
-        <AdminPanel eyebrow="Court mix" title="Sport Distribution">
+        <AdminPanel eyebrow="Court mix" title="Sport Distribution" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-150">
           <AdminDonut segments={sportDistribution} />
         </AdminPanel>
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
-        <AdminPanel eyebrow="Approvals queue" title="Latest Requests">
+        <AdminPanel eyebrow="Approvals queue" title="Latest Requests" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-200">
           <div className="space-y-3">
             {pendingApprovals.length === 0 ? (
-              <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3 motion-safe:animate-[var(--animate-empty-bob)]">
                 <p className="text-sm font-semibold text-primary">No pending approvals right now.</p>
               </article>
             ) : (
-              pendingApprovals.map((request: any) => (
-                <article key={request.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              pendingApprovals.map((request: any, index: number) => (
+                <article key={request.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg motion-safe:animate-[var(--animate-stagger-pop)]" style={{ animationDelay: `${220 + index * 50}ms` }}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-primary">{request.subject || 'Unknown'}</p>
@@ -170,10 +173,10 @@ export default function OperatorDashboardPage() {
           </div>
         </AdminPanel>
 
-        <AdminPanel eyebrow="Risk watch" title="Attention Needed">
+        <AdminPanel eyebrow="Risk watch" title="Attention Needed" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-250">
           <div className="space-y-3">
-            {attentionItems.map((item) => (
-              <article key={item.message} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+            {attentionItems.map((item, index: number) => (
+              <article key={item.message} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg motion-safe:animate-[var(--animate-stagger-pop)]" style={{ animationDelay: `${270 + index * 50}ms` }}>
                 <p className="inline-flex items-center gap-2 text-xs font-lexend uppercase tracking-[0.14em] text-amber-800">
                   <AlertTriangle className="w-3.5 h-3.5" />
                   Attention

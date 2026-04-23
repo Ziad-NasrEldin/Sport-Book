@@ -88,10 +88,11 @@ export default function OperatorCourtsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 motion-safe:animate-[var(--animate-fade-in)]">
       <AdminPageHeader
         title="Court Management"
         subtitle="Configure courts, pricing, and maintenance schedules for every branch from one table."
+        className="motion-safe:animate-[var(--animate-soft-drop)]"
         actions={
           <>
             <button
@@ -110,14 +111,14 @@ export default function OperatorCourtsPage() {
                 ])
                 exportToCsv('courts.csv', headers, rows)
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               Export Courts
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <Grid2x2 className="w-4 h-4" />
               Add Court
@@ -126,7 +127,7 @@ export default function OperatorCourtsPage() {
         }
       />
 
-      <AdminPanel eyebrow="Inventory" title="Court Directory">
+      <AdminPanel eyebrow="Inventory" title="Court Directory" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-100">
         <AdminFilterBar
           searchValue={search}
           onSearchChange={setSearch}
@@ -136,7 +137,7 @@ export default function OperatorCourtsPage() {
               <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {branchOptions.map((branchId: any) => (
                   <option key={branchId} value={branchId}>
@@ -148,7 +149,7 @@ export default function OperatorCourtsPage() {
               <AppSelect
                 value={selectedSport}
                 onChange={handleSportChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {sportOptions.map((sport: any) => (
                   <option key={sport} value={sport}>
@@ -160,7 +161,7 @@ export default function OperatorCourtsPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -172,7 +173,7 @@ export default function OperatorCourtsPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-4 motion-safe:animate-[var(--animate-fade-in)] animation-delay-150">
           {loading ? (
             <SkeletonTable rows={10} />
           ) : (
@@ -226,7 +227,7 @@ export default function OperatorCourtsPage() {
                   render: (court: any) => (
                     <Link
                       href={`/operator/courts/${court.id}`}
-                      className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
+                      className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/16 hover:shadow-[0_8px_16px_-14px_rgba(0,17,58,0.9)] motion-safe:hover:scale-[1.02]"
                     >
                       Configure
                     </Link>

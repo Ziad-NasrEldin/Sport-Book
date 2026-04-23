@@ -70,22 +70,23 @@ export default function OperatorStaffPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 motion-safe:animate-[var(--animate-fade-in)]">
       <AdminPageHeader
         title="Staff Management"
         subtitle="Track branch staffing, monitor shift coverage, and coordinate facility teams from one operational board."
+        className="motion-safe:animate-[var(--animate-soft-drop)]"
         actions={
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               Export Staff
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <UserPlus2 className="w-4 h-4" />
               Invite Staff
@@ -94,7 +95,7 @@ export default function OperatorStaffPage() {
         }
       />
 
-      <AdminPanel eyebrow="Directory" title="Team Roster">
+      <AdminPanel eyebrow="Directory" title="Team Roster" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-100">
         <AdminFilterBar
           searchValue={search}
           onSearchChange={setSearch}
@@ -104,7 +105,7 @@ export default function OperatorStaffPage() {
               <AppSelect
                 value={selectedRole}
                 onChange={handleRoleChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {roleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -116,7 +117,7 @@ export default function OperatorStaffPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -128,7 +129,7 @@ export default function OperatorStaffPage() {
               <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {branchOptions.map((branchId) => (
                   <option key={branchId} value={branchId}>
@@ -140,7 +141,7 @@ export default function OperatorStaffPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-4 motion-safe:animate-[var(--animate-fade-in)] animation-delay-150">
           {loading ? (
             <SkeletonTable />
           ) : (

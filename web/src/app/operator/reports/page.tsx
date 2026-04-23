@@ -63,10 +63,11 @@ export default function OperatorReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 motion-safe:animate-[var(--animate-fade-in)]">
       <AdminPageHeader
         title="Operator Reports"
         subtitle="Generate branch-level performance reports, automate exports, and keep stakeholders updated with scheduled jobs."
+        className="motion-safe:animate-[var(--animate-soft-drop)]"
       />
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -78,17 +79,23 @@ export default function OperatorReportsPage() {
           </>
         ) : (
           <>
-            <AdminStatCard label="Healthy Jobs" value={String(reportJobs.filter((job: any) => job.status === 'HEALTHY').length)} delta="automations running" trend="up" />
-            <AdminStatCard label="Needs Review" value={String(reportJobs.filter((job: any) => job.status === 'NEEDS_REVIEW').length)} delta="requires intervention" trend="down" />
-            <AdminStatCard label="Delivery SLA" value="97.9%" delta="on-time report generation" trend="up" />
+            <div className="motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '80ms' }}>
+              <AdminStatCard label="Healthy Jobs" value={String(reportJobs.filter((job: any) => job.status === 'HEALTHY').length)} delta="automations running" trend="up" />
+            </div>
+            <div className="motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '120ms' }}>
+              <AdminStatCard label="Needs Review" value={String(reportJobs.filter((job: any) => job.status === 'NEEDS_REVIEW').length)} delta="requires intervention" trend="down" />
+            </div>
+            <div className="motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: '160ms' }}>
+              <AdminStatCard label="Delivery SLA" value="97.9%" delta="on-time report generation" trend="up" />
+            </div>
           </>
         )}
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-4">
-        <AdminPanel eyebrow="Builder" title="Create Report">
+        <AdminPanel eyebrow="Builder" title="Create Report" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-100">
           <div className="space-y-3">
-            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
+            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-colors hover:bg-surface-container-medium">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Preset</span>
               <AppSelect
                 value={selectedPreset}
@@ -103,7 +110,7 @@ export default function OperatorReportsPage() {
               </AppSelect>
             </label>
 
-            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
+            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-colors hover:bg-surface-container-medium">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Branch scope</span>
               <AppSelect
                 value={selectedBranch}
@@ -118,7 +125,7 @@ export default function OperatorReportsPage() {
               </AppSelect>
             </label>
 
-            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
+            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-colors hover:bg-surface-container-medium">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Date range</span>
               <input
                 value={dateRange}
@@ -130,14 +137,14 @@ export default function OperatorReportsPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+                className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
               >
                 <CalendarRange className="w-4 h-4" />
                 Schedule
               </button>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+                className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
               >
                 <Download className="w-4 h-4" />
                 Generate Now
@@ -146,7 +153,7 @@ export default function OperatorReportsPage() {
           </div>
         </AdminPanel>
 
-        <AdminPanel eyebrow="Automation" title="Scheduled Jobs">
+        <AdminPanel eyebrow="Automation" title="Scheduled Jobs" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-150">
           {loading ? (
             <SkeletonTable rows={10} />
           ) : (
