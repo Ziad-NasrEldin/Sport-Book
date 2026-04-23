@@ -29,7 +29,7 @@ import {
 
 function ProfilePageContent() {
   const router = useRouter()
-  const { data: profileResponse, loading, error, refetch } = useApiCall('/player/profile')
+  const { data: profileResponse, loading, error, refetch } = useApiCall('/users/profile')
   const profileData = profileResponse?.data || profileResponse || {}
   const [favorites, setFavorites] = useState(() => {
     if (typeof window === 'undefined') return { courts: [], coaches: [] }
@@ -50,14 +50,14 @@ function ProfilePageContent() {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
 
-  const user = profileData.user || {}
+  const user = profileData || {}
   const wallet = profileData.wallet || {}
   const nextBooking = profileData.nextBooking || {}
 
   return (
     <main className="min-h-screen bg-surface-container-low pb-32 font-sans">
       {/* Editorial Header with Hero Background */}
-      <section className="relative w-full h-[40vh] md:h-[50vh] flex flex-col justify-end p-6 md:p-8">
+      <section className="relative w-full h-[40vh] md:h-[50vh] flex flex-col justify-end p-6 md:p-8 animate-spring-in">
         <div className="absolute inset-0 z-0 overflow-hidden rounded-b-[var(--radius-xl)] md:rounded-b-[var(--radius-full)]">
           <Image
             src="https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=2070&auto=format&fit=crop"
@@ -83,7 +83,7 @@ function ProfilePageContent() {
               />
             </div>
             <div className="text-surface-container-lowest">
-              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">{user.fullName || 'Loading...'}</h1>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">{user.name || 'Loading...'}</h1>
               <p className="text-sm md:text-base font-lexend opacity-90 mt-1">{user.email || ''}</p>
               <p className="text-xs md:text-sm font-lexend opacity-80 mt-1">{user.phone || ''}</p>
             </div>
@@ -103,7 +103,7 @@ function ProfilePageContent() {
         {/* Row 1: Wallet & Bookings Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {/* Wallet Summary */}
-          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient flex flex-col justify-between">
+          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient flex flex-col justify-between animate-spring-in animation-delay-100">
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-surface-container-low rounded-[var(--radius-full)]">
@@ -135,7 +135,7 @@ function ProfilePageContent() {
           </div>
 
           {/* Quick Bookings Summary */}
-          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient flex flex-col">
+          <div className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient flex flex-col animate-spring-in animation-delay-150">
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-surface-container-low rounded-[var(--radius-full)]">
@@ -191,11 +191,11 @@ function ProfilePageContent() {
         </div>
 
         {/* Row 2: Settings & Preferences */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 animate-fade-in animation-delay-200">
           {/* Favorites */}
           <Link
             href="/favorites"
-            className="bg-surface-container-lowest rounded-[var(--radius-md)] p-6 shadow-ambient transition-transform hover:scale-[1.02] cursor-pointer group block"
+            className="bg-surface-container-lowest rounded-[var(--radius-md)] p-6 shadow-ambient transition-all duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer group block"
           >
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-5">

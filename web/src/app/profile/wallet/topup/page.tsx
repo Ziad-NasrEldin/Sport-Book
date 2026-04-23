@@ -104,19 +104,19 @@ function WalletTopUpPageContent() {
         <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px]" />
       </div>
 
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
+<header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={handleBack}
             aria-label="Go back"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-all duration-200 active:scale-95"
           >
-            <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
+            <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
-          <div>
+          <div className="animate-soft-drop">
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Top Up Wallet</h1>
-            <p className="text-sm md:text-base text-primary/60">Add funds instantly to book faster</p>
+            <p className="text-sm md:text-base text-primary/60">Add funds to your SportBook wallet</p>
           </div>
         </div>
       </header>

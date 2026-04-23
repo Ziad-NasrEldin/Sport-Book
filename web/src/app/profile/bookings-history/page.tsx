@@ -53,11 +53,11 @@ function ProfileBookingHistoryPageContent() {
             type="button"
             onClick={handleBack}
             aria-label="Go back"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-all duration-200 active:scale-95"
           >
             <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
           </button>
-          <div>
+          <div className="animate-soft-drop">
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Booking History</h1>
             <p className="text-sm md:text-base text-primary/60">All previous sessions in one place</p>
           </div>

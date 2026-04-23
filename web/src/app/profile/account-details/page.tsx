@@ -90,7 +90,7 @@ function AccountDetailsPageContent() {
 
   return (
     <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans">
-      <section className="relative w-full h-[34vh] md:h-[42vh] flex flex-col justify-end p-5 md:p-8 overflow-hidden rounded-b-[var(--radius-xl)] md:rounded-b-[var(--radius-full)]">
+      <section className="relative w-full h-[34vh] md:h-[42vh] flex flex-col justify-end p-5 md:p-8 overflow-hidden rounded-b-[var(--radius-xl)] md:rounded-b-[var(--radius-full)] animate-spring-in">
         <Image
           src="https://images.unsplash.com/photo-1470165518248-ff1947d8b4f9?auto=format&fit=crop&w=1600&q=80"
           alt="Account details header"
@@ -152,7 +152,7 @@ function AccountDetailsPageContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             <label className="flex flex-col gap-2">
               <span className="text-xs font-lexend uppercase tracking-widest text-primary/50">First Name</span>
-              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
+              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-container/30">
                 <UserRound className="w-4 h-4 text-primary/50" />
                 <input
                   value={firstName}
@@ -165,7 +165,7 @@ function AccountDetailsPageContent() {
 
             <label className="flex flex-col gap-2">
               <span className="text-xs font-lexend uppercase tracking-widest text-primary/50">Last Name</span>
-              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
+              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-container/30">
                 <UserRound className="w-4 h-4 text-primary/50" />
                 <input
                   value={lastName}
@@ -176,15 +176,28 @@ function AccountDetailsPageContent() {
               </div>
             </label>
 
-            <label className="flex flex-col gap-2">
-              <span className="text-xs font-lexend uppercase tracking-widest text-primary/50">Email Address</span>
-              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
+<label className="flex flex-col gap-2">
+              <span className="text-xs font-lexend uppercase tracking-widest text-primary/50">Email</span>
+              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5 opacity-60">
                 <Mail className="w-4 h-4 text-primary/50" />
                 <input
                   value={email}
-                  readOnly
-                  className="w-full bg-transparent outline-none font-semibold text-primary/60"
+                  disabled
+                  className="w-full bg-transparent outline-none font-semibold text-primary cursor-not-allowed"
                   type="email"
+                />
+              </div>
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-xs font-lexend uppercase tracking-widest text-primary/50">Phone Number</span>
+              <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-container/30">
+                <Phone className="w-4 h-4 text-primary/50" />
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-transparent outline-none font-semibold text-primary"
+                  type="tel"
                 />
               </div>
             </label>
