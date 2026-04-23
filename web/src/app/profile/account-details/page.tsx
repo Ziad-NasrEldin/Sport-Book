@@ -9,6 +9,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { AuthGuard } from '@/components/auth/AuthGuard'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const favoriteSports = ['Tennis', 'Padel']
 
@@ -225,13 +226,13 @@ function AccountDetailsPageContent() {
               <span className="text-xs font-lexend uppercase tracking-widest text-primary/50">Preferred Language</span>
               <div className="flex items-center gap-2 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
                 <Globe className="w-4 h-4 text-primary/50" />
-                <select
+                <AppSelect
                   defaultValue="English"
                   className="w-full bg-transparent outline-none font-semibold text-primary"
                 >
                   <option>English</option>
                   <option>Arabic</option>
-                </select>
+                </AppSelect>
               </div>
             </label>
 
@@ -315,3 +316,4 @@ export default function AccountDetailsPage() {
     </AuthGuard>
   )
 }
+

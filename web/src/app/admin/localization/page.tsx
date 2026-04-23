@@ -11,6 +11,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 export default function AdminLocalizationPage() {
   const [defaultLocale, setDefaultLocale] = useState('')
   const [saving, setSaving] = useState(false)
@@ -122,7 +123,7 @@ export default function AdminLocalizationPage() {
         <AdminPanel eyebrow="Platform default" title="Locale Behavior">
           <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
             <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Default locale</span>
-            <select
+            <AppSelect
               value={defaultLocale}
               onChange={(event) => setDefaultLocale(event.target.value)}
               className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -132,7 +133,7 @@ export default function AdminLocalizationPage() {
                   {locale.locale}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
 
           <div className="mt-3 space-y-3">
@@ -150,3 +151,4 @@ export default function AdminLocalizationPage() {
     </div>
   )
 }
+

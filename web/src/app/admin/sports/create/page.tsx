@@ -9,6 +9,7 @@ import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 type SportStatus = 'Draft' | 'Enabled'
 
@@ -303,7 +304,7 @@ export default function AdminCreateSportPage() {
       <section className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
         <AdminPanel eyebrow="Template Setup" title="Auto Populate">
           <div className="flex flex-col md:flex-row gap-2">
-            <select
+            <AppSelect
               value={template}
               onChange={(event) => setTemplate(event.target.value as TemplateName)}
               className="w-full rounded-xl bg-surface-container-low px-3 py-2.5 text-sm text-primary outline-none"
@@ -313,7 +314,7 @@ export default function AdminCreateSportPage() {
                   {nameKey}
                 </option>
               ))}
-            </select>
+            </AppSelect>
             <button
               type="button"
               onClick={applyTemplate}
@@ -466,3 +467,5 @@ export default function AdminCreateSportPage() {
     </div>
   )
 }
+
+

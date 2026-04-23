@@ -14,6 +14,7 @@ import { statusTone } from '@/lib/admin/ui'
 import type { CoachService, CoachSessionType } from '@/lib/coach/types'
 import { api } from '@/lib/api/client'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 function formatEgp(value: number) {
   return new Intl.NumberFormat('en-EG', {
     style: 'currency',
@@ -207,7 +208,7 @@ export default function CoachServicesPage() {
                 <LabeledInput label="Multiplier" type="number" value={String(sessionTypeForm.multiplier)} onChange={(value) => setSessionTypeForm((current) => ({ ...current, multiplier: Number(value) }))} />
                 <label className="space-y-1">
                   <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Status</span>
-                  <select
+                  <AppSelect
                     value={sessionTypeForm.status}
                     onChange={(event) => setSessionTypeForm((current) => ({ ...current, status: event.target.value as SessionTypeFormState['status'] }))}
                     className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
@@ -215,7 +216,7 @@ export default function CoachServicesPage() {
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="PAUSED">PAUSED</option>
                     <option value="DRAFT">DRAFT</option>
-                  </select>
+                  </AppSelect>
                 </label>
               </div>
 
@@ -236,7 +237,7 @@ export default function CoachServicesPage() {
                 <LabeledInput label="Title" value={serviceForm.title} onChange={(value) => setServiceForm((current) => ({ ...current, title: value }))} />
                 <label className="space-y-1">
                   <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Session Type</span>
-                  <select
+                  <AppSelect
                     value={serviceForm.sessionTypeId}
                     onChange={(event) => setServiceForm((current) => ({ ...current, sessionTypeId: event.target.value }))}
                     className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
@@ -245,14 +246,14 @@ export default function CoachServicesPage() {
                     {safeSessionTypes.map((sessionType) => (
                       <option key={sessionType.id} value={sessionType.id}>{sessionType.name}</option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <LabeledInput label="Description" value={serviceForm.description} onChange={(value) => setServiceForm((current) => ({ ...current, description: value }))} className="md:col-span-2" />
                 <LabeledInput label="Duration" type="number" value={String(serviceForm.duration)} onChange={(value) => setServiceForm((current) => ({ ...current, duration: Number(value) }))} />
                 <LabeledInput label="Price" type="number" value={String(serviceForm.price)} onChange={(value) => setServiceForm((current) => ({ ...current, price: Number(value) }))} />
                 <label className="space-y-1">
                   <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Status</span>
-                  <select
+                  <AppSelect
                     value={serviceForm.status}
                     onChange={(event) => setServiceForm((current) => ({ ...current, status: event.target.value as ServiceFormState['status'] }))}
                     className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
@@ -260,7 +261,7 @@ export default function CoachServicesPage() {
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="PAUSED">PAUSED</option>
                     <option value="DRAFT">DRAFT</option>
-                  </select>
+                  </AppSelect>
                 </label>
               </div>
 
@@ -496,3 +497,4 @@ function LabeledInput({ label, value, onChange, type = 'text', className }: Labe
     </label>
   )
 }
+

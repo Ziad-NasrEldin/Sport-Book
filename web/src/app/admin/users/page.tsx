@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useMemo, useState } from 'react'
-import { Download, UserCog, UserMinus } from 'lucide-react'
+import { Download, UserCog, UserMinus, Check } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -10,9 +10,12 @@ import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
+import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
+import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon'
 import { statusTone } from '@/lib/admin/ui'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 const roleOptions = ['All', 'PLAYER', 'COACH', 'FACILITY', 'OPERATOR', 'ADMIN'] as const
 const statusOptions = ['All', 'ACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'] as const
 
@@ -38,6 +41,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [selectedRole, setSelectedRole] = useState<(typeof roleOptions)[number]>('All')
   const [selectedStatus, setSelectedStatus] = useState<(typeof statusOptions)[number]>('All')
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
+  const [isSuspending, setIsSuspending] = useState(false)
 
   const { data: usersResponse, loading, error } = useApiCall('/admin-workspace/users')
 
@@ -69,6 +74,44 @@ export default function AdminUsersPage() {
       return matchSearch && matchRole && matchStatus
     })
   }, [search, selectedRole, selectedStatus, usersData])
+
+  const handleToggleUserSelection = useCallback((userId: string) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(userId)) {
+        next.delete(userId)
+      } else {
+        next.add(userId)
+      }
+      return next
+    })
+  }, [])
+
+  const handleToggleSelectAll = useCallback(() => {
+    setSelectedUserIds((prev) => {
+      if (prev.size === filteredUsers.length) {
+        return new Set()
+      }
+      return new Set(filteredUsers.map((u) => u.id))
+    })
+  }, [filteredUsers])
+
+  const handleBulkSuspend = useCallback(async () => {
+    if (selectedUserIds.size === 0) return
+    setIsSuspending(true)
+
+    try {
+      const suspendPromises = Array.from(selectedUserIds).map((userId) =>
+        api.put(`/admin-workspace/users/${userId}`, { status: 'SUSPENDED' })
+      )
+
+      await Promise.all(suspendPromises)
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to suspend users:', error)
+      setIsSuspending(false)
+    }
+  }, [selectedUserIds])
 
   const userStats = useMemo(() => {
     return usersData.reduce(
@@ -156,7 +199,7 @@ export default function AdminUsersPage() {
           searchPlaceholder="Search by id, email, or user name"
           controls={
             <>
-              <select
+              <AppSelect
                 value={selectedRole}
                 onChange={handleRoleChange}
                 className="rounded-full border border-primary/10 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
@@ -166,8 +209,8 @@ export default function AdminUsersPage() {
                     {role}
                   </option>
                 ))}
-              </select>
-              <select
+              </AppSelect>
+              <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 className="rounded-full border border-primary/10 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
@@ -177,13 +220,15 @@ export default function AdminUsersPage() {
                     {status}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-secondary-container to-[#ff9f22] px-3.5 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-on-secondary-container shadow-[0_14px_28px_-18px_rgba(253,139,0,0.9)] transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                onClick={handleBulkSuspend}
+                disabled={selectedUserIds.size === 0 || isSuspending}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-secondary-container to-[#ff9f22] px-3.5 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-on-secondary-container shadow-[0_14px_28px_-18px_rgba(253,139,0,0.9)] transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-45 disabled:cursor-not-allowed disabled:translate-y-0"
               >
                 <UserMinus className="w-3.5 h-3.5" />
-                Suspend Selection
+                {isSuspending ? 'Suspending...' : selectedUserIds.size > 0 ? `Suspend (${selectedUserIds.size})` : 'Suspend Selection'}
               </button>
             </>
           }
@@ -203,6 +248,25 @@ export default function AdminUsersPage() {
               items={filteredUsers}
               getRowKey={(user) => user.id}
               columns={[
+                {
+                  key: 'select',
+                  header: (
+                    <input
+                      type="checkbox"
+                      checked={filteredUsers.length > 0 && selectedUserIds.size === filteredUsers.length}
+                      onChange={handleToggleSelectAll}
+                      className="w-4 h-4 rounded border-primary/20 bg-surface-container-low text-primary focus:ring-primary/20"
+                    />
+                  ),
+                  render: (user) => (
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.has(user.id)}
+                      onChange={() => handleToggleUserSelection(user.id)}
+                      className="w-4 h-4 rounded border-primary/20 bg-surface-container-low text-primary focus:ring-primary/20"
+                    />
+                  ),
+                },
                 {
                   key: 'identity',
                   header: 'User',
@@ -256,8 +320,9 @@ export default function AdminUsersPage() {
                         href={buildWhatsAppHref(user.name || 'User', user.id)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center rounded-full border border-[#25D366]/40 bg-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-[#128C7E] transition-colors hover:bg-[#25D366]/30"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#25D366]/40 bg-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-[#128C7E] transition-colors hover:bg-[#25D366]/30"
                       >
+                        <WhatsAppIcon className="h-3.5 w-3.5 fill-current" />
                         Quick Chat on WhatsApp
                       </a>
                     </div>
@@ -271,3 +336,4 @@ export default function AdminUsersPage() {
     </div>
   )
 }
+

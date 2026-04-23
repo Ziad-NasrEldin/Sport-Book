@@ -11,6 +11,7 @@ import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const statusOptions = ['Active', 'Maintenance', 'Paused'] as const
 const surfaceOptions = ['Acrylic', 'Artificial Grass', 'Hard Court'] as const
@@ -167,7 +168,7 @@ export default function OperatorCourtDetailsPage() {
 
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Status</span>
-              <select
+              <AppSelect
                 value={status}
                 onChange={handleStatusChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -177,12 +178,12 @@ export default function OperatorCourtDetailsPage() {
                     {option}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
 
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Surface type</span>
-              <select
+              <AppSelect
                 value={surface}
                 onChange={handleSurfaceChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -192,7 +193,7 @@ export default function OperatorCourtDetailsPage() {
                     {option}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -277,3 +278,4 @@ export default function OperatorCourtDetailsPage() {
     </div>
   )
 }
+

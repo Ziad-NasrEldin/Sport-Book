@@ -8,6 +8,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { api } from '@/lib/api/client'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 type DiscountKind = 'Percentage' | 'Fixed Amount'
 type MockCouponStatus = 'DRAFT' | 'ACTIVE'
 
@@ -239,14 +240,14 @@ export default function AdminCreateCouponPage() {
             </label>
             <label className="space-y-1.5">
               <span className="text-xs font-lexend uppercase tracking-[0.12em] text-primary/55">Discount Type</span>
-              <select
+              <AppSelect
                 value={discountKind}
                 onChange={(event) => setDiscountKind(event.target.value as DiscountKind)}
                 className="w-full rounded-xl bg-surface-container-low px-3 py-2.5 text-sm text-primary outline-none"
               >
                 <option value="Percentage">Percentage</option>
                 <option value="Fixed Amount">Fixed Amount</option>
-              </select>
+              </AppSelect>
             </label>
             <label className="space-y-1.5">
               <span className="text-xs font-lexend uppercase tracking-[0.12em] text-primary/55">Discount Value</span>
@@ -500,3 +501,4 @@ export default function AdminCreateCouponPage() {
     </div>
   )
 }
+

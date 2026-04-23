@@ -11,6 +11,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const statusOptions = ['All', 'PENDING', 'APPROVED', 'REJECTED'] as const
 
@@ -117,7 +118,7 @@ export default function AdminReviewsPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by author, target, or review id"
           controls={
-            <select
+            <AppSelect
               value={statusFilter}
               onChange={handleStatusFilterChange}
               className="rounded-full border-2 border-primary/15 bg-surface-container-low px-4 py-2.5 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium focus:border-amber-500/50"
@@ -127,7 +128,7 @@ export default function AdminReviewsPage() {
                   {status}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -230,3 +231,5 @@ export default function AdminReviewsPage() {
     </div>
   )
 }
+
+

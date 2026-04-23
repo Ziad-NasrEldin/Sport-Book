@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, MessageCircle, PencilLine, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowLeft, PencilLine, ShieldCheck, UserRound } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon'
 import { statusTone } from '@/lib/admin/ui'
 
 function buildWhatsAppHref(userName: string, userId: string) {
@@ -117,7 +118,7 @@ export default function AdminUserDetailsPage() {
               rel="noreferrer"
               className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366]/20 px-4 py-2.5 text-sm font-semibold text-[#128C7E]"
             >
-              <MessageCircle className="w-4 h-4" />
+              <WhatsAppIcon className="h-4 w-4 fill-current" />
               Quick Chat on WhatsApp
             </a>
 

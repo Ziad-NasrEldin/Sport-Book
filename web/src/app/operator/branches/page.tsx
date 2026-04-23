@@ -13,6 +13,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import type { BranchRecord, BranchStatus } from '@/lib/operator/mockData'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const statusOptions = ['All', 'ACTIVE', 'PENDING_SETUP', 'MAINTENANCE', 'PAUSED'] as const
 
@@ -95,7 +96,7 @@ export default function OperatorBranchesPage() {
           searchPlaceholder="Search by branch id, manager, or branch name"
           controls={
             <>
-              <select
+              <AppSelect
                 value={selectedCity}
                 onChange={handleCityChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -105,8 +106,8 @@ export default function OperatorBranchesPage() {
                     {city}
                   </option>
                 ))}
-              </select>
-              <select
+              </AppSelect>
+              <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -116,7 +117,7 @@ export default function OperatorBranchesPage() {
                     {status}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </>
           }
         />
@@ -198,3 +199,5 @@ export default function OperatorBranchesPage() {
     </div>
   )
 }
+
+

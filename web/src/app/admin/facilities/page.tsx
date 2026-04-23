@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useMemo, useState } from 'react'
-import { Activity, Building2, Download, Landmark, Plus, TrendingUp, X } from 'lucide-react'
+import { Activity, Building2, Download, Landmark, Pencil, Plus, Save, TrendingUp, X } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -12,6 +12,7 @@ import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import { showToast } from '@/lib/toast'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 type FacilityStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED'
 
@@ -63,8 +64,11 @@ export default function AdminFacilitiesPage() {
   const [search, setSearch] = useState('')
   const [cityFilter, setCityFilter] = useState<string>('All')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null)
   const [formState, setFormState] = useState<FacilityFormState>(INITIAL_FORM_STATE)
   const [formError, setFormError] = useState<string | null>(null)
+  const isEditMode = Boolean(editingFacilityId)
+  const isFormModalOpen = isCreateModalOpen || isEditMode
 
   const { data: facilitiesResponse, loading, error, refetch } = useApiCall('/admin-workspace/facilities')
   const { data: sportsResponse } = useApiCall('/admin-workspace/sports')
@@ -75,6 +79,7 @@ export default function AdminFacilitiesPage() {
     onSuccess: async () => {
       showToast('Facility created successfully.', 'success')
       setIsCreateModalOpen(false)
+      setEditingFacilityId(null)
       setFormState(INITIAL_FORM_STATE)
       setFormError(null)
       await refetch()
@@ -83,6 +88,24 @@ export default function AdminFacilitiesPage() {
       setFormError(apiError.message || 'Failed to create facility.')
     },
   })
+
+  const updateFacilityMutation = useApiMutation(
+    editingFacilityId ? `/admin-workspace/facilities/${editingFacilityId}` : '/admin-workspace/facilities',
+    'PATCH',
+    {
+      onSuccess: async () => {
+        showToast('Facility updated successfully.', 'success')
+        setIsCreateModalOpen(false)
+        setEditingFacilityId(null)
+        setFormState(INITIAL_FORM_STATE)
+        setFormError(null)
+        await refetch()
+      },
+      onError: (apiError) => {
+        setFormError(apiError.message || 'Failed to update facility.')
+      },
+    },
+  )
 
   const handleCityFilterChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
     setCityFilter(event.target.value)
@@ -111,14 +134,39 @@ export default function AdminFacilitiesPage() {
   const openCreateModal = useCallback(() => {
     setFormState(INITIAL_FORM_STATE)
     setFormError(null)
+    setEditingFacilityId(null)
     setIsCreateModalOpen(true)
   }, [])
 
-  const closeCreateModal = useCallback(() => {
+  const openEditModal = useCallback((facility: any) => {
     setIsCreateModalOpen(false)
+    setEditingFacilityId(facility.id)
+    setFormError(null)
+    setFormState({
+      name: facility.name || '',
+      city: facility.city || 'Cairo',
+      address: facility.address || '',
+      description: facility.description || '',
+      phone: facility.phone || '',
+      email: facility.email || '',
+      status: (facility.status as FacilityStatus) || 'ACTIVE',
+      operatorName: facility.operator?.name || '',
+      operatorEmail: facility.operator?.email || '',
+      operatorPhone: facility.operator?.phone || '',
+      branchName: facility.branches?.[0]?.name || '',
+      branchAddress: facility.branches?.[0]?.address || '',
+      sportIds: Array.isArray(facility.sports) ? facility.sports.map((item: any) => item.sportId).filter(Boolean) : [],
+    })
+  }, [])
+
+  const closeFormModal = useCallback(() => {
+    setIsCreateModalOpen(false)
+    setEditingFacilityId(null)
+    setFormState(INITIAL_FORM_STATE)
     setFormError(null)
     createFacilityMutation.reset()
-  }, [createFacilityMutation])
+    updateFacilityMutation.reset()
+  }, [createFacilityMutation, updateFacilityMutation])
 
   const cityOptions = useMemo<string[]>(
     () => ['All', ...Array.from(new Set<string>(facilitiesData.map((item: any) => item.city).filter(Boolean)))],
@@ -215,7 +263,7 @@ export default function AdminFacilitiesPage() {
         return
       }
 
-      await createFacilityMutation.mutate({
+      const payload = {
         ...formState,
         name: trimmedName,
         city: trimmedCity,
@@ -228,10 +276,19 @@ export default function AdminFacilitiesPage() {
         operatorPhone: formState.operatorPhone.trim() || undefined,
         branchName: formState.branchName.trim() || undefined,
         branchAddress: formState.branchAddress.trim() || undefined,
-      })
+      }
+
+      if (isEditMode && editingFacilityId) {
+        await updateFacilityMutation.mutate(payload)
+        return
+      }
+
+      await createFacilityMutation.mutate(payload)
     },
-    [createFacilityMutation, formState],
+    [createFacilityMutation, editingFacilityId, formState, isEditMode, updateFacilityMutation],
   )
+
+  const isSubmitting = createFacilityMutation.loading || updateFacilityMutation.loading
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
@@ -371,7 +428,7 @@ export default function AdminFacilitiesPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by facility name, id, or operator"
           controls={
-            <select
+            <AppSelect
               value={cityFilter}
               onChange={handleCityFilterChange}
               className="rounded-full border border-primary/12 bg-surface-container-low px-4 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary shadow-sm outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.15)] motion-safe:focus:-translate-y-0.5"
@@ -381,7 +438,7 @@ export default function AdminFacilitiesPage() {
                   {city}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -433,28 +490,44 @@ export default function AdminFacilitiesPage() {
                   header: 'Status',
                   render: (facility: any) => <AdminStatusPill label={facility.status || 'Unknown'} tone={statusTone(facility.status || 'Unknown')} />,
                 },
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  render: (facility: any) => (
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(facility)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-surface-container-low px-3 py-1.5 text-xs font-lexend font-bold uppercase tracking-[0.1em] text-primary transition-all duration-200 hover:bg-surface-container-high motion-safe:hover:-translate-y-0.5"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                  ),
+                },
               ]}
             />
           )}
         </div>
       </AdminPanel>
 
-      {isCreateModalOpen ? (
+      {isFormModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px] motion-safe:animate-[var(--animate-modal-backdrop-in)]">
           <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden overflow-y-auto rounded-[calc(var(--radius-lg)+6px)] border border-primary/14 bg-surface-container-lowest shadow-[0_28px_70px_rgba(0,0,0,0.32)] motion-safe:animate-[var(--animate-modal-dialog-in)]">
             <div className="relative flex items-start justify-between gap-4 border-b border-primary/10 bg-gradient-to-r from-primary-container/35 via-surface-container-lowest to-surface-container-low px-6 py-5">
               <div className="pointer-events-none absolute -bottom-8 right-8 h-20 w-20 rounded-full bg-primary/20 blur-2xl" />
               <div>
-                <p className="text-[11px] font-lexend uppercase tracking-[0.16em] text-primary/55">Admin Action</p>
-                <h3 className="mt-1 text-2xl font-black text-primary">Add Facility</h3>
+                <p className="text-[11px] font-lexend uppercase tracking-[0.16em] text-primary/55">{isEditMode ? 'Admin Update' : 'Admin Action'}</p>
+                <h3 className="mt-1 text-2xl font-black text-primary">{isEditMode ? 'Edit Facility' : 'Add Facility'}</h3>
                 <p className="mt-2 text-sm text-primary/65">
-                  Create a facility, provision its operator account, and optionally link sports in one step.
+                  {isEditMode
+                    ? 'Update facility profile, operator identity, branch details, and linked sports from one workspace.'
+                    : 'Create a facility, provision its operator account, and optionally link sports in one step.'}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={closeCreateModal}
-                aria-label="Close add facility dialog"
+                onClick={closeFormModal}
+                aria-label={isEditMode ? 'Close edit facility dialog' : 'Close add facility dialog'}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/10 bg-surface-container-low text-primary shadow-sm transition-all duration-200 hover:bg-surface-container-high motion-safe:hover:scale-105 motion-safe:active:scale-95"
               >
                 <X className="h-4 w-4" />
@@ -529,7 +602,7 @@ export default function AdminFacilitiesPage() {
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Status</span>
-                  <select
+                  <AppSelect
                     name="status"
                     value={formState.status}
                     onChange={handleFieldChange}
@@ -538,7 +611,7 @@ export default function AdminFacilitiesPage() {
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="PENDING">PENDING</option>
                     <option value="SUSPENDED">SUSPENDED</option>
-                  </select>
+                  </AppSelect>
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Main Branch Name</span>
@@ -566,7 +639,9 @@ export default function AdminFacilitiesPage() {
                 <div>
                   <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Operator Account</p>
                   <p className="mt-1 text-sm text-primary/65">
-                    Leave these fields blank and the system will auto-generate the operator identity for you.
+                    {isEditMode
+                      ? 'Update operator identity, email, and phone details tied to this facility account.'
+                      : 'Leave these fields blank and the system will auto-generate the operator identity for you.'}
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">
@@ -602,7 +677,11 @@ export default function AdminFacilitiesPage() {
                     />
                   </label>
                 </div>
-                <p className="text-xs text-primary/55">Auto-created operators use the default seeded password: <span className="font-bold">password123</span></p>
+                {isEditMode ? (
+                  <p className="text-xs text-primary/55">Operator status syncs with facility status automatically.</p>
+                ) : (
+                  <p className="text-xs text-primary/55">Auto-created operators use the default seeded password: <span className="font-bold">password123</span></p>
+                )}
               </section>
 
               <section className="space-y-3 rounded-[var(--radius-md)] border border-primary/10 bg-surface-container-low/35 p-4 motion-safe:animate-[var(--animate-field-group-in)] animation-delay-200">
@@ -640,18 +719,18 @@ export default function AdminFacilitiesPage() {
               <div className="flex flex-wrap items-center justify-end gap-3 border-t border-primary/8 pt-4">
                 <button
                   type="button"
-                  onClick={closeCreateModal}
+                  onClick={closeFormModal}
                   className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-surface-container-high motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={createFacilityMutation.loading}
+                  disabled={isSubmitting}
                   className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-sm transition-all duration-200 hover:opacity-90 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <Plus className="h-4 w-4" />
-                  {createFacilityMutation.loading ? 'Creating...' : 'Create Facility'}
+                  {isEditMode ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Facility'}
                 </button>
               </div>
             </form>
@@ -661,3 +740,5 @@ export default function AdminFacilitiesPage() {
     </div>
   )
 }
+
+

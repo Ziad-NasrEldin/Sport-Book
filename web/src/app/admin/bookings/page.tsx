@@ -13,6 +13,7 @@ import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 const statusOptions = ['All', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as const
 
 type BookingStatus = (typeof statusOptions)[number]
@@ -162,7 +163,7 @@ export default function AdminBookingsPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by booking id, facility, or customer"
           controls={
-            <select
+            <AppSelect
               value={selectedStatus}
               onChange={handleStatusChange}
               className="rounded-full border border-primary/10 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
@@ -172,7 +173,7 @@ export default function AdminBookingsPage() {
                   {status}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -246,3 +247,4 @@ export default function AdminBookingsPage() {
     </div>
   )
 }
+

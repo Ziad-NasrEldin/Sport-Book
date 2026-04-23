@@ -10,6 +10,7 @@ import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 type CourtSport = string
 
 type CreateFormState = {
@@ -354,7 +355,7 @@ export default function TeamsPage() {
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className={`bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3 group transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-ambient transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
             <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">You are joining as</span>
-            <select
+            <AppSelect
               className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
               value={activeUserId}
               onChange={(event) => {
@@ -367,7 +368,7 @@ export default function TeamsPage() {
                 {user.name}
               </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
 
           <div className={`bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
@@ -394,7 +395,7 @@ export default function TeamsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Sport</span>
-                <select
+                <AppSelect
                   value={createForm.sport}
                   onChange={(event) => {
                     const value = event.target.value
@@ -416,12 +417,12 @@ export default function TeamsPage() {
                       {sport}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
 
               <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Court</span>
-                <select
+                <AppSelect
                   value={createForm.courtId}
                   onChange={(event) => {
                     setCreateForm((prev) => ({
@@ -441,7 +442,7 @@ export default function TeamsPage() {
                       {court.name}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
 
               <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
@@ -479,7 +480,7 @@ export default function TeamsPage() {
 
               <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Start Hour</span>
-                <select
+                <AppSelect
                   value={createForm.startHour}
                   onChange={(event) => {
                     setCreateForm((prev) => ({
@@ -494,12 +495,12 @@ export default function TeamsPage() {
                       {formatHour(hour)}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
 
               <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Duration</span>
-                <select
+                <AppSelect
                   value={createForm.durationHours}
                   onChange={(event) => {
                     setCreateForm((prev) => ({
@@ -514,7 +515,7 @@ export default function TeamsPage() {
                       {duration} hour{duration > 1 ? 's' : ''}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
             </div>
 
@@ -539,7 +540,7 @@ export default function TeamsPage() {
             <h2 className="text-lg md:text-xl font-bold text-primary">Teams Feed</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:w-auto">
-              <select
+              <AppSelect
                 value={selectedSportFilter}
                 onChange={(event) => setSelectedSportFilter(event.target.value as 'All' | CourtSport)}
                 className="bg-surface-container-high rounded-full px-4 py-2.5 text-sm font-semibold text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:text-primary-container active:scale-[0.97] transition-[transform,box-shadow,color] duration-200"
@@ -550,7 +551,7 @@ export default function TeamsPage() {
                     {sport}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
 
               <input
                 type="date"
@@ -670,3 +671,4 @@ export default function TeamsPage() {
     </main>
   )
 }
+

@@ -3,7 +3,6 @@
 import { forwardRef, type SelectHTMLAttributes } from "react"
 import { ChevronDown } from "lucide-react"
 import { clsx } from "clsx"
-
 export type SelectSize = "sm" | "md" | "lg"
 
 type AdminSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> & {
@@ -53,3 +52,4 @@ export const AdminSelect = forwardRef<HTMLSelectElement, AdminSelectProps>(
     )
   }
 )
+

@@ -12,6 +12,7 @@ import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import { showToast } from '@/lib/toast'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 type CoachStatus = 'APPROVED' | 'PENDING' | 'SUSPENDED'
 
@@ -294,7 +295,7 @@ export default function AdminCoachesPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by coach id, name, or email"
           controls={
-            <select
+            <AppSelect
               value={sportFilter}
               onChange={(event) => setSportFilter(event.target.value)}
               className="rounded-full border border-primary/15 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-high"
@@ -304,7 +305,7 @@ export default function AdminCoachesPage() {
                   {sport}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -436,7 +437,7 @@ export default function AdminCoachesPage() {
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Sport</span>
-                  <select
+                  <AppSelect
                     name="sportId"
                     value={formState.sportId}
                     onChange={handleFieldChange}
@@ -449,11 +450,11 @@ export default function AdminCoachesPage() {
                         {sport.displayName || sport.name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Status</span>
-                  <select
+                  <AppSelect
                     name="status"
                     value={formState.status}
                     onChange={handleFieldChange}
@@ -462,7 +463,7 @@ export default function AdminCoachesPage() {
                     <option value="APPROVED">APPROVED</option>
                     <option value="PENDING">PENDING</option>
                     <option value="SUSPENDED">SUSPENDED</option>
-                  </select>
+                  </AppSelect>
                 </label>
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Experience (years)</span>
@@ -554,3 +555,5 @@ export default function AdminCoachesPage() {
     </div>
   )
 }
+
+

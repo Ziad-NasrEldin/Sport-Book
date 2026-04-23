@@ -16,6 +16,7 @@ import { stringValue } from '@/lib/api/extract'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import { showToast } from '@/lib/toast'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const tabs = ['Products', 'Orders'] as const
 const productStatusOptions = ['All', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'] as const
@@ -628,7 +629,7 @@ export default function AdminStoreManagementPage() {
               onSearchChange={setProductSearch}
               searchPlaceholder="Search by product title, id, category, or facility"
               controls={
-                <select
+                <AppSelect
                   value={productStatus}
                   onChange={(event) => setProductStatus(event.target.value as (typeof productStatusOptions)[number])}
                   className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -638,7 +639,7 @@ export default function AdminStoreManagementPage() {
                       {status}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               }
             />
 
@@ -728,7 +729,7 @@ export default function AdminStoreManagementPage() {
               onSearchChange={setOrderSearch}
               searchPlaceholder="Search by order id, customer, or product"
               controls={
-                <select
+                <AppSelect
                   value={orderStatus}
                   onChange={(event) => setOrderStatus(event.target.value as (typeof orderStatusOptions)[number])}
                   className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -738,7 +739,7 @@ export default function AdminStoreManagementPage() {
                       {status}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               }
             />
 
@@ -809,7 +810,7 @@ export default function AdminStoreManagementPage() {
 
                         return (
                           <div className="flex min-w-[220px] items-center gap-2">
-                            <select
+                            <AppSelect
                               value={nextStatus}
                               onChange={(event) => handleOrderDraftChange(order.id, event.target.value as OrderStatus)}
                               className="rounded-full bg-surface-container-low px-3 py-2 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -819,7 +820,7 @@ export default function AdminStoreManagementPage() {
                                   {status}
                                 </option>
                               ))}
-                            </select>
+                            </AppSelect>
                             <button
                               type="button"
                               onClick={() => handleUpdateOrderStatus(order.id)}
@@ -879,7 +880,7 @@ export default function AdminStoreManagementPage() {
               <section className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Facility</span>
-                  <select
+                  <AppSelect
                     name="facilityId"
                     value={productForm.facilityId}
                     onChange={handleProductFieldChange}
@@ -892,7 +893,7 @@ export default function AdminStoreManagementPage() {
                         {facility.name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
 
                 <label className="space-y-1.5">
@@ -970,7 +971,7 @@ export default function AdminStoreManagementPage() {
 
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Status</span>
-                  <select
+                  <AppSelect
                     name="status"
                     value={productForm.status}
                     onChange={handleProductFieldChange}
@@ -983,7 +984,7 @@ export default function AdminStoreManagementPage() {
                           {status}
                         </option>
                       ))}
-                  </select>
+                  </AppSelect>
                 </label>
               </section>
 
@@ -1017,3 +1018,5 @@ export default function AdminStoreManagementPage() {
     </div>
   )
 }
+
+

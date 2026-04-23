@@ -9,6 +9,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const roleOptions = ['PLAYER', 'COACH', 'OPERATOR', 'ADMIN'] as const
 const statusOptions = ['ACTIVE', 'PENDING', 'SUSPENDED', 'ARCHIVED'] as const
@@ -271,7 +272,7 @@ export default function AdminUserEditPage() {
 
           <label className="block space-y-1">
             <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Role</span>
-            <select
+            <AppSelect
               value={role}
               onChange={(event) => setRole(event.target.value as typeof roleOptions[number])}
               className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
@@ -279,12 +280,12 @@ export default function AdminUserEditPage() {
               {roleOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
-            </select>
+            </AppSelect>
           </label>
 
           <label className="block space-y-1">
             <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Status</span>
-            <select
+            <AppSelect
               value={status}
               onChange={(event) => setStatus(event.target.value as typeof statusOptions[number])}
               className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
@@ -292,7 +293,7 @@ export default function AdminUserEditPage() {
               {statusOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
-            </select>
+            </AppSelect>
           </label>
 
           <label className="block space-y-1 md:col-span-2">
@@ -366,3 +367,4 @@ export default function AdminUserEditPage() {
     </div>
   )
 }
+

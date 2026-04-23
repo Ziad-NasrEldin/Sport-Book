@@ -12,6 +12,8 @@ vi.mock('../service', () => ({
   getDashboardStats: vi.fn(),
   listAuditLogs: vi.fn(),
   listFacilities: vi.fn(),
+  createFacility: vi.fn(),
+  updateFacility: vi.fn(),
   listCoaches: vi.fn(),
   listBookings: vi.fn(),
   listFinance: vi.fn(),
@@ -37,7 +39,7 @@ vi.mock('../service', () => ({
   listStoreOrders: vi.fn(),
 }))
 
-import { respondToRoleUpgrade, updateVerificationCase } from '../service'
+import { respondToRoleUpgrade, updateFacility, updateVerificationCase } from '../service'
 
 let app: FastifyInstance
 
@@ -91,5 +93,33 @@ describe('admin verification routes', () => {
 
     expect(res.statusCode).toBe(200)
     expect(updateVerificationCase).toHaveBeenCalledWith('req_1', payload, 'admin_1')
+  })
+})
+
+describe('admin facility routes', () => {
+  it('passes authenticated admin id to facility updates', async () => {
+    vi.mocked(updateFacility).mockResolvedValue({ id: 'facility_1', status: 'ACTIVE' } as any)
+    const token = await app.jwt.sign({ userId: 'admin_1', email: 'admin@sportbook.com', role: 'ADMIN' })
+
+    const payload = {
+      name: 'Arena One',
+      city: 'Cairo',
+      status: 'ACTIVE',
+      operatorName: 'Arena Manager',
+      operatorEmail: 'manager@arena-one.com',
+      branchName: 'Main Branch',
+      branchAddress: 'Nasr City',
+      sportIds: ['sport_1'],
+    }
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/admin-workspace/facilities/facility_1',
+      headers: { authorization: `Bearer ${token}` },
+      payload,
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(updateFacility).toHaveBeenCalledWith('facility_1', payload, 'admin_1')
   })
 })

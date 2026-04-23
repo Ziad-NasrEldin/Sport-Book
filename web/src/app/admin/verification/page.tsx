@@ -13,6 +13,7 @@ import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 const statusFilters = ['All', 'PENDING', 'APPROVED', 'REJECTED'] as const
 
 function getRiskLevel(requestedRole: string): 'Low' | 'Medium' | 'High' {
@@ -99,7 +100,7 @@ export default function AdminVerificationPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by user id, role, or request id"
           controls={
-            <select
+            <AppSelect
               value={statusFilter}
               onChange={handleStatusFilterChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -109,7 +110,7 @@ export default function AdminVerificationPage() {
                   {status}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -180,3 +181,4 @@ export default function AdminVerificationPage() {
     </div>
   )
 }
+

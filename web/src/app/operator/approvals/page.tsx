@@ -13,6 +13,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import { exportToCsv } from '@/lib/export'
 import type { ApprovalRecord, ApprovalPriority, ApprovalStatus } from '@/lib/operator/mockData'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const statusOptions = ['All', 'Pending', 'Approved', 'Rejected'] as const
 const priorityOptions = ['All', 'Low', 'Medium', 'High'] as const
@@ -121,7 +122,7 @@ export default function OperatorApprovalsPage() {
           searchPlaceholder="Search by request id, requester, or subject"
           controls={
             <>
-              <select
+              <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -131,9 +132,9 @@ export default function OperatorApprovalsPage() {
                     {status}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
 
-              <select
+              <AppSelect
                 value={selectedPriority}
                 onChange={handlePriorityChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -143,7 +144,7 @@ export default function OperatorApprovalsPage() {
                     {priority}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </>
           }
         />
@@ -225,3 +226,5 @@ export default function OperatorApprovalsPage() {
     </div>
   )
 }
+
+

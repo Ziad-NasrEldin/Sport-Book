@@ -11,6 +11,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import type { ScheduleSlot, BranchRecord, CourtRecord } from '@/lib/operator/mockData'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const statusOptions = ['All', 'OPEN', 'BOOKED', 'BLOCKED'] as const
 const weekOptions = ['This Week', 'Next Week', 'Following Week'] as const
@@ -105,7 +106,7 @@ export default function OperatorSchedulePage() {
 
       <AdminPanel eyebrow="Planner" title="Weekly Slot Grid">
         <div className="flex flex-wrap gap-2">
-          <select
+          <AppSelect
             value={selectedBranch}
             onChange={handleBranchChange}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -115,9 +116,9 @@ export default function OperatorSchedulePage() {
                 {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
               </option>
             ))}
-          </select>
+          </AppSelect>
 
-          <select
+          <AppSelect
             value={selectedStatus}
             onChange={handleStatusChange}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -127,9 +128,9 @@ export default function OperatorSchedulePage() {
                 {status}
               </option>
             ))}
-          </select>
+          </AppSelect>
 
-          <select
+          <AppSelect
             value={selectedWeek}
             onChange={handleWeekChange}
             className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -139,7 +140,7 @@ export default function OperatorSchedulePage() {
                 {week}
               </option>
             ))}
-          </select>
+          </AppSelect>
         </div>
 
         <div className="mt-4">
@@ -200,3 +201,5 @@ export default function OperatorSchedulePage() {
     </div>
   )
 }
+
+

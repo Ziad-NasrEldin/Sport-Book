@@ -14,6 +14,7 @@ import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 const statusOptions = ['All', 'ACTIVE', 'EXPIRED', 'DRAFT'] as const
 
 type CouponRecord = {
@@ -185,7 +186,7 @@ export default function AdminCouponsPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by coupon code"
           controls={
-            <select
+            <AppSelect
               value={statusFilter}
               onChange={handleStatusFilterChange}
               className="rounded-full border border-primary/10 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
@@ -195,7 +196,7 @@ export default function AdminCouponsPage() {
                   {status}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -287,3 +288,4 @@ export default function AdminCouponsPage() {
     </div>
   )
 }
+

@@ -1484,7 +1484,6 @@ export async function updateFacility(facilityId: string, data: UpdateFacilityInp
             facilityId,
             sportId,
           })),
-          skipDuplicates: true,
         })
       }
     }

@@ -10,6 +10,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import type { CoachAvailabilityData, CoachAvailabilityException, CoachAvailabilityWindow } from '@/lib/coach/types'
 import { api } from '@/lib/api/client'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const EMPTY_WINDOW: {
   day: string
@@ -303,7 +304,7 @@ function SelectField({ label, value, onChange, options }: SelectFieldProps) {
   return (
     <label className="space-y-1">
       <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">{label}</span>
-      <select
+      <AppSelect
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
@@ -311,7 +312,9 @@ function SelectField({ label, value, onChange, options }: SelectFieldProps) {
         {options.map((option) => (
           <option key={option} value={option}>{option}</option>
         ))}
-      </select>
+      </AppSelect>
     </label>
   )
 }
+
+

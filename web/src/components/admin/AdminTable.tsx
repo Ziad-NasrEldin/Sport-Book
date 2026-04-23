@@ -4,7 +4,7 @@ import { AdminEmptyState } from './AdminEmptyState'
 
 type Column<T> = {
   key: string
-  header: string
+  header: string | ReactNode
   className?: string
   render: (item: T) => ReactNode
 }

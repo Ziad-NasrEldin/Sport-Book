@@ -14,6 +14,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import { exportToCsv } from '@/lib/export'
 import type { CourtRecord, CourtStatus, BranchRecord } from '@/lib/operator/mockData'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const statusOptions = ['All', 'ACTIVE', 'MAINTENANCE', 'PAUSED'] as const
 
@@ -132,7 +133,7 @@ export default function OperatorCourtsPage() {
           searchPlaceholder="Search by court id, branch, or court name"
           controls={
             <>
-              <select
+              <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -142,9 +143,9 @@ export default function OperatorCourtsPage() {
                     {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
 
-              <select
+              <AppSelect
                 value={selectedSport}
                 onChange={handleSportChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -154,9 +155,9 @@ export default function OperatorCourtsPage() {
                     {sport}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
 
-              <select
+              <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -166,7 +167,7 @@ export default function OperatorCourtsPage() {
                     {status}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </>
           }
         />
@@ -239,3 +240,5 @@ export default function OperatorCourtsPage() {
     </div>
   )
 }
+
+

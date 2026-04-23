@@ -11,6 +11,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const presets = ['Revenue', 'User Growth', 'Peak Hours', 'Sports Popularity'] as const
 
@@ -63,7 +64,7 @@ export default function AdminReportsPage() {
           <div className="space-y-3">
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Preset</span>
-              <select
+              <AppSelect
                 value={selectedPreset}
                 onChange={(event) => setSelectedPreset(event.target.value as (typeof presets)[number])}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -73,7 +74,7 @@ export default function AdminReportsPage() {
                     {preset}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
 
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
@@ -158,3 +159,5 @@ export default function AdminReportsPage() {
     </div>
   )
 }
+
+

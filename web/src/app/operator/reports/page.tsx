@@ -13,6 +13,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
 import type { ReportJob, BranchRecord } from '@/lib/operator/mockData'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const presetOptions = ['Revenue Heatmap', 'Utilization by Court', 'Cancellation Analysis', 'Staff Coverage'] as const
 
@@ -89,7 +90,7 @@ export default function OperatorReportsPage() {
           <div className="space-y-3">
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Preset</span>
-              <select
+              <AppSelect
                 value={selectedPreset}
                 onChange={handlePresetChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -99,12 +100,12 @@ export default function OperatorReportsPage() {
                     {preset}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
 
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
               <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Branch scope</span>
-              <select
+              <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
                 className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
@@ -114,7 +115,7 @@ export default function OperatorReportsPage() {
                     {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
 
             <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
@@ -196,3 +197,5 @@ export default function OperatorReportsPage() {
     </div>
   )
 }
+
+

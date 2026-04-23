@@ -11,6 +11,7 @@ import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const severityOptions = ['All', 'INFO', 'WARNING', 'CRITICAL'] as const
 
@@ -66,7 +67,7 @@ export default function AdminAuditPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search by actor, action, or event id"
           controls={
-            <select
+            <AppSelect
               value={severity}
               onChange={handleSeverityChange}
               className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -76,7 +77,7 @@ export default function AdminAuditPage() {
                   {option}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           }
         />
 
@@ -131,3 +132,5 @@ export default function AdminAuditPage() {
     </div>
   )
 }
+
+

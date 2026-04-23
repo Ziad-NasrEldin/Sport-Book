@@ -12,6 +12,7 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { statusTone } from '@/lib/admin/ui'
 import type { StaffRecord } from '@/lib/operator/mockData'
+import { AppSelect } from '@/components/ui/AppSelect'
 
 const roleOptions = ['All', 'Branch Manager', 'Front Desk', 'Maintenance', 'Coach Coordinator'] as const
 const statusOptions = ['All', 'Active', 'Pending', 'On Leave', 'Suspended'] as const
@@ -100,7 +101,7 @@ export default function OperatorStaffPage() {
           searchPlaceholder="Search by name, id, or email"
           controls={
             <>
-              <select
+              <AppSelect
                 value={selectedRole}
                 onChange={handleRoleChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -110,9 +111,9 @@ export default function OperatorStaffPage() {
                     {role}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
 
-              <select
+              <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -122,9 +123,9 @@ export default function OperatorStaffPage() {
                     {status}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
 
-              <select
+              <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
                 className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
@@ -134,7 +135,7 @@ export default function OperatorStaffPage() {
                     {branchId === 'All' ? 'All Branches' : getBranchNameById(branchId)}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </>
           }
         />
@@ -195,3 +196,5 @@ export default function OperatorStaffPage() {
     </div>
   )
 }
+
+

@@ -8,6 +8,7 @@ import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 
+import { AppSelect } from '@/components/ui/AppSelect'
 export default function AdminSettingsPage() {
   const [commissionRate, setCommissionRate] = useState('18')
   const [approvalMode, setApprovalMode] = useState('manual')
@@ -160,14 +161,14 @@ export default function AdminSettingsPage() {
 
             <label className="block rounded-[var(--radius-default)] border border-primary/10 bg-white/85 p-4 shadow-[0_14px_26px_-22px_rgba(0,17,58,0.65)]">
               <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/60">Default booking approval mode</span>
-              <select
+              <AppSelect
                 value={approvalMode}
                 onChange={(event) => setApprovalMode(event.target.value)}
                 className="mt-2.5 w-full rounded-[var(--radius-default)] border border-primary/20 bg-surface-container-lowest px-3.5 py-3 text-lg font-extrabold text-primary outline-none transition-all focus:border-primary-container focus:shadow-[0_0_0_2px_rgba(0,35,102,0.12)]"
               >
                 <option value="manual">Manual approval</option>
                 <option value="auto">Auto approve</option>
-              </select>
+              </AppSelect>
             </label>
 
             <label className="block rounded-[var(--radius-default)] border border-primary/10 bg-white/85 p-4 shadow-[0_14px_26px_-22px_rgba(0,17,58,0.65)]">
@@ -245,3 +246,4 @@ export default function AdminSettingsPage() {
     </div>
   )
 }
+
