@@ -156,3 +156,25 @@ pm run build\).
 ## 2026-04-16 (SEO - Robots Metadata + Canonical URL Template)
 - Added `web/src/app/robots.ts` to generate `robots.txt` with canonical host/sitemap values derived from `NEXT_PUBLIC_SITE_URL` (with safe fallback support).
 - Added `web/.env.example` as a production template for `NEXT_PUBLIC_SITE_URL` and updated `web/.gitignore` to allow committing `.env.example`.
+
+## 2026-04-23 (Fix - Web Dev OOM and Localhost Memory Spike)
+- Investigated localhost crash behavior and reproduced a Turbopack out-of-memory failure during `/` compile, including worker-thread spawn failures under resource pressure.
+- Fixed Next config scope in `web/next.config.ts` by aligning both `outputFileTracingRoot` and `turbopack.root` to the `web` app directory instead of the repository root.
+- Eliminated repo-root module resolution side effects (including `tailwindcss` resolution attempts from `E:\GitHub\Sport-Book`) and restored stable local dev startup/compile behavior.
+
+## 2026-04-23 (Fix - Auth Sign-In Hydration Mismatch)
+- Fixed SSR/client text mismatch on `/auth/sign-in` by removing localStorage-based account-type initialization from first render.
+- Set deterministic initial account type (`player`) and moved persisted account-type hydration into `useEffect` after mount.
+- Prevented hydration failures when stored account type differs from server-rendered default label/button text.
+
+## 2026-04-23 (Fix - Multi-Page Hydration Mismatch Hardening)
+- Removed client-storage-dependent state initializers from Home, Book, Store Product Details, and Profile pages so server and client first render now match.
+- Stabilized Coach Details initial render by deferring selected-date initialization to mount-time before availability rendering.
+- Hydrated auth token, onboarding completion, unread notifications, cart state, and favorites in `useEffect` after mount.
+- Prevented SSR/client HTML drift that could trigger hydration tree regeneration on initial load.
+
+## 2026-04-23 (Feature - Firebase Social Login Prep)
+- Added Firebase Google/Facebook backend token exchange via `/api/v1/auth/social-login` while preserving JWT access tokens and HttpOnly refresh cookies.
+- Added `SocialAccount` Prisma linkage, Firebase Admin token verification, and social account auto-link/create behavior.
+- Wired frontend Firebase popup sign-in buttons into `/auth/sign-in` and documented required public Firebase env vars.
+- Added auth route/service coverage for social login and verified API tests plus API/web production builds.

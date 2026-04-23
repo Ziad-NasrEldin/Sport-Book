@@ -310,6 +310,20 @@ function ProfilePageContent() {
             </div>
           </button>
         </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-2 text-sm font-bold text-primary/60">
+          <Link href="/privacy-policy" className="hover:text-secondary-container transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="text-primary/25">|</span>
+          <Link href="/terms-of-service" className="hover:text-secondary-container transition-colors">
+            Terms of Service
+          </Link>
+          <span className="text-primary/25">|</span>
+          <Link href="/data-deletion" className="hover:text-secondary-container transition-colors">
+            Data Deletion
+          </Link>
+        </div>
       </section>
 
       <FloatingNav />

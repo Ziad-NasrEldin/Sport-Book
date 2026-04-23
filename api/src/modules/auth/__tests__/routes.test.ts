@@ -6,6 +6,7 @@ import { createApp } from '../../../app'
 vi.mock('../service', () => ({
   register: vi.fn(),
   login: vi.fn(),
+  loginWithSocialToken: vi.fn(),
   logout: vi.fn(),
   refreshAccessToken: vi.fn(),
   requestPasswordReset: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('../service', () => ({
 import {
   register,
   login,
+  loginWithSocialToken,
   logout,
   refreshAccessToken,
   requestPasswordReset,
@@ -121,6 +123,33 @@ describe('POST /api/v1/auth/login', () => {
       payload: { email: 'test@example.com', password: 'wrong' },
     })
     expect(res.statusCode).toBe(401)
+  })
+})
+
+describe('POST /api/v1/auth/social-login', () => {
+  it('returns 200 with accessToken and sets cookie', async () => {
+    vi.mocked(loginWithSocialToken).mockResolvedValue({ user: mockUser, tokens: mockTokens })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/social-login',
+      payload: { provider: 'google', idToken: 'firebase_id_token' },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(loginWithSocialToken).toHaveBeenCalledWith({ provider: 'google', idToken: 'firebase_id_token' })
+    expect(res.json().data.accessToken).toBeDefined()
+    expect(res.headers['set-cookie']).toMatch(/refreshToken=/)
+  })
+
+  it('returns 400 for invalid provider', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/social-login',
+      payload: { provider: 'twitter', idToken: 'firebase_id_token' },
+    })
+
+    expect(res.statusCode).toBe(400)
   })
 })
 

@@ -37,6 +37,7 @@
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.26.2",
+    "firebase-admin": "^13.8.0",
     "module-alias": "^2.3.4",
     "pino": "^8.19.0",
     "prisma": "^5.10.0",

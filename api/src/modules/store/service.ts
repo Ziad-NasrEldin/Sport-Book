@@ -2,6 +2,46 @@ import { prisma } from '@lib/prisma'
 import { NotFoundError, BadRequestError } from '@common/errors'
 import type { CreateOrderInput } from './schema'
 
+function safeParseJson<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback
+
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
+function mapProduct(product: {
+  id: string
+  facilityId: string
+  name: string
+  description: string | null
+  category: string
+  images: string
+  price: any
+  currency: string
+  quantity: number
+  status: string
+  createdAt: Date
+  updatedAt: Date
+  facility?: { name: string; city: string; address?: string | null } | null
+}) {
+  const images = safeParseJson<string[]>(product.images, [])
+
+  return {
+    ...product,
+    title: product.name,
+    image: images[0] ?? '',
+    images,
+    price: Number(product.price),
+    location: product.facility?.city ?? '',
+    facilityName: product.facility?.name ?? '',
+    createdAt: product.createdAt.toISOString(),
+    updatedAt: product.updatedAt.toISOString(),
+  }
+}
+
 export async function listProducts(filters: {
   facilityId?: string
   category?: string
@@ -36,10 +76,7 @@ export async function listProducts(filters: {
   ])
 
   return {
-    data: products.map(p => ({
-      ...p,
-      images: JSON.parse(p.images || '[]'),
-    })),
+    data: products.map(mapProduct),
     pagination: {
       page,
       limit,
@@ -68,8 +105,7 @@ export async function getProduct(productId: string) {
   }
 
   return {
-    ...product,
-    images: JSON.parse(product.images || '[]'),
+    ...mapProduct(product),
   }
 }
 

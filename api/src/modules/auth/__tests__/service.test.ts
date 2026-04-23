@@ -16,6 +16,10 @@ vi.mock('@lib/prisma', () => ({
       delete: vi.fn(),
       deleteMany: vi.fn(),
     },
+    socialAccount: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
     roleUpgradeRequest: {
       findFirst: vi.fn(),
       create: vi.fn(),
@@ -32,11 +36,17 @@ vi.mock('@lib/crypto', () => ({
   generatePasswordResetToken: vi.fn().mockReturnValue('mock_reset_token'),
 }))
 
+vi.mock('@lib/firebaseAdmin', () => ({
+  verifyFirebaseSocialIdToken: vi.fn(),
+}))
+
 import { prisma } from '@lib/prisma'
 import { verifyPassword } from '@lib/crypto'
+import { verifyFirebaseSocialIdToken } from '@lib/firebaseAdmin'
 import {
   register,
   login,
+  loginWithSocialToken,
   logout,
   refreshAccessToken,
   requestPasswordReset,
@@ -126,6 +136,75 @@ describe('login', () => {
     await expect(
       login({ email: 'test@example.com', password: 'password123' })
     ).rejects.toThrow(UnauthorizedError)
+  })
+})
+
+describe('loginWithSocialToken', () => {
+  it('creates a user, links social account, and returns tokens', async () => {
+    vi.mocked(verifyFirebaseSocialIdToken).mockResolvedValue({
+      uid: 'firebase_uid_1',
+      email: 'Social@Example.com',
+      emailVerified: true,
+      name: 'Social User',
+      picture: 'https://example.com/avatar.png',
+    })
+    vi.mocked(prisma.socialAccount.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.user.create).mockResolvedValue({
+      ...mockUser,
+      email: 'social@example.com',
+      name: 'Social User',
+      emailVerified: true,
+    } as any)
+    vi.mocked(prisma.socialAccount.upsert).mockResolvedValue({} as any)
+    vi.mocked(prisma.refreshToken.create).mockResolvedValue({} as any)
+
+    const result = await loginWithSocialToken({ provider: 'google', idToken: 'firebase_token' })
+
+    expect(verifyFirebaseSocialIdToken).toHaveBeenCalledWith('google', 'firebase_token')
+    expect(prisma.socialAccount.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          provider: 'GOOGLE',
+          providerUserId: 'firebase_uid_1',
+          email: 'social@example.com',
+        }),
+      })
+    )
+    expect(result.user.email).toBe('social@example.com')
+    expect(result.tokens.refreshToken).toBe('mock_refresh_token')
+  })
+
+  it('uses linked user when social account already exists', async () => {
+    vi.mocked(verifyFirebaseSocialIdToken).mockResolvedValue({
+      uid: 'firebase_uid_1',
+      email: 'social@example.com',
+      emailVerified: true,
+      name: 'Social User',
+      picture: null,
+    })
+    vi.mocked(prisma.socialAccount.findUnique).mockResolvedValue({ user: mockUser } as any)
+    vi.mocked(prisma.refreshToken.create).mockResolvedValue({} as any)
+
+    const result = await loginWithSocialToken({ provider: 'google', idToken: 'firebase_token' })
+
+    expect(result.user.id).toBe('user_1')
+    expect(prisma.user.create).not.toHaveBeenCalled()
+    expect(prisma.socialAccount.upsert).not.toHaveBeenCalled()
+  })
+
+  it('throws BadRequestError when Firebase identity has no email', async () => {
+    vi.mocked(verifyFirebaseSocialIdToken).mockResolvedValue({
+      uid: 'firebase_uid_1',
+      email: null,
+      emailVerified: false,
+      name: null,
+      picture: null,
+    })
+
+    await expect(
+      loginWithSocialToken({ provider: 'facebook', idToken: 'firebase_token' })
+    ).rejects.toThrow(BadRequestError)
   })
 })
 

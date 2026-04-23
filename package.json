@@ -15,7 +15,7 @@
     "@common": "api/dist/common"
   },
   "scripts": {
-    "dev": "concurrently -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev": "concurrently --kill-others-on-fail -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm run dev --workspace=api",
     "dev:web": "npm run dev --workspace=web",
     "build": "npm run build --workspace=api && npm run build --workspace=web",

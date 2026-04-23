@@ -19,6 +19,9 @@ const envSchema = z.object({
   PAYMOB_API_KEY: z.string().optional(),
   PAYMOB_INTEGRATION_ID: z.string().optional(),
   PAYMOB_HMAC_SECRET: z.string().optional(),
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import {
   createTeamPost,
@@ -17,8 +17,7 @@ import {
 import { success } from '@common/response'
 
 export async function teamRoutes(app: FastifyInstance) {
-  // All routes require authentication
-  app.addHook('preHandler', async (request: FastifyRequest, reply) => {
+  const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       await request.jwtVerify()
     } catch (err) {
@@ -27,10 +26,10 @@ export async function teamRoutes(app: FastifyInstance) {
         code: 'UNAUTHORIZED'
       })
     }
-  })
+  }
 
   // POST /teams - Create team post
-  app.post('/', async (request: FastifyRequest) => {
+  app.post('/', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const data = createTeamPostSchema.parse(request.body)
     const teamPost = await createTeamPost(request.user!.userId, data)
     return success(teamPost)
@@ -56,7 +55,7 @@ export async function teamRoutes(app: FastifyInstance) {
   })
 
   // POST /teams/:id/join - Request to join team
-  app.post('/:id/join', async (request: FastifyRequest) => {
+  app.post('/:id/join', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const data = joinTeamPostSchema.parse({ teamPostId: id })
     const joinRequest = await joinTeamPost(request.user!.userId, data)
@@ -64,7 +63,7 @@ export async function teamRoutes(app: FastifyInstance) {
   })
 
   // POST /teams/requests/:requestId/respond - Respond to join request
-  app.post('/requests/:requestId/respond', async (request: FastifyRequest) => {
+  app.post('/requests/:requestId/respond', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const { requestId } = request.params as { requestId: string }
     const data = respondToJoinRequestSchema.parse(request.body)
     const result = await respondToJoinRequest(request.user!.userId, requestId, data)
@@ -72,14 +71,14 @@ export async function teamRoutes(app: FastifyInstance) {
   })
 
   // POST /teams/:id/leave - Leave team
-  app.post('/:id/leave', async (request: FastifyRequest) => {
+  app.post('/:id/leave', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const result = await leaveTeamPost(request.user!.userId, id)
     return success(result)
   })
 
   // POST /teams/:id/cancel - Cancel team post
-  app.post('/:id/cancel', async (request: FastifyRequest) => {
+  app.post('/:id/cancel', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const { id } = request.params as { id: string }
     const result = await cancelTeamPost(request.user!.userId, id)
     return success(result)

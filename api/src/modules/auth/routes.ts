@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import {
   registerSchema,
   loginSchema,
+  socialLoginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
@@ -10,6 +11,7 @@ import {
 import {
   register,
   login,
+  loginWithSocialToken,
   logout,
   refreshAccessToken,
   requestPasswordReset,
@@ -49,6 +51,17 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/login', async (request: FastifyRequest, reply: FastifyReply) => {
     const data = loginSchema.parse(request.body)
     const result = await login(data)
+    const accessToken = await reply.jwtSign(
+      getAccessTokenPayload(result.user.id, result.user.email, result.user.role)
+    )
+    reply.setCookie('refreshToken', result.tokens.refreshToken, REFRESH_COOKIE_OPTS(isProduction))
+    return success({ user: result.user, accessToken })
+  })
+
+  // POST /auth/social-login
+  app.post('/social-login', async (request: FastifyRequest, reply: FastifyReply) => {
+    const data = socialLoginSchema.parse(request.body)
+    const result = await loginWithSocialToken(data)
     const accessToken = await reply.jwtSign(
       getAccessTokenPayload(result.user.id, result.user.email, result.user.role)
     )

@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '@lib/prisma'
 import { listCoaches } from '@modules/coaches/service'
@@ -159,15 +159,15 @@ export async function userRoutes(app: FastifyInstance) {
 // These stubs keep the web frontend working until Phase C replaces them
 // with real implementations pointing at the correct domain modules.
 export async function playerRoutes(app: FastifyInstance) {
-  app.addHook('preHandler', async (request: FastifyRequest, reply) => {
+  const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       await request.jwtVerify()
     } catch {
       return reply.status(401).send({ error: 'Unauthorized - Please log in', code: 'UNAUTHORIZED' })
     }
-  })
+  }
 
-  app.get('/profile', async (request: FastifyRequest) => {
+  app.get('/profile', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const user = await getMe(request.user!.userId)
     return success(user)
   })
@@ -303,7 +303,7 @@ export async function playerRoutes(app: FastifyInstance) {
     )
   })
 
-  app.get('/notifications/unread-count', async (request: FastifyRequest) => {
+  app.get('/notifications/unread-count', { preHandler: requireAuth }, async (request: FastifyRequest) => {
     const count = await getUnreadNotificationsCount(request.user!.userId)
     return success({ count })
   })

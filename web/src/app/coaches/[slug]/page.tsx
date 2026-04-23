@@ -117,7 +117,7 @@ export default function CoachDetailsPage() {
 
       {coach ? (
         <div className="md:max-w-4xl md:mx-auto">
-          <section className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden md:rounded-[2rem] md:mt-4 md:shadow-ambient">
+          <section className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden md:rounded-[2rem] md:mt-4 md:shadow-ambient transition-transform duration-300 hover:scale-[1.01]">
             <Image src={coach.user.avatar ?? '/favicon.ico'} alt={coach.user.name} fill className="object-cover object-center" priority />
             <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent">
               <div className="space-y-2 md:space-y-3">
@@ -206,8 +206,8 @@ export default function CoachDetailsPage() {
                       key={hour}
                       type="button"
                       onClick={() => setSelectedStartHour(hour)}
-                      className={`rounded-[var(--radius-default)] p-4 font-bold shadow-sm ${
-                        active ? 'bg-secondary-container text-white' : 'bg-surface-container-lowest text-primary'
+                      className={`rounded-[var(--radius-default)] p-4 font-bold shadow-sm transition-[transform,background-color] duration-200 ${
+                        active ? 'bg-secondary-container text-white animate-slot-select' : 'bg-surface-container-lowest text-primary hover:bg-surface-container-low hover:-translate-y-0.5 active:scale-95'
                       }`}
                     >
                       {formatHour(hour)}

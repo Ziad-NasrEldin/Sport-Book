@@ -8,15 +8,21 @@ import {
   generatePasswordResetToken,
 } from '@lib/crypto'
 import { sendEmail, buildPasswordResetUrl } from '@lib/email'
+import { verifyFirebaseSocialIdToken } from '@lib/firebaseAdmin'
 import { ApiError, ConflictError, UnauthorizedError, NotFoundError, BadRequestError } from '@common/errors'
 import type {
   RegisterInput,
   LoginInput,
+  SocialLoginInput,
   RoleUpgradeRequestInput,
 } from './schema'
 
 const REFRESH_TOKEN_EXPIRY_DAYS = parseInt(env.REFRESH_TOKEN_DAYS)
 const PASSWORD_RESET_EXPIRY_MINUTES = 60
+const SOCIAL_PROVIDER_TO_DB = {
+  google: 'GOOGLE',
+  facebook: 'FACEBOOK',
+} as const
 
 export interface AuthTokens {
   refreshToken: string
@@ -66,6 +72,85 @@ export async function login(data: LoginInput): Promise<{ user: AuthUser; tokens:
 
   if (!user || !(await verifyPassword(data.password, user.password))) {
     throw new UnauthorizedError('Invalid email or password')
+  }
+
+  if (user.status === 'SUSPENDED') {
+    throw new UnauthorizedError('Account has been suspended')
+  }
+
+  const refreshToken = await createRefreshToken(user.id)
+  return { user: toAuthUser(user), tokens: { refreshToken } }
+}
+
+export async function loginWithSocialToken(
+  data: SocialLoginInput
+): Promise<{ user: AuthUser; tokens: AuthTokens }> {
+  const identity = await verifyFirebaseSocialIdToken(data.provider, data.idToken)
+  const email = identity.email?.trim().toLowerCase() ?? null
+
+  if (!email) {
+    throw new BadRequestError('Social account is missing an email address')
+  }
+
+  const provider = SOCIAL_PROVIDER_TO_DB[data.provider]
+  const linkedAccount = await prisma.socialAccount.findUnique({
+    where: {
+      provider_providerUserId: {
+        provider,
+        providerUserId: identity.uid,
+      },
+    },
+    include: {
+      user: true,
+    },
+  })
+
+  let user = linkedAccount?.user ?? null
+
+  if (!user) {
+    user = await prisma.user.findUnique({ where: { email } })
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: await hashPassword(generateRefreshToken()),
+          name: identity.name?.trim() || email.split('@')[0],
+          avatar: identity.picture,
+          role: 'PLAYER',
+          status: 'ACTIVE',
+          emailVerified: identity.emailVerified,
+          wallet: { create: { balance: 0, currency: 'EGP' } },
+          preferences: {
+            create: { language: 'en', currency: 'EGP', timezone: 'Africa/Cairo' },
+          },
+        },
+      })
+    } else if (identity.emailVerified && !user.emailVerified) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+      })
+    }
+
+    await prisma.socialAccount.upsert({
+      where: {
+        provider_providerUserId: {
+          provider,
+          providerUserId: identity.uid,
+        },
+      },
+      update: {
+        userId: user.id,
+        email,
+      },
+      create: {
+        userId: user.id,
+        provider,
+        providerUserId: identity.uid,
+        email,
+      },
+    })
   }
 
   if (user.status === 'SUSPENDED') {

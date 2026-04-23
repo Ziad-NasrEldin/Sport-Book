@@ -1,12 +1,13 @@
 import path from 'node:path'
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants'
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const baseConfig: NextConfig = {
   output: 'standalone',
-  outputFileTracingRoot: path.resolve(__dirname, '..'),
   allowedDevOrigins: ['localhost', '127.0.0.1'],
   turbopack: {
-    root: path.resolve(__dirname, '..'),
+    // Keep dev watcher scoped to web app folder.
+    root: path.resolve(__dirname),
   },
   images: {
     remotePatterns: [
@@ -16,6 +17,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-};
+}
 
-export default nextConfig;
+export default function nextConfig(phase: string): NextConfig {
+  if (phase === PHASE_DEVELOPMENT_SERVER) {
+    return baseConfig
+  }
+
+  return {
+    ...baseConfig,
+    outputFileTracingRoot: path.resolve(__dirname, '..'),
+  }
+}
