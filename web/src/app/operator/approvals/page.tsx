@@ -108,7 +108,7 @@ export default function OperatorApprovalsPage() {
               ])
               exportToCsv('approvals-queue.csv', headers, rows)
             }}
-            className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
           >
             <Download className="w-4 h-4" />
             Export Queue
@@ -126,7 +126,7 @@ export default function OperatorApprovalsPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -138,7 +138,7 @@ export default function OperatorApprovalsPage() {
               <AppSelect
                 value={selectedPriority}
                 onChange={handlePriorityChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {priorityOptions.map((priority) => (
                   <option key={priority} value={priority}>
@@ -163,7 +163,7 @@ export default function OperatorApprovalsPage() {
                   header: 'Request',
                   render: (request: any) => (
                     <div>
-                      <p className="font-bold text-primary">{request.subject || 'Unknown'}</p>
+                      <p className="font-black text-primary">{request.subject || 'Unknown'}</p>
                       <p className="text-xs text-primary/60 mt-1">{request.id || 'Unknown'} • {request.type || 'Unknown'}</p>
                     </div>
                   ),
@@ -173,7 +173,7 @@ export default function OperatorApprovalsPage() {
                   header: 'Requested By',
                   render: (request: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{request.requestedBy || 'Unknown'}</p>
+                      <p className="text-sm font-bold text-primary">{request.requestedBy || 'Unknown'}</p>
                       <p className="text-xs text-primary/55 mt-1">{new Date(request.submittedAt).toLocaleString()}</p>
                     </div>
                   ),
@@ -202,7 +202,7 @@ export default function OperatorApprovalsPage() {
                         type="button"
                         onClick={() => updateStatus(request.id, 'APPROVED')}
                         disabled={updateStatusMutation.loading}
-                        className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-emerald-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-500/22 hover:shadow-[0_8px_16px_-14px_rgba(16,185,129,0.75)] disabled:opacity-50 disabled:hover:translate-y-0 motion-safe:hover:scale-[1.02]"
+                        className="inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-emerald-500/15 to-emerald-500/22 px-3 py-1.5 text-[10px] font-lexend font-black uppercase tracking-[0.12em] text-emerald-700 shadow-[0_6px_16px_-10px_rgba(16,185,129,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(16,185,129,0.7)] disabled:opacity-50 disabled:hover:translate-y-0 motion-safe:hover:scale-[1.03]"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Approve
@@ -211,7 +211,7 @@ export default function OperatorApprovalsPage() {
                         type="button"
                         onClick={() => updateStatus(request.id, 'REJECTED')}
                         disabled={updateStatusMutation.loading}
-                        className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-rose-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-rose-500/22 hover:shadow-[0_8px_16px_-14px_rgba(244,63,94,0.75)] disabled:opacity-50 disabled:hover:translate-y-0 motion-safe:hover:scale-[1.02]"
+                        className="inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-rose-500/15 to-rose-500/22 px-3 py-1.5 text-[10px] font-lexend font-black uppercase tracking-[0.12em] text-rose-700 shadow-[0_6px_16px_-10px_rgba(244,63,94,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(244,63,94,0.7)] disabled:opacity-50 disabled:hover:translate-y-0 motion-safe:hover:scale-[1.03]"
                       >
                         <XCircle className="w-3.5 h-3.5" />
                         Reject

@@ -56,7 +56,7 @@ export default function CoachDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Coach Dashboard"
         subtitle="Run your coaching operation from one command center: revenue, schedule quality, service performance, and booking readiness."
@@ -82,7 +82,7 @@ export default function CoachDashboardPage() {
         }
       />
 
-      <section className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
         {loading ? (
           <>
             <SkeletonStat />
@@ -103,7 +103,7 @@ export default function CoachDashboardPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6">
         <AdminPanel
           eyebrow="Revenue pulse"
           title="Earnings Momentum"
@@ -111,18 +111,18 @@ export default function CoachDashboardPage() {
         >
           <AdminTrendBars values={coachRevenueTrend.map((p: { value: number }) => p.value)} colorClassName="bg-secondary-container" />
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Pending requests</p>
-              <p className="mt-1 text-lg font-extrabold text-primary">{pendingRequests}</p>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-lg">
+              <p className="text-[11px] uppercase tracking-[0.2em] font-lexend text-primary/40 font-bold">Pending requests</p>
+              <p className="mt-2 text-2xl font-black text-primary">{pendingRequests}</p>
             </div>
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Confirmed today</p>
-              <p className="mt-1 text-lg font-extrabold text-primary">{confirmedToday}</p>
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-lg">
+              <p className="text-[11px] uppercase tracking-[0.2em] font-lexend text-primary/40 font-bold">Confirmed today</p>
+              <p className="mt-2 text-2xl font-black text-primary">{confirmedToday}</p>
             </div>
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/50">Avg payout / session</p>
-              <p className="mt-1 text-lg font-extrabold text-primary">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-lg">
+              <p className="text-[11px] uppercase tracking-[0.2em] font-lexend text-primary/40 font-bold">Avg payout / session</p>
+              <p className="mt-2 text-2xl font-black text-primary">
                 {formatEgp(
                   coachBookings.length > 0
                     ? Math.round(coachBookings.reduce((sum, booking) => sum + booking.payout, 0) / coachBookings.length)
@@ -151,24 +151,24 @@ export default function CoachDashboardPage() {
         </AdminPanel>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
         <AdminPanel eyebrow="Today" title="Session Pipeline">
-          <div className="space-y-3">
+          <div className="space-y-4">
             {coachBookings.map((booking) => (
-              <article key={booking.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              <article key={booking.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-primary">{booking.athlete}</p>
-                    <p className="text-xs text-primary/60 mt-1">{booking.sessionType} • {booking.duration} min</p>
+                    <p className="text-base font-black text-primary">{booking.athlete}</p>
+                    <p className="text-sm text-primary/70 mt-1.5 font-semibold">{booking.sessionType} • {booking.duration} min</p>
                   </div>
                   <AdminStatusPill label={booking.status} tone={statusTone(booking.status)} />
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-primary/60">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-primary/70 font-medium">
                   <span>{new Date(booking.dateTime).toLocaleString()}</span>
                   <span>•</span>
                   <span>{booking.location}</span>
                   <span>•</span>
-                  <span className="font-bold text-primary">{formatEgp(booking.payout)}</span>
+                  <span className="font-black text-primary text-base">{formatEgp(booking.payout)}</span>
                 </div>
               </article>
             ))}
@@ -176,27 +176,27 @@ export default function CoachDashboardPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Quick actions" title="Control Center">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <button
               type="button"
               onClick={() => router.push('/coach/availability')}
-              className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3 text-left"
+              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-colors shadow-md"
             >
-              <p className="text-sm font-semibold text-primary">Open availability editor for next week blocks.</p>
+              <p className="text-base font-bold text-primary">Open availability editor for next week blocks.</p>
             </button>
             <button
               type="button"
               onClick={() => router.push('/coach/services')}
-              className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3 text-left"
+              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-colors shadow-md"
             >
-              <p className="text-sm font-semibold text-primary">Publish latest service pricing to booking pages.</p>
+              <p className="text-base font-bold text-primary">Publish latest service pricing to booking pages.</p>
             </button>
             <button
               type="button"
               onClick={() => router.push('/coach/bookings')}
-              className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3 text-left"
+              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-colors shadow-md"
             >
-              <p className="text-sm font-semibold text-primary">Review pending athlete requests before 6 PM.</p>
+              <p className="text-base font-bold text-primary">Review pending athlete requests before 6 PM.</p>
             </button>
           </div>
         </AdminPanel>

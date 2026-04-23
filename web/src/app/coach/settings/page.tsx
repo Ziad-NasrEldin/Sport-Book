@@ -44,7 +44,7 @@ export default function CoachSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Settings"
         subtitle="Fine-tune your booking and communication controls so operations stay predictable at scale."
@@ -61,9 +61,9 @@ export default function CoachSettingsPage() {
         }
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <AdminPanel eyebrow="Notifications" title="Communication Preferences">
-          <div className="space-y-3">
+          <div className="space-y-4">
             {(settingsData?.notifications ?? []).map((item) => (
               <ToggleRow
                 key={item.key}
@@ -82,7 +82,7 @@ export default function CoachSettingsPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Policies" title="Booking Rules">
-          <div className="space-y-3">
+          <div className="space-y-4">
             {(settingsData?.policies ?? []).map((item) => (
               <ToggleRow
                 key={item.key}
@@ -101,9 +101,9 @@ export default function CoachSettingsPage() {
         </AdminPanel>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <AdminPanel eyebrow="Payouts" title="Transfer Schedule">
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {[
               { label: 'Weekly', value: 'weekly' },
               { label: 'Bi-weekly', value: 'biweekly' },
@@ -116,14 +116,14 @@ export default function CoachSettingsPage() {
                   key={option.value}
                   type="button"
                   onClick={() => setPayoutCycle(option.value as typeof payoutCycle)}
-                  className={`w-full text-left px-4 py-3 rounded-[var(--radius-default)] transition-colors ${
+                  className={`w-full text-left px-5 py-4 rounded-[var(--radius-md)] transition-colors shadow-sm ${
                     active
-                      ? 'bg-primary-container text-surface-container-lowest'
-                      : 'bg-surface-container-low text-primary'
+                      ? 'bg-primary-container text-surface-container-lowest shadow-md'
+                      : 'bg-surface-container-low text-primary hover:bg-surface-container-high'
                   }`}
                 >
-                  <p className="font-bold">{option.label}</p>
-                  <p className={`text-xs mt-1 ${active ? 'text-surface-container-lowest/80' : 'text-primary/60'}`}>
+                  <p className="font-black text-base">{option.label}</p>
+                  <p className={`text-sm mt-1.5 font-semibold ${active ? 'text-surface-container-lowest/80' : 'text-primary/70'}`}>
                     {option.value === 'weekly'
                       ? 'Faster cash flow with smaller payout batches.'
                       : option.value === 'biweekly'
@@ -137,18 +137,18 @@ export default function CoachSettingsPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Security" title="Access Controls">
-          <div className="space-y-3">
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3">
-              <p className="font-bold text-primary">Two-factor authentication</p>
-              <p className="text-xs text-primary/60 mt-1">{securityInfo?.twoFactorEnabled ? 'Enabled on all sign-ins and payout actions.' : 'Not yet enabled. Consider enabling for enhanced security.'}</p>
+          <div className="space-y-4">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+              <p className="font-black text-primary text-base">Two-factor authentication</p>
+              <p className="text-sm text-primary/70 mt-1.5 font-semibold">{securityInfo?.twoFactorEnabled ? 'Enabled on all sign-ins and payout actions.' : 'Not yet enabled. Consider enabling for enhanced security.'}</p>
             </article>
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3">
-              <p className="font-bold text-primary">API token access</p>
-              <p className="text-xs text-primary/60 mt-1">{securityInfo?.apiTokenCount ?? 0} active API token{((securityInfo?.apiTokenCount ?? 0) !== 1) ? 's' : ''}. Rotate tokens every 90 days for external integrations.</p>
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+              <p className="font-black text-primary text-base">API token access</p>
+              <p className="text-sm text-primary/70 mt-1.5 font-semibold">{securityInfo?.apiTokenCount ?? 0} active API token{((securityInfo?.apiTokenCount ?? 0) !== 1) ? 's' : ''}. Rotate tokens every 90 days for external integrations.</p>
             </article>
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-4 py-3">
-              <p className="font-bold text-primary">Device sessions</p>
-              <p className="text-xs text-primary/60 mt-1">{securityInfo?.activeDeviceSessions ?? 0} active device{((securityInfo?.activeDeviceSessions ?? 0) !== 1) ? 's' : ''} currently trusted.</p>
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+              <p className="font-black text-primary text-base">Device sessions</p>
+              <p className="text-sm text-primary/70 mt-1.5 font-semibold">{securityInfo?.activeDeviceSessions ?? 0} active device{((securityInfo?.activeDeviceSessions ?? 0) !== 1) ? 's' : ''} currently trusted.</p>
             </article>
           </div>
         </AdminPanel>
@@ -166,20 +166,20 @@ type ToggleRowProps = {
 
 function ToggleRow({ label, description, enabled, onToggle }: ToggleRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5">
+    <div className="flex items-center justify-between gap-4 bg-surface-container-high rounded-[var(--radius-md)] px-5 py-4 shadow-sm">
       <div>
-        <p className="font-bold text-primary leading-tight">{label}</p>
-        <p className="text-xs text-primary/60 mt-1">{description}</p>
+        <p className="font-black text-primary leading-tight text-base">{label}</p>
+        <p className="text-sm text-primary/70 mt-1.5 font-semibold">{description}</p>
       </div>
 
       <button
         type="button"
         onClick={onToggle}
-        className={`w-12 h-7 rounded-full p-1 transition-colors ${enabled ? 'bg-tertiary-fixed' : 'bg-primary/20'}`}
+        className={`w-14 h-8 rounded-full p-1 transition-colors shadow-sm ${enabled ? 'bg-tertiary-fixed' : 'bg-primary/20'}`}
         aria-pressed={enabled}
       >
         <span
-          className={`block w-5 h-5 rounded-full bg-surface-container-lowest shadow-sm transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
+          className={`block w-6 h-6 rounded-full bg-surface-container-lowest shadow-md transition-transform ${enabled ? 'translate-x-6' : 'translate-x-0'}`}
         />
       </button>
     </div>

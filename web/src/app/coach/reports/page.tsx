@@ -39,7 +39,7 @@ export default function CoachReportsPage() {
   const estimatedPayout = coachBookings.reduce((sum, booking) => sum + (typeof booking.payout === 'number' ? booking.payout : 0), 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Reports"
         subtitle="Analyze earnings, utilization, and delivery quality to optimize weekly coaching capacity."
@@ -71,7 +71,7 @@ export default function CoachReportsPage() {
         }
       />
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {loading ? (
           <>
             <SkeletonStat />
@@ -87,7 +87,7 @@ export default function CoachReportsPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6">
         <AdminPanel eyebrow="Revenue trend" title="Earnings Trajectory">
           <AdminTrendBars values={coachRevenueTrend.map((p: { value: number }) => p.value)} colorClassName="bg-secondary-container" />
         </AdminPanel>

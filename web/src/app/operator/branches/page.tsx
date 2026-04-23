@@ -74,14 +74,14 @@ export default function OperatorBranchesPage() {
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <Download className="w-4 h-4" />
               Export Branches
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-sm font-bold text-surface-container-lowest shadow-[0_20px_40px_-20px_rgba(0,35,102,1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_28px_48px_-18px_rgba(0,35,102,1.1)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <Building2 className="w-4 h-4" />
               Add Branch
@@ -100,7 +100,7 @@ export default function OperatorBranchesPage() {
               <AppSelect
                 value={selectedCity}
                 onChange={handleCityChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {cityOptions.map((city: any) => (
                   <option key={city} value={city}>
@@ -111,7 +111,7 @@ export default function OperatorBranchesPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -136,7 +136,7 @@ export default function OperatorBranchesPage() {
                   header: 'Branch',
                   render: (branch: any) => (
                     <div>
-                      <Link href={`/operator/branches/${branch.id}`} className="font-bold text-primary hover:text-secondary transition-colors">
+                      <Link href={`/operator/branches/${branch.id}`} className="font-black text-primary hover:text-secondary transition-colors">
                         {branch.name || 'Unknown'}
                       </Link>
                       <p className="text-xs text-primary/60 mt-1">{branch.id || 'Unknown'}</p>
@@ -148,7 +148,7 @@ export default function OperatorBranchesPage() {
                   header: 'Manager',
                   render: (branch: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{branch.manager || 'Unknown'}</p>
+                      <p className="text-sm font-bold text-primary">{branch.manager || 'Unknown'}</p>
                       <p className="text-xs text-primary/55 mt-1">{branch.city || 'Unknown'}</p>
                     </div>
                   ),
@@ -156,14 +156,14 @@ export default function OperatorBranchesPage() {
                 {
                   key: 'capacity',
                   header: 'Courts',
-                  render: (branch: any) => <p className="text-sm font-semibold text-primary">{branch.courts || 0}</p>,
+                  render: (branch: any) => <p className="text-sm font-bold text-primary">{branch.courts || 0}</p>,
                 },
                 {
                   key: 'utilization',
                   header: 'Utilization',
                   render: (branch: any) => (
                     <div className="min-w-[120px]">
-                      <p className="text-sm font-semibold text-primary">{branch.utilization || 0}%</p>
+                      <p className="text-sm font-bold text-primary">{branch.utilization || 0}%</p>
                       <div className="mt-1 h-1.5 rounded-full bg-primary/10 overflow-hidden">
                         <div className="h-full rounded-full bg-secondary-container" style={{ width: `${branch.utilization || 0}%` }} />
                       </div>
@@ -173,7 +173,7 @@ export default function OperatorBranchesPage() {
                 {
                   key: 'revenue',
                   header: 'Revenue',
-                  render: (branch: any) => <p className="text-sm font-semibold text-primary">{formatEgp(branch.monthlyRevenue || 0)}</p>,
+                  render: (branch: any) => <p className="text-sm font-bold text-primary">{formatEgp(branch.monthlyRevenue || 0)}</p>,
                 },
                 {
                   key: 'status',
@@ -186,7 +186,7 @@ export default function OperatorBranchesPage() {
                   render: (branch: any) => (
                     <Link
                       href={`/operator/branches/${branch.id}`}
-                      className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/16 hover:shadow-[0_8px_16px_-14px_rgba(0,17,58,0.9)] motion-safe:hover:scale-[1.02]"
+                      className="inline-flex items-center rounded-full bg-gradient-to-br from-primary/10 to-primary/16 px-3 py-1.5 text-[10px] font-lexend font-black uppercase tracking-[0.12em] text-primary shadow-[0_6px_16px_-10px_rgba(0,17,58,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.7)] motion-safe:hover:scale-[1.03]"
                     >
                       Open
                     </Link>

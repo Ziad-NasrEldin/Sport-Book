@@ -62,7 +62,7 @@ export default function CoachProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Profile"
         subtitle="Shape how athletes discover you: your headline, credentials, and coaching identity directly affect conversion."
@@ -79,10 +79,10 @@ export default function CoachProfilePage() {
         }
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
         <AdminPanel eyebrow="Public identity" title="Coach Card">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative w-28 h-28 rounded-[var(--radius-md)] overflow-hidden shrink-0 bg-surface-container-low">
+          <div className="flex flex-col sm:flex-row gap-6">
+            <div className="relative w-32 h-32 rounded-[var(--radius-lg)] overflow-hidden shrink-0 bg-surface-container-low shadow-lg">
               <Image
                 src={avatar || DEFAULT_AVATAR}
                 alt="Coach avatar"
@@ -92,38 +92,38 @@ export default function CoachProfilePage() {
               <button
                 type="button"
                 onClick={() => setAvatar(window.prompt('Paste a public image URL for your profile photo', avatar) || avatar)}
-                className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-primary-container text-surface-container-lowest grid place-items-center"
+                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary-container text-surface-container-lowest grid place-items-center shadow-md hover:shadow-lg transition-shadow"
                 aria-label="Change profile image"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 space-y-3">
-              <label className="block space-y-1">
-                <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Display Name</span>
+            <div className="flex-1 space-y-4">
+              <label className="block space-y-2">
+                <span className="text-[11px] font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold">Display Name</span>
                 <input
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
-                  className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
+                  className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-3 text-base text-primary outline-none shadow-sm"
                 />
               </label>
 
-              <label className="block space-y-1">
-                <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Headline</span>
+              <label className="block space-y-2">
+                <span className="text-[11px] font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold">Headline</span>
                 <input
                   value={headline}
                   onChange={(event) => setHeadline(event.target.value)}
-                  className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
+                  className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-3 text-base text-primary outline-none shadow-sm"
                 />
               </label>
 
-              <label className="block space-y-1">
-                <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">City</span>
+              <label className="block space-y-2">
+                <span className="text-[11px] font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold">City</span>
                 <input
                   value={city}
                   onChange={(event) => setCity(event.target.value)}
-                  className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
+                  className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-3 text-base text-primary outline-none shadow-sm"
                 />
               </label>
             </div>
@@ -131,26 +131,26 @@ export default function CoachProfilePage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Visibility" title="Profile Reach">
-          <div className="space-y-3">
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
-              <p className="text-sm font-bold text-primary">Public Profile Status</p>
-              <p className="text-xs text-primary/60 mt-1">Control whether athletes can discover your services now.</p>
+          <div className="space-y-4">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md">
+              <p className="text-base font-black text-primary">Public Profile Status</p>
+              <p className="text-sm text-primary/70 mt-1.5 font-semibold">Control whether athletes can discover your services now.</p>
               <button
                 type="button"
                 onClick={() => setIsPublicProfileVisible((current) => !current)}
-                className={`mt-3 px-3 py-2 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.14em] ${
+                className={`mt-4 px-4 py-2.5 rounded-full text-xs font-lexend font-black uppercase tracking-[0.2em] shadow-sm ${
                   isPublicProfileVisible
-                    ? 'bg-primary-container text-surface-container-lowest'
-                    : 'bg-surface-container-high text-primary/70'
+                    ? 'bg-primary-container text-surface-container-lowest shadow-md'
+                    : 'bg-surface-container-high text-primary/70 hover:bg-surface-container-higher transition-colors'
                 }`}
               >
                 {isPublicProfileVisible ? 'Visible to athletes' : 'Hidden from listing'}
               </button>
             </div>
 
-            <div className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
-              <p className="text-sm font-bold text-primary">Completeness</p>
-              <p className="text-xs text-primary/60 mt-1">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md">
+              <p className="text-base font-black text-primary">Completeness</p>
+              <p className="text-sm text-primary/70 mt-1.5 font-semibold">
                 {[displayName, headline, bio, city].filter(Boolean).length * 25}% complete.
               </p>
             </div>
@@ -159,18 +159,18 @@ export default function CoachProfilePage() {
       </section>
 
       <AdminPanel eyebrow="About" title="Coach Story">
-        <label className="block space-y-1">
-          <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Bio</span>
+        <label className="block space-y-2">
+          <span className="text-[11px] font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold">Bio</span>
           <textarea
             value={bio}
             onChange={(event) => setBio(event.target.value)}
             rows={5}
-            className="w-full rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none resize-none"
+            className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-3 text-base text-primary outline-none resize-none shadow-sm"
           />
         </label>
       </AdminPanel>
 
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <TagEditorPanel
           eyebrow="Sports"
           title="Specialties"
@@ -230,12 +230,12 @@ type TagEditorPanelProps = {
 function TagEditorPanel({ eyebrow, title, values, draft, onDraftChange, onAdd, onRemove }: TagEditorPanelProps) {
   return (
     <AdminPanel eyebrow={eyebrow} title={title}>
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-2">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-3">
           {values.map((value) => (
             <span
               key={value}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.12em] bg-primary-container text-surface-container-lowest"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-lexend font-black uppercase tracking-[0.2em] bg-primary-container text-surface-container-lowest shadow-sm"
             >
               {value}
               <button type="button" onClick={() => onRemove(value)} aria-label={`Remove ${value}`}>
@@ -245,17 +245,17 @@ function TagEditorPanel({ eyebrow, title, values, draft, onDraftChange, onAdd, o
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <input
             value={draft}
             onChange={(event) => onDraftChange(event.target.value)}
-            className="flex-1 rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-2.5 text-sm text-primary outline-none"
+            className="flex-1 rounded-[var(--radius-md)] bg-surface-container-low px-5 py-3 text-base text-primary outline-none shadow-sm"
             placeholder={`Add ${title.toLowerCase()}`}
           />
           <button
             type="button"
             onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+            className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-5 py-2.5 text-sm font-bold text-primary hover:bg-surface-container-high transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Add

@@ -85,7 +85,7 @@ export default function CoachAvailabilityPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Availability"
         subtitle="Control your working windows, exceptions, and seasonal templates before sessions go live to athletes."
@@ -101,9 +101,9 @@ export default function CoachAvailabilityPage() {
         }
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <AdminPanel eyebrow="Create window" title={editingWindowId ? 'Edit Availability Block' : 'Add Availability Block'}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectField label="Day" value={windowForm.day} onChange={(value) => setWindowForm((current) => ({ ...current, day: value }))} options={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']} />
             <SelectField label="Mode" value={windowForm.mode} onChange={(value) => setWindowForm((current) => ({ ...current, mode: value as 'ACTIVE' | 'PAUSED' }))} options={['ACTIVE', 'PAUSED']} />
             <InputField label="Start" type="time" value={windowForm.start} onChange={(value) => setWindowForm((current) => ({ ...current, start: value }))} />
@@ -113,18 +113,18 @@ export default function CoachAvailabilityPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Exceptions" title={editingExceptionId ? 'Edit Exception' : 'Add Availability Exception'}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField label="Date" type="date" value={exceptionForm.date} onChange={(value) => setExceptionForm((current) => ({ ...current, date: value }))} />
             <SelectField label="Availability" value={exceptionForm.isAvailable ? 'Available' : 'Blocked'} onChange={(value) => setExceptionForm((current) => ({ ...current, isAvailable: value === 'Available' }))} options={['Blocked', 'Available']} />
             <InputField label="Reason" value={exceptionForm.reason} onChange={(value) => setExceptionForm((current) => ({ ...current, reason: value }))} className="md:col-span-2" />
             <InputField label="Impact" value={exceptionForm.impact} onChange={(value) => setExceptionForm((current) => ({ ...current, impact: value }))} className="md:col-span-2" />
           </div>
-          <div className="mt-4 flex gap-2">
-            <button type="button" onClick={() => void handleExceptionSubmit()} className="rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest">
+          <div className="mt-6 flex gap-3">
+            <button type="button" onClick={() => void handleExceptionSubmit()} className="rounded-full bg-primary-container px-5 py-2.5 text-sm font-bold text-surface-container-lowest shadow-md hover:shadow-lg transition-shadow">
               {editingExceptionId ? 'Save Exception' : 'Add Exception'}
             </button>
             {editingExceptionId && (
-              <button type="button" onClick={() => { setEditingExceptionId(null); setExceptionForm(EMPTY_EXCEPTION) }} className="rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary">
+              <button type="button" onClick={() => { setEditingExceptionId(null); setExceptionForm(EMPTY_EXCEPTION) }} className="rounded-full bg-surface-container-low px-5 py-2.5 text-sm font-bold text-primary hover:bg-surface-container-high transition-colors">
                 Cancel
               </button>
             )}
@@ -133,7 +133,7 @@ export default function CoachAvailabilityPage() {
       </section>
 
       <AdminPanel eyebrow="Day selector" title="Weekly Coverage">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {(availableDays.length > 0 ? availableDays : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']).map((day) => {
             const active = day === selectedDay
 
@@ -142,10 +142,10 @@ export default function CoachAvailabilityPage() {
                 key={day}
                 type="button"
                 onClick={() => setSelectedDay(day)}
-                className={`px-3 py-2 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.14em] ${
+                className={`px-4 py-2.5 rounded-full text-xs font-lexend font-black uppercase tracking-[0.2em] shadow-sm ${
                   active
-                    ? 'bg-primary-container text-surface-container-lowest'
-                    : 'bg-surface-container-low text-primary/75'
+                    ? 'bg-primary-container text-surface-container-lowest shadow-md'
+                    : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high transition-colors'
                 }`}
               >
                 {day}
@@ -155,19 +155,19 @@ export default function CoachAvailabilityPage() {
         </div>
       </AdminPanel>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
         <AdminPanel eyebrow="Selected day" title={`${selectedDay} Session Windows`}>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filteredWindows.map((window) => (
-              <article key={window.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
+              <article key={window.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-primary">{window.start} - {window.end}</p>
-                    <p className="text-xs text-primary/60 mt-1">{window.venue}</p>
+                    <p className="text-base font-black text-primary">{window.start} - {window.end}</p>
+                    <p className="text-sm text-primary/70 mt-1.5 font-semibold">{window.venue}</p>
                   </div>
                   <AdminStatusPill label={window.mode} tone={statusTone(window.mode)} />
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-4 flex gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -180,7 +180,7 @@ export default function CoachAvailabilityPage() {
                         mode: window.mode === 'PAUSED' ? 'PAUSED' : 'ACTIVE',
                       })
                     }}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-bold text-primary"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-black text-primary hover:bg-surface-container-high transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Edit
@@ -191,7 +191,7 @@ export default function CoachAvailabilityPage() {
                       await api.delete(`/coach/availability/${window.id}`)
                       await refetch()
                     }}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-bold text-secondary"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-black text-secondary hover:bg-surface-container-high transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete
@@ -203,13 +203,13 @@ export default function CoachAvailabilityPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Exceptions" title="Blocked Dates & Overrides">
-          <div className="space-y-3">
+          <div className="space-y-4">
             {availabilityExceptions.map((exception) => (
-              <article key={exception.id} className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
-                <p className="text-sm font-bold text-primary">{new Date(exception.date).toLocaleDateString()}</p>
-                <p className="text-xs text-primary/60 mt-1">{exception.reason}</p>
-                <p className="text-xs font-semibold text-primary mt-2">{exception.impact}</p>
-                <div className="mt-3 flex gap-2">
+              <article key={exception.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-shadow">
+                <p className="text-base font-black text-primary">{new Date(exception.date).toLocaleDateString()}</p>
+                <p className="text-sm text-primary/70 mt-1.5 font-semibold">{exception.reason}</p>
+                <p className="text-sm font-bold text-primary mt-2.5">{exception.impact}</p>
+                <div className="mt-4 flex gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -221,7 +221,7 @@ export default function CoachAvailabilityPage() {
                         isAvailable: exception.isAvailable,
                       })
                     }}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-bold text-primary"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-black text-primary hover:bg-surface-container-high transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Edit
@@ -232,7 +232,7 @@ export default function CoachAvailabilityPage() {
                       await api.delete(`/coach/availability/exceptions/${exception.id}`)
                       await refetch()
                     }}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-bold text-secondary"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-black text-secondary hover:bg-surface-container-high transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete
@@ -245,17 +245,17 @@ export default function CoachAvailabilityPage() {
       </section>
 
       <AdminPanel eyebrow="Automation" title="Reusable Templates">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {templateCards.map((template) => (
-            <article key={template.id} className="rounded-[var(--radius-default)] bg-surface-container-low p-4">
-              <p className="text-sm font-bold text-primary">{template.title}</p>
-              <p className="text-xs text-primary/60 mt-2 leading-relaxed">{template.description}</p>
+            <article key={template.id} className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md hover:shadow-lg transition-shadow">
+              <p className="text-base font-black text-primary">{template.title}</p>
+              <p className="text-sm text-primary/70 mt-2.5 leading-relaxed font-semibold">{template.description}</p>
             </article>
           ))}
         </div>
 
-        <div className="mt-4 rounded-[var(--radius-default)] bg-primary-container/10 p-3.5 text-xs text-primary/75 inline-flex items-start gap-2">
-          <CalendarClock className="w-4 h-4 shrink-0 mt-0.5" />
+        <div className="mt-6 rounded-[var(--radius-md)] bg-primary-container/10 p-5 text-sm text-primary/75 inline-flex items-start gap-3 shadow-sm">
+          <CalendarClock className="w-5 h-5 shrink-0 mt-0.5" />
           Publish updates here first, then sync to booking surfaces so athletes only see finalized windows.
         </div>
       </AdminPanel>

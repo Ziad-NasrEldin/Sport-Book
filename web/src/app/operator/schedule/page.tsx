@@ -89,14 +89,14 @@ export default function OperatorSchedulePage() {
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <Download className="w-4 h-4" />
               Export Schedule
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-sm font-bold text-surface-container-lowest shadow-[0_20px_40px_-20px_rgba(0,35,102,1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_28px_48px_-18px_rgba(0,35,102,1.1)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <CalendarRange className="w-4 h-4" />
               Publish Changes
@@ -110,7 +110,7 @@ export default function OperatorSchedulePage() {
           <AppSelect
             value={selectedBranch}
             onChange={handleBranchChange}
-            className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+            className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
           >
             {branchOptions.map((branchId: any) => (
               <option key={branchId} value={branchId}>
@@ -122,7 +122,7 @@ export default function OperatorSchedulePage() {
           <AppSelect
             value={selectedStatus}
             onChange={handleStatusChange}
-            className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+            className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
           >
             {statusOptions.map((status) => (
               <option key={status} value={status}>
@@ -134,7 +134,7 @@ export default function OperatorSchedulePage() {
           <AppSelect
             value={selectedWeek}
             onChange={handleWeekChange}
-            className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+            className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
           >
             {weekOptions.map((week) => (
               <option key={week} value={week}>
@@ -155,7 +155,7 @@ export default function OperatorSchedulePage() {
                 {
                   key: 'day',
                   header: 'Day',
-                  render: (slot: any) => <p className="text-sm font-semibold text-primary">{slot.day || 'Unknown'}</p>,
+                  render: (slot: any) => <p className="text-sm font-bold text-primary">{slot.day || 'Unknown'}</p>,
                 },
                 {
                   key: 'slot',
@@ -167,7 +167,7 @@ export default function OperatorSchedulePage() {
                   header: 'Court',
                   render: (slot: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{getCourtNameById(slot.courtId)}</p>
+                      <p className="text-sm font-bold text-primary">{getCourtNameById(slot.courtId)}</p>
                       <p className="text-xs text-primary/55 mt-1">{getBranchNameById(slot.branchId)}</p>
                     </div>
                   ),
@@ -191,9 +191,9 @@ export default function OperatorSchedulePage() {
       <AdminPanel eyebrow="Summary" title={`${selectedWeek} by Day`} className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-200">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {daySummary.map((summary, index: number) => (
-            <article key={summary.day} className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: `${200 + index * 50}ms` }}>
-              <p className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">{summary.day}</p>
-              <p className="mt-1 text-2xl font-extrabold text-primary">{summary.total}</p>
+            <article key={summary.day} className="rounded-[var(--radius-default)] bg-gradient-to-br from-surface-container-low to-surface-container-high p-3.5 shadow-[0_8px_20px_-12px_rgba(0,17,58,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.5)] motion-safe:animate-[var(--animate-card-stagger)]" style={{ animationDelay: `${200 + index * 50}ms` }}>
+              <p className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/60">{summary.day}</p>
+              <p className="mt-1 text-2xl font-black text-primary">{summary.total}</p>
               <p className="mt-1 text-xs text-primary/60">Booked {summary.booked} • Blocked {summary.blocked}</p>
             </article>
           ))}

@@ -95,12 +95,12 @@ export default function OperatorReportsPage() {
       <section className="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-4">
         <AdminPanel eyebrow="Builder" title="Create Report" className="motion-safe:animate-[var(--animate-soft-rise)] animation-delay-100">
           <div className="space-y-3">
-            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-colors hover:bg-surface-container-medium">
-              <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Preset</span>
+            <label className="block rounded-[var(--radius-default)] bg-gradient-to-br from-surface-container-low to-surface-container-high p-3.5 shadow-[0_8px_20px_-12px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_12px_28px_-14px_rgba(0,17,58,0.4)]">
+              <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/60">Preset</span>
               <AppSelect
                 value={selectedPreset}
                 onChange={handlePresetChange}
-                className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
+                className="mt-2 w-full bg-transparent text-lg font-black text-primary outline-none"
               >
                 {presetOptions.map((preset) => (
                   <option key={preset} value={preset}>
@@ -110,12 +110,12 @@ export default function OperatorReportsPage() {
               </AppSelect>
             </label>
 
-            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-colors hover:bg-surface-container-medium">
-              <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Branch scope</span>
+            <label className="block rounded-[var(--radius-default)] bg-gradient-to-br from-surface-container-low to-surface-container-high p-3.5 shadow-[0_8px_20px_-12px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_12px_28px_-14px_rgba(0,17,58,0.4)]">
+              <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/60">Branch scope</span>
               <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
-                className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
+                className="mt-2 w-full bg-transparent text-lg font-black text-primary outline-none"
               >
                 {branchOptions.map((branchId: any) => (
                   <option key={branchId} value={branchId}>
@@ -125,26 +125,26 @@ export default function OperatorReportsPage() {
               </AppSelect>
             </label>
 
-            <label className="block rounded-[var(--radius-default)] bg-surface-container-low p-3.5 transition-colors hover:bg-surface-container-medium">
-              <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/55">Date range</span>
+            <label className="block rounded-[var(--radius-default)] bg-gradient-to-br from-surface-container-low to-surface-container-high p-3.5 shadow-[0_8px_20px_-12px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_12px_28px_-14px_rgba(0,17,58,0.4)]">
+              <span className="text-xs font-lexend uppercase tracking-[0.14em] text-primary/60">Date range</span>
               <input
                 value={dateRange}
                 onChange={handleDateRangeChange}
-                className="mt-2 w-full bg-transparent text-lg font-bold text-primary outline-none"
+                className="mt-2 w-full bg-transparent text-lg font-black text-primary outline-none"
               />
             </label>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-sm font-bold text-surface-container-lowest shadow-[0_20px_40px_-20px_rgba(0,35,102,1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_28px_48px_-18px_rgba(0,35,102,1.1)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
               >
                 <CalendarRange className="w-4 h-4" />
                 Schedule
               </button>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
               >
                 <Download className="w-4 h-4" />
                 Generate Now
@@ -166,7 +166,7 @@ export default function OperatorReportsPage() {
                   header: 'Report',
                   render: (job: any) => (
                     <div>
-                      <p className="font-bold text-primary">{job.name || 'Unknown'}</p>
+                      <p className="font-black text-primary">{job.name || 'Unknown'}</p>
                       <p className="text-xs text-primary/60 mt-1">Owner: {job.owner || 'Unknown'}</p>
                     </div>
                   ),

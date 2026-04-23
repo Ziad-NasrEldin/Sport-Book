@@ -79,14 +79,14 @@ export default function OperatorStaffPage() {
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <Download className="w-4 h-4" />
               Export Staff
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-sm font-bold text-surface-container-lowest shadow-[0_20px_40px_-20px_rgba(0,35,102,1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_28px_48px_-18px_rgba(0,35,102,1.1)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <UserPlus2 className="w-4 h-4" />
               Invite Staff
@@ -105,7 +105,7 @@ export default function OperatorStaffPage() {
               <AppSelect
                 value={selectedRole}
                 onChange={handleRoleChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {roleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -117,7 +117,7 @@ export default function OperatorStaffPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -129,7 +129,7 @@ export default function OperatorStaffPage() {
               <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {branchOptions.map((branchId) => (
                   <option key={branchId} value={branchId}>
@@ -154,7 +154,7 @@ export default function OperatorStaffPage() {
                   header: 'Staff Member',
                   render: (member: any) => (
                     <div>
-                      <p className="font-bold text-primary">{member.name || 'Unknown'}</p>
+                      <p className="font-black text-primary">{member.name || 'Unknown'}</p>
                       <p className="text-xs text-primary/60 mt-1">{member.id || 'Unknown'}</p>
                     </div>
                   ),
@@ -162,7 +162,7 @@ export default function OperatorStaffPage() {
                 {
                   key: 'role',
                   header: 'Role',
-                  render: (member: any) => <p className="text-sm font-semibold text-primary">{member.role || 'Unknown'}</p>,
+                  render: (member: any) => <p className="text-sm font-bold text-primary">{member.role || 'Unknown'}</p>,
                 },
                 {
                   key: 'branch',
@@ -179,7 +179,7 @@ export default function OperatorStaffPage() {
                   header: 'Contact',
                   render: (member: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{member.phone || 'Unknown'}</p>
+                      <p className="text-sm font-bold text-primary">{member.phone || 'Unknown'}</p>
                       <p className="text-xs text-primary/55 mt-1">{member.email || 'Unknown'}</p>
                     </div>
                   ),

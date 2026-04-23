@@ -120,7 +120,7 @@ export default function OperatorBookingsPage() {
               ])
               exportToCsv('bookings.csv', headers, rows)
             }}
-            className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
           >
             <Download className="w-4 h-4" />
             Export Bookings
@@ -138,7 +138,7 @@ export default function OperatorBookingsPage() {
               <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {branchOptions.map((branchId) => (
                   <option key={branchId} value={branchId}>
@@ -150,7 +150,7 @@ export default function OperatorBookingsPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -175,7 +175,7 @@ export default function OperatorBookingsPage() {
                   header: 'Booking',
                   render: (booking: any) => (
                     <div>
-                      <p className="font-bold text-primary">{booking.id || 'Unknown'}</p>
+                      <p className="font-black text-primary">{booking.id || 'Unknown'}</p>
                       <p className="text-xs text-primary/60 mt-1">{booking.customer || booking.user?.name || 'Unknown'}</p>
                     </div>
                   ),
@@ -185,7 +185,7 @@ export default function OperatorBookingsPage() {
                   header: 'Schedule',
                   render: (booking: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{new Date(booking.date).toLocaleDateString()} • {booking.slot || 'TBD'}</p>
+                      <p className="text-sm font-bold text-primary">{new Date(booking.date).toLocaleDateString()} • {booking.slot || 'TBD'}</p>
                       <p className="text-xs text-primary/55 mt-1">{getCourtNameById(booking.courtId)}</p>
                     </div>
                   ),
@@ -200,7 +200,7 @@ export default function OperatorBookingsPage() {
                   header: 'Payment',
                   render: (booking: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{formatEgp(booking.amount || 0)}</p>
+                      <p className="text-sm font-bold text-primary">{formatEgp(booking.amount || 0)}</p>
                       <p className="text-xs text-primary/55 mt-1">{booking.paymentMethod || 'Unknown'}</p>
                     </div>
                   ),
@@ -218,7 +218,7 @@ export default function OperatorBookingsPage() {
                       type="button"
                       onClick={() => advanceStatus(booking.id, booking.status)}
                       disabled={advanceStatusMutation.loading}
-                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/16 hover:shadow-[0_8px_16px_-14px_rgba(0,17,58,0.9)] disabled:opacity-50 disabled:hover:translate-y-0 motion-safe:hover:scale-[1.02]"
+                      className="inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-primary/10 to-primary/16 px-3 py-1.5 text-[10px] font-lexend font-black uppercase tracking-[0.12em] text-primary shadow-[0_6px_16px_-10px_rgba(0,17,58,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.7)] disabled:opacity-50 disabled:hover:translate-y-0 motion-safe:hover:scale-[1.03]"
                     >
                       <Repeat2 className="w-3.5 h-3.5" />
                       Advance

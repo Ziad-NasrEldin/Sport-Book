@@ -111,14 +111,14 @@ export default function OperatorCourtsPage() {
                 ])
                 exportToCsv('courts.csv', headers, rows)
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_10px_20px_-14px_rgba(0,17,58,0.8)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-4 py-2 text-sm font-bold text-primary shadow-[0_8px_24px_-12px_rgba(0,17,58,0.6)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-14px_rgba(0,17,58,0.85)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <Download className="w-4 h-4" />
               Export Courts
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-sm font-bold text-surface-container-lowest shadow-[0_20px_40px_-20px_rgba(0,35,102,1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_28px_48px_-18px_rgba(0,35,102,1.1)] active:translate-y-0 motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]"
             >
               <Grid2x2 className="w-4 h-4" />
               Add Court
@@ -137,7 +137,7 @@ export default function OperatorCourtsPage() {
               <AppSelect
                 value={selectedBranch}
                 onChange={handleBranchChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {branchOptions.map((branchId: any) => (
                   <option key={branchId} value={branchId}>
@@ -149,7 +149,7 @@ export default function OperatorCourtsPage() {
               <AppSelect
                 value={selectedSport}
                 onChange={handleSportChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {sportOptions.map((sport: any) => (
                   <option key={sport} value={sport}>
@@ -161,7 +161,7 @@ export default function OperatorCourtsPage() {
               <AppSelect
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
+                className="rounded-full bg-gradient-to-br from-surface-container-low to-surface-container-high px-3 py-2 text-xs font-lexend font-black uppercase tracking-[0.12em] text-primary outline-none shadow-[0_4px_12px_-8px_rgba(0,17,58,0.3)] transition-colors hover:shadow-[0_8px_16px_-10px_rgba(0,17,58,0.4)]"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -186,7 +186,7 @@ export default function OperatorCourtsPage() {
                   header: 'Court',
                   render: (court: any) => (
                     <div>
-                      <p className="font-bold text-primary">{court.name || 'Unknown'}</p>
+                      <p className="font-black text-primary">{court.name || 'Unknown'}</p>
                       <p className="text-xs text-primary/60 mt-1">{court.id || 'Unknown'}</p>
                     </div>
                   ),
@@ -194,14 +194,14 @@ export default function OperatorCourtsPage() {
                 {
                   key: 'branch',
                   header: 'Branch',
-                  render: (court: any) => <p className="text-sm font-semibold text-primary">{getBranchNameById(court.branchId)}</p>,
+                  render: (court: any) => <p className="text-sm font-bold text-primary">{getBranchNameById(court.branchId)}</p>,
                 },
                 {
                   key: 'sport',
                   header: 'Sport & Surface',
                   render: (court: any) => (
                     <div>
-                      <p className="text-sm font-semibold text-primary">{sportLabel(court.sport) || 'Unknown'}</p>
+                      <p className="text-sm font-bold text-primary">{sportLabel(court.sport) || 'Unknown'}</p>
                       <p className="text-xs text-primary/55 mt-1">{court.surface || 'Unknown'}</p>
                     </div>
                   ),
@@ -209,7 +209,7 @@ export default function OperatorCourtsPage() {
                 {
                   key: 'pricing',
                   header: 'Price / Hour',
-                  render: (court: any) => <p className="text-sm font-semibold text-primary">{formatEgp(court.pricePerHour || 0)}</p>,
+                  render: (court: any) => <p className="text-sm font-bold text-primary">{formatEgp(court.pricePerHour || 0)}</p>,
                 },
                 {
                   key: 'status',
@@ -227,7 +227,7 @@ export default function OperatorCourtsPage() {
                   render: (court: any) => (
                     <Link
                       href={`/operator/courts/${court.id}`}
-                      className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/16 hover:shadow-[0_8px_16px_-14px_rgba(0,17,58,0.9)] motion-safe:hover:scale-[1.02]"
+                      className="inline-flex items-center rounded-full bg-gradient-to-br from-primary/10 to-primary/16 px-3 py-1.5 text-[10px] font-lexend font-black uppercase tracking-[0.12em] text-primary shadow-[0_6px_16px_-10px_rgba(0,17,58,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.7)] motion-safe:hover:scale-[1.03]"
                     >
                       Configure
                     </Link>

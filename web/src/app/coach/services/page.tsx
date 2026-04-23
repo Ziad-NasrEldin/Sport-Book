@@ -167,7 +167,7 @@ export default function CoachServicesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Services"
         subtitle="Design your service catalog and session formats. Session types here power player booking experiences."
@@ -194,10 +194,10 @@ export default function CoachServicesPage() {
       />
 
       {(isSessionTypeFormOpen || isServiceFormOpen) && (
-        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {isSessionTypeFormOpen && (
             <AdminPanel eyebrow="Compose" title={editingSessionTypeId ? 'Edit Session Type' : 'Create Session Type'}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LabeledInput label="Name" value={sessionTypeForm.name} onChange={(value) => setSessionTypeForm((current) => ({ ...current, name: value }))} />
                 <LabeledInput label="Visibility" value={sessionTypeForm.visibility} onChange={(value) => setSessionTypeForm((current) => ({ ...current, visibility: value }))} />
                 <LabeledInput label="Description" value={sessionTypeForm.description} onChange={(value) => setSessionTypeForm((current) => ({ ...current, description: value }))} className="md:col-span-2" />
@@ -221,10 +221,10 @@ export default function CoachServicesPage() {
               </div>
 
               <div className="mt-4 flex gap-2">
-                <button type="button" onClick={() => void handleSubmitSessionType()} className="rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest">
+                <button type="button" onClick={() => void handleSubmitSessionType()} className="rounded-full bg-primary-container px-5 py-2.5 text-sm font-bold text-surface-container-lowest shadow-md hover:shadow-lg transition-shadow">
                   {editingSessionTypeId ? 'Save Session Type' : 'Create Session Type'}
                 </button>
-                <button type="button" onClick={resetSessionTypeForm} className="rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary">
+                <button type="button" onClick={resetSessionTypeForm} className="rounded-full bg-surface-container-low px-5 py-2.5 text-sm font-bold text-primary hover:bg-surface-container-high transition-colors">
                   Cancel
                 </button>
               </div>
@@ -233,7 +233,7 @@ export default function CoachServicesPage() {
 
           {isServiceFormOpen && (
             <AdminPanel eyebrow="Catalog" title={editingServiceId ? 'Edit Service' : 'Create Service'}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LabeledInput label="Title" value={serviceForm.title} onChange={(value) => setServiceForm((current) => ({ ...current, title: value }))} />
                 <label className="space-y-1">
                   <span className="text-[11px] font-lexend uppercase tracking-[0.14em] text-primary/55">Session Type</span>
@@ -266,10 +266,10 @@ export default function CoachServicesPage() {
               </div>
 
               <div className="mt-4 flex gap-2">
-                <button type="button" onClick={() => void handleSubmitService()} className="rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest">
+                <button type="button" onClick={() => void handleSubmitService()} className="rounded-full bg-primary-container px-5 py-2.5 text-sm font-bold text-surface-container-lowest shadow-md hover:shadow-lg transition-shadow">
                   {editingServiceId ? 'Save Service' : 'Create Service'}
                 </button>
-                <button type="button" onClick={resetServiceForm} className="rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary">
+                <button type="button" onClick={resetServiceForm} className="rounded-full bg-surface-container-low px-5 py-2.5 text-sm font-bold text-primary hover:bg-surface-container-high transition-colors">
                   Cancel
                 </button>
               </div>
@@ -279,44 +279,44 @@ export default function CoachServicesPage() {
       )}
 
       <AdminPanel eyebrow="Coach-managed" title="Session Type Formats">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
           {sessionTypesLoading ? (
             <p className="text-sm text-primary/60">Loading session types...</p>
           ) : (
             safeSessionTypes.map((sessionType) => (
-              <article key={sessionType.id} className="rounded-[var(--radius-default)] bg-surface-container-low p-4 space-y-3">
+              <article key={sessionType.id} className="rounded-[var(--radius-md)] bg-surface-container-low p-5 space-y-4 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-primary">{sessionType.name}</p>
-                    <p className="text-xs text-primary/60 mt-1">{sessionType.description}</p>
+                    <p className="text-base font-black text-primary">{sessionType.name}</p>
+                    <p className="text-sm text-primary/70 mt-1.5 font-semibold">{sessionType.description}</p>
                   </div>
                   <AdminStatusPill label={sessionType.status} tone={statusTone(sessionType.status)} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-[var(--radius-default)] bg-surface-container-lowest px-2.5 py-2">
-                    <p className="font-lexend uppercase tracking-[0.14em] text-primary/45">Participants</p>
-                    <p className="text-primary font-bold mt-1">{sessionType.minParticipants}-{sessionType.maxParticipants}</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-[var(--radius-md)] bg-surface-container-lowest px-4 py-3 shadow-sm">
+                    <p className="font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold text-[10px]">Participants</p>
+                    <p className="text-primary font-black mt-1.5 text-base">{sessionType.minParticipants}-{sessionType.maxParticipants}</p>
                   </div>
-                  <div className="rounded-[var(--radius-default)] bg-surface-container-lowest px-2.5 py-2">
-                    <p className="font-lexend uppercase tracking-[0.14em] text-primary/45">Base Rate</p>
-                    <p className="text-primary font-bold mt-1">{formatEgp(sessionType.baseRate)}</p>
+                  <div className="rounded-[var(--radius-md)] bg-surface-container-lowest px-4 py-3 shadow-sm">
+                    <p className="font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold text-[10px]">Base Rate</p>
+                    <p className="text-primary font-black mt-1.5 text-base">{formatEgp(sessionType.baseRate)}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {sessionType.durationOptions.map((duration) => (
-                    <span key={duration} className="px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.12em] bg-surface-container-lowest text-primary/75">
+                    <span key={duration} className="px-3 py-1.5 rounded-full text-[10px] font-lexend font-black uppercase tracking-[0.2em] bg-surface-container-lowest text-primary/75 shadow-sm">
                       {duration}m
                     </span>
                   ))}
                 </div>
 
-                <p className="text-xs text-primary/60">
-                  Visibility: <span className="font-bold text-primary">{sessionType.visibility}</span> • Multiplier {sessionType.multiplier}x
+                <p className="text-sm text-primary/70 font-semibold">
+                  Visibility: <span className="font-black text-primary">{sessionType.visibility}</span> • Multiplier {sessionType.multiplier}x
                 </p>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -334,7 +334,7 @@ export default function CoachServicesPage() {
                       })
                       setIsSessionTypeFormOpen(true)
                     }}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-bold text-primary"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-black text-primary hover:bg-surface-container-high transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Edit
@@ -345,7 +345,7 @@ export default function CoachServicesPage() {
                       await api.delete(`/coach/session-types/${sessionType.id}`)
                       await refetchSessionTypes()
                     }}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-bold text-secondary"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-black text-secondary hover:bg-surface-container-high transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete
@@ -384,7 +384,7 @@ export default function CoachServicesPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-6">
           {servicesLoading ? (
             <SkeletonTable rows={10} />
           ) : (

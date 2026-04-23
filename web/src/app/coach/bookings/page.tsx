@@ -46,13 +46,13 @@ export default function CoachBookingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Bookings"
         subtitle="Track your full booking lifecycle, prioritize high-intent athletes, and keep payouts predictable."
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.9fr] gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.9fr] gap-6">
         <AdminPanel eyebrow="Pipeline" title="Session Requests & Confirmations">
           <AdminFilterBar
             searchValue={search}
@@ -80,7 +80,7 @@ export default function CoachBookingsPage() {
             }
           />
 
-          <div className="mt-4">
+          <div className="mt-6">
             {loading ? (
               <SkeletonTable rows={10} />
             ) : (
@@ -130,17 +130,17 @@ export default function CoachBookingsPage() {
         </AdminPanel>
 
         <AdminPanel eyebrow="Today" title="Operational Notes">
-          <div className="space-y-3">
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
-              <p className="text-sm font-semibold text-primary">
+          <div className="space-y-4">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+              <p className="text-base font-bold text-primary">
                 {(coachBookings ?? []).filter((booking) => booking.status === 'PENDING').length} pending confirmations should be reviewed today.
               </p>
             </article>
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
-              <p className="text-sm font-semibold text-primary">Travel buffer is reflected by your current availability windows.</p>
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+              <p className="text-base font-bold text-primary">Travel buffer is reflected by your current availability windows.</p>
             </article>
-            <article className="rounded-[var(--radius-default)] bg-surface-container-low px-3.5 py-3">
-              <p className="text-sm font-semibold text-primary">Completed sessions automatically feed the reports page payout totals.</p>
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+              <p className="text-base font-bold text-primary">Completed sessions automatically feed the reports page payout totals.</p>
             </article>
           </div>
         </AdminPanel>
