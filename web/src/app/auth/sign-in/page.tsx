@@ -155,6 +155,7 @@ export default function SignInPage() {
                   type="email"
                   name="email"
                   placeholder="alex@example.com"
+                  required
                   className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
@@ -168,6 +169,7 @@ export default function SignInPage() {
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   placeholder="Enter your password"
+                  required
                   className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest transition-all duration-200"
                 />
                 <button
