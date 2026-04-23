@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useMemo, useState } from 'react'
-import { Download, UserPlus, X } from 'lucide-react'
+import { AlertTriangle, Download, Star, UserCheck2, UserPlus, X } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -104,6 +104,43 @@ export default function AdminCoachesPage() {
     })
   }, [search, sportFilter, coachesData])
 
+  const coachSignals = useMemo(
+    () => [
+      {
+        label: 'Approved Roster',
+        value: filteredCoaches.filter((coach: any) => coach.status === 'APPROVED').length,
+        icon: UserCheck2,
+        accent: 'text-[#c3f400]',
+        surface: 'bg-[#c3f400]/18',
+      },
+      {
+        label: 'Pending Reviews',
+        value: filteredCoaches.filter((coach: any) => coach.status === 'PENDING').length,
+        icon: AlertTriangle,
+        accent: 'text-[#ffd27a]',
+        surface: 'bg-[#fd8b00]/24',
+      },
+      {
+        label: 'Average Rating',
+        value: filteredCoaches.length
+          ? (filteredCoaches.reduce((total: number, coach: any) => total + (coach.rating || 0), 0) / filteredCoaches.length).toFixed(1)
+          : '0.0',
+        icon: Star,
+        accent: 'text-white',
+        surface: 'bg-white/14',
+      },
+    ],
+    [filteredCoaches],
+  )
+
+  const topCoach = useMemo(() => {
+    if (filteredCoaches.length === 0) {
+      return null
+    }
+
+    return [...filteredCoaches].sort((left: any, right: any) => (right.rating || 0) - (left.rating || 0))[0]
+  }, [filteredCoaches])
+
   const exportCoaches = useCallback(() => {
     const headers = 'Name,Email,Sport,Status,Sessions This Month,Commission Rate,Rating'
     const rows = filteredCoaches.map((coach: any) =>
@@ -187,7 +224,45 @@ export default function AdminCoachesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
+      <section className="relative overflow-hidden bg-[linear-gradient(118deg,#00113a_0%,#002366_52%,#fd8b00_136%)] px-6 py-6 text-surface-container-lowest shadow-[0_30px_80px_-40px_rgba(0,17,58,0.95)]">
+        <div className="pointer-events-none absolute -left-12 top-0 h-48 w-48 rounded-full bg-[#c3f400]/35 blur-3xl" />
+        <div className="pointer-events-none absolute -right-12 bottom-0 h-44 w-44 rounded-full bg-[#ffb347]/30 blur-3xl" />
+        <div className="relative grid gap-6 xl:grid-cols-[1.4fr_1fr] xl:items-end">
+          <div>
+            <p className="text-[11px] font-lexend uppercase tracking-[0.2em] text-white/75">Coach Command Deck</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-black leading-tight md:text-[2.5rem]">
+              Run approvals, growth, and risk control from one high-contrast workspace.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/78">
+              Every change here affects booking quality and monthly revenue. Prioritize pending reviews fast, then keep top performers visible.
+            </p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/16 px-4 py-2 text-xs font-lexend font-bold uppercase tracking-[0.16em] text-white">
+              <Star className="h-3.5 w-3.5 text-[#c3f400]" />
+              {topCoach ? `Top performer ${topCoach.name || 'Unknown'} (${(topCoach.rating || 0).toFixed(1)})` : 'No highlighted performer yet'}
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            {coachSignals.map((signal, index) => {
+              const Icon = signal.icon
+
+              return (
+                <article
+                  key={signal.label}
+                  className={`rounded-[1.15rem] border border-white/18 ${signal.surface} p-4 animate-stagger-pop`}
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-lexend uppercase tracking-[0.16em] text-white/75">{signal.label}</p>
+                    <Icon className={`h-4 w-4 ${signal.accent}`} />
+                  </div>
+                  <p className="mt-2 text-3xl font-black text-white">{signal.value}</p>
+                </article>
+              )
+            })}
+          </div>
+        </div>
+      </section>
       <AdminPageHeader
         title="Coach Management"
         subtitle="Review coach performance, control commission settings, and create verified coach listings from the admin workspace."
@@ -196,7 +271,7 @@ export default function AdminCoachesPage() {
             <button
               type="button"
               onClick={exportCoaches}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:-translate-y-0.5 active:translate-y-0 transition-all"
             >
               <Download className="w-4 h-4" />
               Export Coaches
@@ -204,7 +279,7 @@ export default function AdminCoachesPage() {
             <button
               type="button"
               onClick={openInviteModal}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_34px_-16px_rgba(0,17,58,0.8)] hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all"
             >
               <UserPlus className="w-4 h-4" />
               Invite Coach
@@ -222,7 +297,7 @@ export default function AdminCoachesPage() {
             <select
               value={sportFilter}
               onChange={(event) => setSportFilter(event.target.value)}
-              className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+              className="rounded-full border border-primary/15 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-high"
             >
               {sportOptions.map((sport) => (
                 <option key={sport} value={sport}>
@@ -233,7 +308,7 @@ export default function AdminCoachesPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-4 rounded-[var(--radius-md)] border border-primary/10 bg-surface-container-lowest/70 p-2">
           {loading ? (
             <SkeletonTable rows={10} />
           ) : (
@@ -283,8 +358,8 @@ export default function AdminCoachesPage() {
       </AdminPanel>
 
       {isInviteModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-4xl rounded-[var(--radius-lg)] border border-primary/10 bg-surface-container-lowest shadow-ambient max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/45 p-4 animate-fade-in">
+          <div className="w-full max-w-4xl rounded-[var(--radius-lg)] border border-primary/10 bg-surface-container-lowest shadow-[0_34px_70px_-32px_rgba(0,17,58,0.9)] max-h-[90vh] overflow-y-auto animate-modal-dialog-in">
             <div className="flex items-start justify-between gap-4 border-b border-primary/8 px-6 py-5">
               <div>
                 <p className="text-[11px] font-lexend uppercase tracking-[0.16em] text-primary/55">Admin Action</p>
@@ -469,7 +544,7 @@ export default function AdminCoachesPage() {
                   className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <UserPlus className="h-4 w-4" />
-                  {createCoachMutation.loading ? 'Creating…' : 'Create Coach'}
+                  {createCoachMutation.loading ? 'Creating...' : 'Create Coach'}
                 </button>
               </div>
             </form>

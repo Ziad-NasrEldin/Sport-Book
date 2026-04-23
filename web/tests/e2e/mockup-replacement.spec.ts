@@ -162,21 +162,3 @@ test.describe('Operator Dashboard - Real Data From API', () => {
     await context.close()
   })
 })
-
-test.describe('Onboarding - Real Stats From API', () => {
-  test('onboarding page fetches platform stats from real API endpoint', async ({ page }) => {
-    await page.route('**/api/v1/onboarding/stats', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ courts: 24, coaches: 120, cities: 8, products: 340 }),
-      })
-    })
-
-    await page.goto('/onboarding', { waitUntil: 'domcontentloaded' })
-    await waitForInteractive(page)
-
-    const getStarted = page.getByRole('button', { name: /get started/i })
-    await expect(getStarted).toBeVisible({ timeout: 10000 })
-  })
-})

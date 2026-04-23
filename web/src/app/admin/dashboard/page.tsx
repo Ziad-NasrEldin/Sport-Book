@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-primary/15 bg-[linear-gradient(130deg,var(--color-primary)_0%,#001a52_52%,#11387d_100%)] shadow-[0_32px_72px_-36px_rgba(0,17,58,0.95)]">
+      <section className="relative overflow-hidden bg-[linear-gradient(130deg,var(--color-primary)_0%,#001a52_52%,#11387d_100%)] shadow-[0_32px_72px_-36px_rgba(0,17,58,0.95)]">
         <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-secondary-container/30 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-[-7rem] h-64 w-64 rounded-full bg-tertiary-fixed/20 blur-3xl" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/30" />

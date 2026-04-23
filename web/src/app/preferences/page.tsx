@@ -12,7 +12,6 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { resetOnboardingCompleted } from '@/lib/onboarding'
 import { useApiCall } from '@/lib/api/hooks'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
@@ -95,10 +94,6 @@ export default function PreferencesPage() {
     router.push('/profile')
   }
 
-  const handleReplayOnboarding = () => {
-    resetOnboardingCompleted()
-    router.push('/onboarding')
-  }
 
   const handleSavePreferences = async () => {
     setSaving(true)
@@ -362,13 +357,6 @@ export default function PreferencesPage() {
             ) : 'Save Preferences'}
           </button>
 
-          <button
-            type="button"
-            onClick={handleReplayOnboarding}
-            className="mt-3 w-full py-3.5 rounded-[var(--radius-full)] bg-surface-container-lowest border border-primary/10 text-primary font-bold hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-          >
-            Replay Onboarding
-          </button>
         </div>
       </section>
 

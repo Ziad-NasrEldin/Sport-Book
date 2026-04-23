@@ -46,3 +46,4 @@ Thumbs.db
 *.temp
 # Added by code-review-graph
 .code-review-graph/
+.gstack/

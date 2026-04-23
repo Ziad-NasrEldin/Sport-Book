@@ -32,6 +32,22 @@ export const createFacilitySchema = z.object({
   sportIds: z.array(z.string()).default([]),
 })
 
+export const updateFacilitySchema = z.object({
+  name: z.string().min(2).optional(),
+  city: z.string().min(2).optional(),
+  address: z.string().min(2).optional(),
+  description: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED']).optional(),
+  operatorName: z.string().min(2).optional(),
+  operatorEmail: z.string().email().optional(),
+  operatorPhone: z.string().optional(),
+  branchName: z.string().min(2).optional(),
+  branchAddress: z.string().min(2).optional(),
+  sportIds: z.array(z.string()).optional(),
+})
+
 export const createCoachSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
@@ -170,6 +186,7 @@ export const listAuditLogsSchema = z.object({
 export type ListUsersInput = z.infer<typeof listUsersSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
 export type CreateFacilityInput = z.infer<typeof createFacilitySchema>
+export type UpdateFacilityInput = z.infer<typeof updateFacilitySchema>
 export type CreateCoachInput = z.infer<typeof createCoachSchema>
 export type CreateStoreProductInput = z.infer<typeof createStoreProductSchema>
 export type UpdateStoreProductInput = z.infer<typeof updateStoreProductSchema>

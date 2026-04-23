@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useMemo, useState } from 'react'
-import { Building2, Download, Plus, X } from 'lucide-react'
+import { Activity, Building2, Download, Landmark, Plus, TrendingUp, X } from 'lucide-react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -53,6 +53,10 @@ function formatEgp(value: number) {
     currency: 'EGP',
     maximumFractionDigits: 0,
   }).format(value)
+}
+
+function clampPercentage(value: number) {
+  return Math.min(100, Math.max(0, Math.round(value)))
 }
 
 export default function AdminFacilitiesPage() {
@@ -136,6 +140,46 @@ export default function AdminFacilitiesPage() {
     })
   }, [cityFilter, search, facilitiesData])
 
+  const facilityInsights = useMemo(() => {
+    const totalFacilities = facilitiesData.length
+    const activeCount = facilitiesData.filter((facility: any) => facility.status === 'ACTIVE').length
+    const pendingCount = facilitiesData.filter((facility: any) => facility.status === 'PENDING').length
+    const suspendedCount = facilitiesData.filter((facility: any) => facility.status === 'SUSPENDED').length
+    const totalRevenue = facilitiesData.reduce((total: number, facility: any) => total + Number(facility.monthlyRevenue || 0), 0)
+    const utilizationTotal = facilitiesData.reduce((total: number, facility: any) => total + Number(facility.utilization || 0), 0)
+    const averageUtilization = totalFacilities > 0 ? utilizationTotal / totalFacilities : 0
+
+    const cityTotals = facilitiesData.reduce<Record<string, number>>((accumulator, facility: any) => {
+      const city = String(facility.city || '').trim()
+      if (!city) {
+        return accumulator
+      }
+      accumulator[city] = (accumulator[city] || 0) + 1
+      return accumulator
+    }, {})
+
+    const [topCityName = 'No city data', topCityCount = 0] = Object.entries(cityTotals).sort((a, b) => b[1] - a[1])[0] || []
+
+    return {
+      totalFacilities,
+      activeCount,
+      pendingCount,
+      suspendedCount,
+      totalRevenue,
+      averageUtilization,
+      topCityName,
+      topCityCount,
+    }
+  }, [facilitiesData])
+
+  const utilizationLeaders = useMemo(
+    () =>
+      [...filteredFacilities]
+        .sort((a: any, b: any) => Number(b.utilization || 0) - Number(a.utilization || 0))
+        .slice(0, 3),
+    [filteredFacilities],
+  )
+
   const exportFacilities = useCallback(() => {
     const headers = 'Name,City,Status,Branches,Monthly Revenue,Utilization'
     const rows = filteredFacilities.map((facility: any) =>
@@ -194,16 +238,17 @@ export default function AdminFacilitiesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 motion-safe:animate-[var(--animate-fade-in)]">
       <AdminPageHeader
         title="Facility Management"
         subtitle="Control partner facilities, monitor branch utilization, and add new operators without leaving the admin workspace."
+        className="motion-safe:animate-[var(--animate-soft-drop)]"
         actions={
           <>
             <button
               type="button"
               onClick={exportFacilities}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-surface-container-high motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               Export Facilities
@@ -211,7 +256,7 @@ export default function AdminFacilitiesPage() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest transition-all duration-200 hover:opacity-90 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
             >
               <Building2 className="w-4 h-4" />
               Add Facility
@@ -220,7 +265,107 @@ export default function AdminFacilitiesPage() {
         }
       />
 
-      <AdminPanel eyebrow="Operations" title="Facility Directory">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,2.25fr)_minmax(0,1fr)]">
+        <AdminPanel
+          noPadding
+          className="relative overflow-hidden border border-primary/12 bg-gradient-to-br from-primary-container/65 via-surface-container-lowest to-surface-container-high p-5 motion-safe:animate-[var(--animate-spring-in)] md:p-6"
+        >
+          <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-primary/20 blur-3xl motion-safe:animate-[var(--animate-float-blob)]" />
+          <div className="pointer-events-none absolute -left-14 bottom-0 h-40 w-40 rounded-full bg-surface-container-high blur-2xl motion-safe:animate-[var(--animate-float-blob)] animation-delay-300" />
+
+          <div className="relative space-y-5">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/60">Performance Pulse</p>
+                <h3 className="mt-1 text-2xl font-black tracking-tight text-primary md:text-3xl">Facility Command Center</h3>
+                <p className="mt-2 max-w-2xl text-sm text-primary/70">
+                  Live snapshot across partner growth, utilization pressure, and revenue momentum.
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-surface-container-lowest/85 px-3 py-1.5 text-[11px] font-lexend font-bold uppercase tracking-[0.12em] text-primary/70">
+                <Activity className="h-3.5 w-3.5" />
+                {filteredFacilities.length} tracked
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <article className="card-lift rounded-[var(--radius-default)] border border-primary/12 bg-surface-container-lowest/90 px-4 py-4 shadow-sm backdrop-blur-sm motion-safe:animate-[var(--animate-card-stagger)]">
+                <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Total Facilities</p>
+                <p className="mt-2 text-3xl font-black text-primary motion-safe:animate-[var(--animate-number-pop)]">{facilityInsights.totalFacilities}</p>
+                <p className="mt-1 text-xs text-primary/60">{facilityInsights.activeCount} active operators</p>
+              </article>
+              <article className="card-lift rounded-[var(--radius-default)] border border-primary/12 bg-surface-container-lowest/90 px-4 py-4 shadow-sm backdrop-blur-sm motion-safe:animate-[var(--animate-card-stagger)] animation-delay-100">
+                <p className="inline-flex items-center gap-1.5 text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Avg Utilization
+                </p>
+                <p className="mt-2 text-3xl font-black text-primary motion-safe:animate-[var(--animate-number-pop)] animation-delay-150">{clampPercentage(facilityInsights.averageUtilization)}%</p>
+                <p className="mt-1 text-xs text-primary/60">
+                  {facilityInsights.pendingCount} pending, {facilityInsights.suspendedCount} suspended
+                </p>
+              </article>
+              <article className="card-lift rounded-[var(--radius-default)] border border-primary/12 bg-surface-container-lowest/90 px-4 py-4 shadow-sm backdrop-blur-sm motion-safe:animate-[var(--animate-card-stagger)] animation-delay-200">
+                <p className="inline-flex items-center gap-1.5 text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">
+                  <Landmark className="h-3.5 w-3.5" />
+                  Monthly Revenue
+                </p>
+                <p className="mt-2 text-2xl font-black text-primary motion-safe:animate-[var(--animate-number-pop)] animation-delay-200">{formatEgp(facilityInsights.totalRevenue)}</p>
+                <p className="mt-1 text-xs text-primary/60">Combined active portfolio performance</p>
+              </article>
+              <article className="card-lift rounded-[var(--radius-default)] border border-primary/12 bg-surface-container-lowest/90 px-4 py-4 shadow-sm backdrop-blur-sm motion-safe:animate-[var(--animate-card-stagger)] animation-delay-300">
+                <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Top City Density</p>
+                <p className="mt-2 text-xl font-black text-primary">{facilityInsights.topCityName}</p>
+                <p className="mt-1 text-xs text-primary/60">{facilityInsights.topCityCount} facilities concentrated</p>
+              </article>
+            </div>
+          </div>
+        </AdminPanel>
+
+        <AdminPanel
+          eyebrow="Leaderboard"
+          title="Utilization Leaders"
+          className="border border-primary/10 bg-surface-container-lowest motion-safe:animate-[var(--animate-soft-rise)] animation-delay-200"
+        >
+          <div className="space-y-3">
+            {utilizationLeaders.length > 0 ? (
+              utilizationLeaders.map((facility: any, index: number) => {
+                const utilization = clampPercentage(Number(facility.utilization || 0))
+                return (
+                  <article
+                    key={facility.id || `${facility.name}-${index}`}
+                    className="card-lift rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-3.5 py-3 motion-safe:animate-[var(--animate-stagger-pop)]"
+                    style={{ animationDelay: `${120 + index * 75}ms` }}
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-primary">{facility.name || 'Unknown facility'}</p>
+                        <p className="mt-1 text-[11px] font-lexend uppercase tracking-[0.1em] text-primary/55">{facility.city || 'Unknown city'}</p>
+                      </div>
+                      <span className="text-sm font-black text-primary">{utilization}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-primary/10">
+                      <div
+                        className="h-full w-full origin-left rounded-full bg-primary-container transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                        style={{ transform: `scaleX(${utilization / 100})` }}
+                      />
+                    </div>
+                  </article>
+                )
+              })
+            ) : (
+              <p className="rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-3.5 py-4 text-sm text-primary/65 motion-safe:animate-[var(--animate-empty-bob)]">
+                Add facilities to reveal utilization leaders.
+              </p>
+            )}
+          </div>
+        </AdminPanel>
+      </section>
+
+      <AdminPanel
+        eyebrow="Operations"
+        title="Facility Directory"
+        className="border border-primary/10 bg-surface-container-lowest motion-safe:animate-[var(--animate-soft-rise)] animation-delay-300"
+      >
         <AdminFilterBar
           searchValue={search}
           onSearchChange={setSearch}
@@ -229,7 +374,7 @@ export default function AdminFacilitiesPage() {
             <select
               value={cityFilter}
               onChange={handleCityFilterChange}
-              className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+              className="rounded-full border border-primary/12 bg-surface-container-low px-4 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary shadow-sm outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.15)] motion-safe:focus:-translate-y-0.5"
             >
               {cityOptions.map((city: string) => (
                 <option key={city} value={city}>
@@ -240,7 +385,7 @@ export default function AdminFacilitiesPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-4 rounded-[var(--radius-default)] border border-primary/8 bg-surface-container-low/45 p-2 motion-safe:animate-[var(--animate-fade-in)] animation-delay-400 md:p-3">
           {loading ? (
             <SkeletonTable rows={10} />
           ) : (
@@ -295,9 +440,10 @@ export default function AdminFacilitiesPage() {
       </AdminPanel>
 
       {isCreateModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-4xl rounded-[var(--radius-lg)] bg-surface-container-lowest shadow-ambient border border-primary/10 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between gap-4 border-b border-primary/8 px-6 py-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px] motion-safe:animate-[var(--animate-modal-backdrop-in)]">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden overflow-y-auto rounded-[calc(var(--radius-lg)+6px)] border border-primary/14 bg-surface-container-lowest shadow-[0_28px_70px_rgba(0,0,0,0.32)] motion-safe:animate-[var(--animate-modal-dialog-in)]">
+            <div className="relative flex items-start justify-between gap-4 border-b border-primary/10 bg-gradient-to-r from-primary-container/35 via-surface-container-lowest to-surface-container-low px-6 py-5">
+              <div className="pointer-events-none absolute -bottom-8 right-8 h-20 w-20 rounded-full bg-primary/20 blur-2xl" />
               <div>
                 <p className="text-[11px] font-lexend uppercase tracking-[0.16em] text-primary/55">Admin Action</p>
                 <h3 className="mt-1 text-2xl font-black text-primary">Add Facility</h3>
@@ -309,14 +455,14 @@ export default function AdminFacilitiesPage() {
                 type="button"
                 onClick={closeCreateModal}
                 aria-label="Close add facility dialog"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:scale-105 active:scale-95 transition-all"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary/10 bg-surface-container-low text-primary shadow-sm transition-all duration-200 hover:bg-surface-container-high motion-safe:hover:scale-105 motion-safe:active:scale-95"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
-              <section className="grid gap-4 md:grid-cols-2">
+              <section className="grid gap-4 rounded-[var(--radius-md)] border border-primary/10 bg-surface-container-low/45 p-4 motion-safe:animate-[var(--animate-field-group-in)] md:grid-cols-2 md:p-5">
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Facility Name</span>
                   <input
@@ -324,7 +470,7 @@ export default function AdminFacilitiesPage() {
                     value={formState.name}
                     onChange={handleFieldChange}
                     placeholder="Smash Hub Nasr City"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                     required
                   />
                 </label>
@@ -335,7 +481,7 @@ export default function AdminFacilitiesPage() {
                     value={formState.city}
                     onChange={handleFieldChange}
                     placeholder="Cairo"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                     required
                   />
                 </label>
@@ -346,7 +492,7 @@ export default function AdminFacilitiesPage() {
                     value={formState.address}
                     onChange={handleFieldChange}
                     placeholder="Makram Ebeid Street, Nasr City"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   />
                 </label>
                 <label className="space-y-1.5 md:col-span-2">
@@ -357,7 +503,7 @@ export default function AdminFacilitiesPage() {
                     onChange={handleFieldChange}
                     placeholder="Indoor multi-sport complex focused on premium community leagues."
                     rows={3}
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   />
                 </label>
                 <label className="space-y-1.5">
@@ -367,7 +513,7 @@ export default function AdminFacilitiesPage() {
                     value={formState.phone}
                     onChange={handleFieldChange}
                     placeholder="+20 100 123 4567"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   />
                 </label>
                 <label className="space-y-1.5">
@@ -378,7 +524,7 @@ export default function AdminFacilitiesPage() {
                     value={formState.email}
                     onChange={handleFieldChange}
                     placeholder="operations@smashhub.eg"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   />
                 </label>
                 <label className="space-y-1.5">
@@ -387,7 +533,7 @@ export default function AdminFacilitiesPage() {
                     name="status"
                     value={formState.status}
                     onChange={handleFieldChange}
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   >
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="PENDING">PENDING</option>
@@ -401,7 +547,7 @@ export default function AdminFacilitiesPage() {
                     value={formState.branchName}
                     onChange={handleFieldChange}
                     placeholder="Main Branch"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   />
                 </label>
                 <label className="space-y-1.5 md:col-span-2">
@@ -411,12 +557,12 @@ export default function AdminFacilitiesPage() {
                     value={formState.branchAddress}
                     onChange={handleFieldChange}
                     placeholder="Leave blank to reuse the facility address"
-                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none focus:border-primary-container"
+                    className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                   />
                 </label>
               </section>
 
-              <section className="space-y-4 rounded-[var(--radius-md)] bg-surface-container-low p-4">
+              <section className="space-y-4 rounded-[var(--radius-md)] border border-primary/10 bg-gradient-to-br from-surface-container-low to-surface-container-high p-4 motion-safe:animate-[var(--animate-field-group-in)] animation-delay-100">
                 <div>
                   <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Operator Account</p>
                   <p className="mt-1 text-sm text-primary/65">
@@ -431,7 +577,7 @@ export default function AdminFacilitiesPage() {
                       value={formState.operatorName}
                       onChange={handleFieldChange}
                       placeholder="Facility Manager"
-                      className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-lowest px-4 py-3 text-primary outline-none focus:border-primary-container"
+                      className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-lowest px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                     />
                   </label>
                   <label className="space-y-1.5">
@@ -442,7 +588,7 @@ export default function AdminFacilitiesPage() {
                       value={formState.operatorEmail}
                       onChange={handleFieldChange}
                       placeholder="manager@smashhub.eg"
-                      className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-lowest px-4 py-3 text-primary outline-none focus:border-primary-container"
+                      className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-lowest px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                     />
                   </label>
                   <label className="space-y-1.5">
@@ -452,14 +598,14 @@ export default function AdminFacilitiesPage() {
                       value={formState.operatorPhone}
                       onChange={handleFieldChange}
                       placeholder="+20 100 000 0000"
-                      className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-lowest px-4 py-3 text-primary outline-none focus:border-primary-container"
+                      className="w-full rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-lowest px-4 py-3 text-primary outline-none transition-[border-color,box-shadow,transform] duration-200 focus:border-primary-container focus:shadow-[0_0_0_3px_rgba(0,35,102,0.12)] motion-safe:focus:-translate-y-0.5"
                     />
                   </label>
                 </div>
                 <p className="text-xs text-primary/55">Auto-created operators use the default seeded password: <span className="font-bold">password123</span></p>
               </section>
 
-              <section className="space-y-3">
+              <section className="space-y-3 rounded-[var(--radius-md)] border border-primary/10 bg-surface-container-low/35 p-4 motion-safe:animate-[var(--animate-field-group-in)] animation-delay-200">
                 <div>
                   <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Linked Sports</p>
                   <p className="mt-1 text-sm text-primary/65">Optional. Assign any sports this facility should surface under immediately.</p>
@@ -472,10 +618,10 @@ export default function AdminFacilitiesPage() {
                         key={sport.id}
                         type="button"
                         onClick={() => handleSportToggle(sport.id)}
-                        className={`inline-flex items-center rounded-full px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] transition-colors ${
+                        className={`inline-flex items-center rounded-full border px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] transition-all ${
                           isSelected
-                            ? 'bg-primary-container text-surface-container-lowest'
-                            : 'bg-surface-container-low text-primary hover:bg-surface-container-high'
+                            ? 'border-primary-container bg-primary-container text-surface-container-lowest shadow-sm motion-safe:animate-[var(--animate-chip-select)]'
+                            : 'border-primary/10 bg-surface-container-low text-primary motion-safe:hover:-translate-y-0.5 hover:bg-surface-container-high'
                         }`}
                       >
                         {sport.displayName || sport.name}
@@ -486,7 +632,7 @@ export default function AdminFacilitiesPage() {
               </section>
 
               {formError ? (
-                <div className="rounded-[var(--radius-default)] bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                <div className="rounded-[var(--radius-default)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 motion-safe:animate-[var(--animate-shake)]">
                   {formError}
                 </div>
               ) : null}
@@ -495,17 +641,17 @@ export default function AdminFacilitiesPage() {
                 <button
                   type="button"
                   onClick={closeCreateModal}
-                  className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-surface-container-high motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createFacilityMutation.loading}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-sm transition-all duration-200 hover:opacity-90 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Plus className="h-4 w-4" />
-                  {createFacilityMutation.loading ? 'Creating…' : 'Create Facility'}
+                  {createFacilityMutation.loading ? 'Creating...' : 'Create Facility'}
                 </button>
               </div>
             </form>

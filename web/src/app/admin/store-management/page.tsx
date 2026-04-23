@@ -230,6 +230,54 @@ export default function AdminStoreManagementPage() {
       .map((entry) => entry[1])
   }, [storeOrdersAdminData])
 
+  const heroSignal = useMemo(() => {
+    if (activeTab === 'Products') {
+      const stockAttentionCount = productMetrics.lowStock + productMetrics.outOfStock
+
+      return {
+        eyebrow: 'Inventory pulse',
+        title:
+          stockAttentionCount === 0
+            ? 'Inventory remains healthy across facilities.'
+            : `${stockAttentionCount} products require replenishment attention.`,
+        description: 'Keep stock coverage strong to prevent checkout drop-off and protect fulfillment confidence.',
+      }
+    }
+
+    return {
+      eyebrow: 'Fulfillment pulse',
+      title:
+        orderMetrics.pendingOrProcessing === 0
+          ? 'All recent orders are fully resolved.'
+          : `${orderMetrics.pendingOrProcessing} orders still require fulfillment action.`,
+      description: 'Push pending orders through processing quickly to preserve delivery confidence.',
+    }
+  }, [activeTab, orderMetrics.pendingOrProcessing, productMetrics.lowStock, productMetrics.outOfStock])
+
+  const heroStatTiles = useMemo(() => {
+    if (activeTab === 'Products') {
+      return [
+        { label: 'Catalog items', value: String(productMetrics.totalProducts) },
+        { label: 'Inventory value', value: formatEgp(productMetrics.inventoryValue) },
+        { label: 'Out of stock', value: String(productMetrics.outOfStock) },
+      ]
+    }
+
+    return [
+      { label: 'Total orders', value: String(orderMetrics.totalOrders) },
+      { label: 'Delivered', value: `${orderMetrics.deliveredRate}%` },
+      { label: 'Gross sales', value: formatEgp(orderMetrics.grossSales) },
+    ]
+  }, [
+    activeTab,
+    orderMetrics.deliveredRate,
+    orderMetrics.grossSales,
+    orderMetrics.totalOrders,
+    productMetrics.inventoryValue,
+    productMetrics.outOfStock,
+    productMetrics.totalProducts,
+  ])
+
   const exportSnapshot = useCallback(() => {
     if (activeTab === 'Products') {
       const headers = 'Name,Facility,Category,Quantity,Price,Status'
@@ -419,7 +467,7 @@ export default function AdminStoreManagementPage() {
             <button
               type="button"
               onClick={exportSnapshot}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/12 bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-[transform,box-shadow,background-color] duration-200 ease-out-quart hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-[0_16px_26px_-20px_rgba(0,17,58,0.8)] active:translate-y-0"
             >
               <Download className="w-4 h-4" />
               Export Snapshot
@@ -427,7 +475,7 @@ export default function AdminStoreManagementPage() {
             <button
               type="button"
               onClick={openCreateProductModal}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_32px_-22px_rgba(0,35,102,0.9)] transition-[transform,opacity,box-shadow] duration-200 ease-out-quart hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_22px_38px_-20px_rgba(0,35,102,0.95)] active:translate-y-0"
             >
               <FilePlus2 className="w-4 h-4" />
               New Product
@@ -436,8 +484,32 @@ export default function AdminStoreManagementPage() {
         }
       />
 
-      <AdminPanel eyebrow="Commerce" title="Store Operations">
-        <div className="flex flex-wrap gap-2">
+      <section className="relative overflow-hidden bg-[linear-gradient(140deg,rgba(0,35,102,0.96),rgba(0,17,58,0.98)_68%)] px-5 py-5 text-surface-container-lowest shadow-[0_26px_54px_-36px_rgba(0,17,58,0.95)] animate-soft-rise md:px-6 md:py-6">
+        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-secondary-container/25 blur-2xl animate-float-gentle" />
+        <div className="pointer-events-none absolute -bottom-16 left-1/3 h-36 w-36 rounded-full bg-tertiary-fixed/15 blur-2xl animate-float-blob" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl animate-slide-up">
+            <p className="text-[10px] font-lexend uppercase tracking-[0.16em] text-white/68">{heroSignal.eyebrow}</p>
+            <h3 className="mt-2 text-2xl font-black leading-tight text-white md:text-3xl">{heroSignal.title}</h3>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/78">{heroSignal.description}</p>
+          </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 lg:w-[460px] xl:w-[500px]">
+            {heroStatTiles.map((tile, index) => (
+              <article
+                key={tile.label}
+                className="min-w-0 rounded-[var(--radius-default)] border border-white/16 bg-white/10 px-3.5 py-3 backdrop-blur-[2px] animate-card-stagger"
+                style={{ animationDelay: `${index * 90}ms` }}
+              >
+                <p className="text-[10px] font-lexend uppercase tracking-[0.14em] text-white/72">{tile.label}</p>
+                <p className="mt-1.5 max-w-full text-base font-extrabold leading-tight text-white [overflow-wrap:anywhere] sm:text-lg">{tile.value}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <AdminPanel eyebrow="Commerce" title="Store Operations" className="animate-soft-rise [animation-delay:80ms] bg-[linear-gradient(180deg,var(--color-surface-container-lowest),color-mix(in_oklch,var(--color-surface-container-lowest)_90%,var(--color-primary)_10%))]">
+        <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-surface-container-low p-1.5">
           {tabs.map((tab) => {
             const isActive = activeTab === tab
 
@@ -446,10 +518,11 @@ export default function AdminStoreManagementPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-2 rounded-full text-xs font-lexend font-bold uppercase tracking-[0.14em] ${
+                aria-pressed={isActive}
+                className={`rounded-full px-3.5 py-2 text-xs font-lexend font-bold uppercase tracking-[0.14em] transition-[transform,background-color,color,box-shadow] duration-200 ease-out-quart ${
                   isActive
-                    ? 'bg-primary-container text-surface-container-lowest'
-                    : 'bg-surface-container-low text-primary/70'
+                    ? 'bg-primary-container text-surface-container-lowest shadow-[0_10px_20px_-14px_rgba(0,35,102,0.9)]'
+                    : 'bg-transparent text-primary/70 hover:bg-white/65 hover:text-primary'
                 }`}
               >
                 {tab}
@@ -460,62 +533,78 @@ export default function AdminStoreManagementPage() {
 
         {activeTab === 'Products' ? (
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <AdminStatCard
-              label="Total Products"
-              value={String(productMetrics.totalProducts)}
-              delta="Across all facilities"
-              trend="flat"
-            />
-            <AdminStatCard
-              label="Low Stock"
-              value={String(productMetrics.lowStock)}
-              delta="Needs replenishment"
-              trend={productMetrics.lowStock > 0 ? 'down' : 'up'}
-            />
-            <AdminStatCard
-              label="Out of Stock"
-              value={String(productMetrics.outOfStock)}
-              delta="Immediate action required"
-              trend={productMetrics.outOfStock > 0 ? 'down' : 'up'}
-            />
-            <AdminStatCard
-              label="Inventory Value"
-              value={formatEgp(productMetrics.inventoryValue)}
-              delta="Estimated current stock value"
-              trend="up"
-            />
+            <div className="animate-card-stagger [animation-delay:40ms]">
+              <AdminStatCard
+                label="Total Products"
+                value={String(productMetrics.totalProducts)}
+                delta="Across all facilities"
+                trend="flat"
+              />
+            </div>
+            <div className="animate-card-stagger [animation-delay:110ms]">
+              <AdminStatCard
+                label="Low Stock"
+                value={String(productMetrics.lowStock)}
+                delta="Needs replenishment"
+                trend={productMetrics.lowStock > 0 ? 'down' : 'up'}
+              />
+            </div>
+            <div className="animate-card-stagger [animation-delay:180ms]">
+              <AdminStatCard
+                label="Out of Stock"
+                value={String(productMetrics.outOfStock)}
+                delta="Immediate action required"
+                trend={productMetrics.outOfStock > 0 ? 'down' : 'up'}
+              />
+            </div>
+            <div className="animate-card-stagger [animation-delay:250ms]">
+              <AdminStatCard
+                label="Inventory Value"
+                value={formatEgp(productMetrics.inventoryValue)}
+                delta="Estimated current stock value"
+                trend="up"
+              />
+            </div>
           </div>
         ) : (
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <AdminStatCard
-              label="Total Orders"
-              value={String(orderMetrics.totalOrders)}
-              delta="Current sample ledger"
-              trend="up"
-            />
-            <AdminStatCard
-              label="Delivered Rate"
-              value={`${orderMetrics.deliveredRate}%`}
-              delta="Delivery completion quality"
-              trend={orderMetrics.deliveredRate >= 60 ? 'up' : 'flat'}
-            />
-            <AdminStatCard
-              label="Pending / Processing"
-              value={String(orderMetrics.pendingOrProcessing)}
-              delta="Requires fulfillment follow-up"
-              trend={orderMetrics.pendingOrProcessing > 0 ? 'flat' : 'up'}
-            />
-            <AdminStatCard
-              label="Gross Sales"
-              value={formatEgp(orderMetrics.grossSales)}
-              delta="Cancelled orders excluded"
-              trend="up"
-            />
+            <div className="animate-card-stagger [animation-delay:40ms]">
+              <AdminStatCard
+                label="Total Orders"
+                value={String(orderMetrics.totalOrders)}
+                delta="Current sample ledger"
+                trend="up"
+              />
+            </div>
+            <div className="animate-card-stagger [animation-delay:110ms]">
+              <AdminStatCard
+                label="Delivered Rate"
+                value={`${orderMetrics.deliveredRate}%`}
+                delta="Delivery completion quality"
+                trend={orderMetrics.deliveredRate >= 60 ? 'up' : 'flat'}
+              />
+            </div>
+            <div className="animate-card-stagger [animation-delay:180ms]">
+              <AdminStatCard
+                label="Pending / Processing"
+                value={String(orderMetrics.pendingOrProcessing)}
+                delta="Requires fulfillment follow-up"
+                trend={orderMetrics.pendingOrProcessing > 0 ? 'flat' : 'up'}
+              />
+            </div>
+            <div className="animate-card-stagger [animation-delay:250ms]">
+              <AdminStatCard
+                label="Gross Sales"
+                value={formatEgp(orderMetrics.grossSales)}
+                delta="Cancelled orders excluded"
+                trend="up"
+              />
+            </div>
           </div>
         )}
 
         {activeTab === 'Orders' ? (
-          <div className="mt-4 rounded-[var(--radius-default)] bg-surface-container-low p-3.5">
+          <div className="mt-4 rounded-[var(--radius-default)] border border-primary/8 bg-surface-container-low p-3.5 animate-slide-up">
             <p className="text-[10px] font-lexend uppercase tracking-[0.14em] text-primary/55">Orders trend (daily volume)</p>
             <div className="mt-3">
               <AdminTrendBars
@@ -530,6 +619,7 @@ export default function AdminStoreManagementPage() {
       <AdminPanel
         eyebrow={activeTab === 'Products' ? 'Catalog control' : 'Order operations'}
         title={activeTab === 'Products' ? 'Products Directory' : 'Orders Ledger'}
+        className="animate-soft-rise [animation-delay:130ms]"
       >
         {activeTab === 'Products' ? (
           <>
@@ -603,7 +693,7 @@ export default function AdminStoreManagementPage() {
                           <button
                             type="button"
                             onClick={() => openEditProductModal(product)}
-                            className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
+                            className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-[transform,background-color,box-shadow] duration-150 ease-out-quart hover:-translate-y-0.5 hover:bg-primary/16 hover:shadow-[0_8px_16px_-14px_rgba(0,17,58,0.9)] active:translate-y-0"
                           >
                             Edit
                           </button>
@@ -611,7 +701,7 @@ export default function AdminStoreManagementPage() {
                             type="button"
                             onClick={() => handleArchiveProduct(product)}
                             disabled={archivingProductId === product.id}
-                            className="rounded-full bg-red-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full bg-red-500/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-red-700 transition-[transform,background-color,box-shadow] duration-150 ease-out-quart hover:-translate-y-0.5 hover:bg-red-500/22 hover:shadow-[0_8px_16px_-14px_rgba(127,29,29,0.75)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {archivingProductId === product.id ? 'Archiving…' : 'Archive'}
                           </button>
@@ -619,7 +709,7 @@ export default function AdminStoreManagementPage() {
                             type="button"
                             onClick={() => handleDeleteProduct(product)}
                             disabled={deletingProductId === product.id}
-                            className="rounded-full bg-red-700/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-red-900 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full bg-red-700/15 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-red-900 transition-[transform,background-color,box-shadow] duration-150 ease-out-quart hover:-translate-y-0.5 hover:bg-red-700/22 hover:shadow-[0_8px_16px_-14px_rgba(69,10,10,0.78)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {deletingProductId === product.id ? 'Deleting…' : 'Delete'}
                           </button>
@@ -734,7 +824,7 @@ export default function AdminStoreManagementPage() {
                               type="button"
                               onClick={() => handleUpdateOrderStatus(order.id)}
                               disabled={updatingOrderId === order.id || nextStatus === order.status}
-                              className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-[transform,background-color,box-shadow] duration-150 ease-out-quart hover:-translate-y-0.5 hover:bg-primary/16 hover:shadow-[0_8px_16px_-14px_rgba(0,17,58,0.9)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {updatingOrderId === order.id ? 'Saving…' : 'Save'}
                             </button>
@@ -750,8 +840,8 @@ export default function AdminStoreManagementPage() {
         )}
       </AdminPanel>
 
-      <AdminPanel eyebrow="System note" title="Commerce status">
-        <div className="rounded-[var(--radius-default)] bg-surface-container-low p-3.5 text-sm text-primary/75">
+      <AdminPanel eyebrow="System note" title="Commerce status" className="animate-soft-rise [animation-delay:180ms]">
+        <div className="rounded-[var(--radius-default)] bg-[linear-gradient(160deg,color-mix(in_oklch,var(--color-surface-container-low)_90%,var(--color-secondary-container)_10%),var(--color-surface-container-low))] p-3.5 text-sm text-primary/80">
           <p>
             Store management is now connected to live admin product creation, editing, archiving, permanent deletion, exports, and order status updates.
           </p>
@@ -763,8 +853,8 @@ export default function AdminStoreManagementPage() {
       </AdminPanel>
 
       {isProductModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[var(--radius-lg)] border border-primary/10 bg-surface-container-lowest shadow-ambient">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 animate-modal-backdrop-in">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[var(--radius-lg)] border border-primary/10 bg-surface-container-lowest shadow-ambient animate-modal-dialog-in">
             <div className="flex items-start justify-between gap-4 border-b border-primary/8 px-6 py-5">
               <div>
                 <p className="text-[11px] font-lexend uppercase tracking-[0.16em] text-primary/55">Admin Action</p>
@@ -779,7 +869,7 @@ export default function AdminStoreManagementPage() {
                 type="button"
                 onClick={closeProductModal}
                 aria-label="Close product dialog"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:scale-105 active:scale-95 transition-all"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-primary transition-[transform,background-color] duration-200 ease-out-quart hover:rotate-90 hover:bg-surface-container-high active:rotate-0"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -907,14 +997,14 @@ export default function AdminStoreManagementPage() {
                 <button
                   type="button"
                   onClick={closeProductModal}
-                  className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary transition-[transform,background-color] duration-200 ease-out-quart hover:-translate-y-0.5 hover:bg-surface-container-high active:translate-y-0"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingProduct}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_30px_-20px_rgba(0,35,102,0.95)] transition-[transform,opacity,box-shadow] duration-200 ease-out-quart hover:-translate-y-0.5 hover:opacity-95 hover:shadow-[0_20px_32px_-18px_rgba(0,35,102,0.9)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <PackageCheck className="h-4 w-4" />
                   {isSavingProduct ? 'Saving…' : editingProductId ? 'Save Changes' : 'Create Product'}

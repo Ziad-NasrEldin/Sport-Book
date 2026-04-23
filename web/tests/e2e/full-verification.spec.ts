@@ -490,39 +490,6 @@ test.describe('Booking Flow - Dynamic Data Verification', () => {
     await expect(page.getByText(/coach/i).first()).toBeVisible({ timeout: 15000 }).catch(() => null)
   })
 
-  test('onboarding page fetches real platform stats', async ({ page }) => {
-    const statsResponse = page.waitForResponse(
-      (res) => res.url().includes('/onboarding/stats'),
-      { timeout: 15000 },
-    ).catch(() => null)
-
-    await page.goto('/onboarding', { waitUntil: 'domcontentloaded' })
-    await waitForInteractive(page)
-
-    const getStartedButton = page.getByRole('button', { name: /get started/i })
-    await expect(getStartedButton).toBeVisible({ timeout: 15000 })
-
-    if (statsResponse) {
-      const resp = await statsResponse
-      if (resp) {
-        const data = await resp.json()
-        expect(data.data).toBeDefined()
-        expect(typeof data.data.courts).toBe('number')
-        expect(typeof data.data.coaches).toBe('number')
-      }
-    }
-  })
-
-  test('onboarding page slides are navigable', async ({ page }) => {
-    await page.goto('/onboarding', { waitUntil: 'domcontentloaded' })
-    await waitForInteractive(page)
-
-    const nextButton = page.getByRole('button', { name: /next/i }).or(page.getByRole('button', { name: /continue/i }))
-    if (await nextButton.first().isVisible().catch(() => false)) {
-      await nextButton.first().click()
-      await page.waitForTimeout(500)
-    }
-  })
 })
 
 test.describe('User Security Endpoint', () => {

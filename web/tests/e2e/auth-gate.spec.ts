@@ -32,7 +32,7 @@ async function signInAsPlayer(browser: Browser): Promise<{ context: BrowserConte
     page.getByRole('button', { name: /^sign in$/i }).click(),
   ])
 
-  await page.waitForURL(/\/(onboarding)?$/, { timeout: 15000 })
+  await page.waitForURL(/\/$/, { timeout: 15000 })
   await waitForInteractive(page)
   return { context, page }
 }

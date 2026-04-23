@@ -15,8 +15,12 @@ export function AdminTrendBars({ values, colorClassName = 'bg-primary-container'
         return (
           <span
             key={`${value}-${index}`}
-            className={`w-full rounded-full ${colorClassName}`}
-            style={{ height: `${height}%`, opacity: 0.35 + index * 0.06 }}
+            className={`w-full rounded-full transition-[height,opacity,transform] duration-300 ease-out-quart ${colorClassName} animate-card-stagger`}
+            style={{
+              height: `${height}%`,
+              opacity: 0.35 + index * 0.06,
+              animationDelay: `${index * 70}ms`,
+            }}
             aria-hidden="true"
           />
         )

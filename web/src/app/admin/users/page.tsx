@@ -41,7 +41,10 @@ export default function AdminUsersPage() {
 
   const { data: usersResponse, loading, error } = useApiCall('/admin-workspace/users')
 
-  const usersData = usersResponse?.data || usersResponse || []
+  const usersData = useMemo<User[]>(() => {
+    const payload = usersResponse && 'data' in usersResponse ? usersResponse.data : usersResponse
+    return Array.isArray(payload) ? (payload as User[]) : []
+  }, [usersResponse])
 
   const handleRoleChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRole(event.target.value as (typeof roleOptions)[number])
@@ -67,6 +70,19 @@ export default function AdminUsersPage() {
     })
   }, [search, selectedRole, selectedStatus, usersData])
 
+  const userStats = useMemo(() => {
+    return usersData.reduce(
+      (acc: { total: number; active: number; suspended: number; pending: number }, user: User) => {
+        acc.total += 1
+        if (user.status === 'ACTIVE') acc.active += 1
+        if (user.status === 'SUSPENDED') acc.suspended += 1
+        if (user.status === 'PENDING_VERIFICATION') acc.pending += 1
+        return acc
+      },
+      { total: 0, active: 0, suspended: 0, pending: 0 }
+    )
+  }, [usersData])
+
   if (error) {
     return <APIErrorFallback error={error} onRetry={() => window.location.reload()} />
   }
@@ -76,6 +92,7 @@ export default function AdminUsersPage() {
       <AdminPageHeader
         title="User Management"
         subtitle="Moderate platform accounts, review account health, and apply role-based actions without leaving the dashboard."
+        className="px-4 py-5 md:px-6"
         actions={
           <>
             <button
@@ -93,14 +110,14 @@ export default function AdminUsersPage() {
                 a.click()
                 URL.revokeObjectURL(url)
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-surface-container-highest px-4 py-2 text-sm font-semibold text-primary shadow-[0_10px_26px_-20px_rgba(0,17,58,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-lowest hover:shadow-[0_18px_30px_-20px_rgba(0,17,58,0.65)] active:translate-y-0"
             >
               <Download className="w-4 h-4" />
               Export Users
             </button>
             <Link
               href="/admin/verification"
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest shadow-[0_16px_30px_-18px_rgba(0,17,58,0.75)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
             >
               <UserCog className="w-4 h-4" />
               Create Admin
@@ -109,7 +126,30 @@ export default function AdminUsersPage() {
         }
       />
 
-      <AdminPanel eyebrow="Filters" title="User Directory">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <article className="rounded-[1.35rem] border border-primary/10 bg-surface-container-lowest p-4 shadow-[0_20px_45px_-34px_rgba(0,17,58,0.75)] animate-[var(--animate-soft-rise)]">
+          <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-primary/60">Total Accounts</p>
+          <p className="mt-2 text-3xl font-extrabold text-primary">{userStats.total}</p>
+        </article>
+        <article className="rounded-[1.35rem] border border-primary/10 bg-gradient-to-br from-primary to-primary-container p-4 shadow-[0_22px_46px_-28px_rgba(0,17,58,0.95)] animate-[var(--animate-soft-rise)] animation-delay-100">
+          <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-surface-container-lowest/75">Active</p>
+          <p className="mt-2 text-3xl font-extrabold text-surface-container-lowest">{userStats.active}</p>
+        </article>
+        <article className="rounded-[1.35rem] border border-[#fd8b00]/35 bg-gradient-to-br from-[#fff3e5] to-[#ffe2bf] p-4 shadow-[0_22px_46px_-28px_rgba(253,139,0,0.7)] animate-[var(--animate-soft-rise)] animation-delay-200">
+          <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-[#8a4300]">Pending Verification</p>
+          <p className="mt-2 text-3xl font-extrabold text-[#603100]">{userStats.pending}</p>
+        </article>
+        <article className="rounded-[1.35rem] border border-[#c91919]/20 bg-gradient-to-br from-[#fff3f3] to-[#ffe4e4] p-4 shadow-[0_22px_46px_-28px_rgba(201,25,25,0.6)] animate-[var(--animate-soft-rise)] animation-delay-300">
+          <p className="text-[10px] uppercase tracking-[0.14em] font-lexend text-[#9b1c1c]">Suspended</p>
+          <p className="mt-2 text-3xl font-extrabold text-[#7a1616]">{userStats.suspended}</p>
+        </article>
+      </section>
+
+      <AdminPanel
+        eyebrow="Filters"
+        title="User Directory"
+        className="border border-primary/10 bg-surface-container-lowest/95 shadow-[0_26px_54px_-36px_rgba(0,17,58,0.85)]"
+      >
         <AdminFilterBar
           searchValue={search}
           onSearchChange={setSearch}
@@ -119,7 +159,7 @@ export default function AdminUsersPage() {
               <select
                 value={selectedRole}
                 onChange={handleRoleChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full border border-primary/10 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {roleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -130,7 +170,7 @@ export default function AdminUsersPage() {
               <select
                 value={selectedStatus}
                 onChange={handleStatusChange}
-                className="rounded-full bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none"
+                className="rounded-full border border-primary/10 bg-surface-container-low px-3 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-primary outline-none transition-colors hover:bg-surface-container-medium"
               >
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -140,7 +180,7 @@ export default function AdminUsersPage() {
               </select>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-full bg-secondary-container px-3.5 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-on-secondary-container"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-secondary-container to-[#ff9f22] px-3.5 py-2 text-xs font-lexend font-bold uppercase tracking-[0.12em] text-on-secondary-container shadow-[0_14px_28px_-18px_rgba(253,139,0,0.9)] transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
               >
                 <UserMinus className="w-3.5 h-3.5" />
                 Suspend Selection
@@ -149,18 +189,24 @@ export default function AdminUsersPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-4 rounded-[1.25rem] border border-primary/8 bg-surface-container-lowest p-2">
+          <div className="mb-2 flex items-center justify-between px-2 py-1">
+            <p className="text-[10px] font-lexend uppercase tracking-[0.14em] text-primary/55">Live Directory Snapshot</p>
+            <p className="rounded-full bg-primary/[0.08] px-2.5 py-1 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary">
+              {filteredUsers.length} Visible
+            </p>
+          </div>
           {loading ? (
             <SkeletonTable rows={10} />
           ) : (
             <AdminTable
               items={filteredUsers}
-              getRowKey={(user: any) => user.id}
+              getRowKey={(user) => user.id}
               columns={[
                 {
                   key: 'identity',
                   header: 'User',
-                  render: (user: any) => (
+                  render: (user) => (
                     <div>
                       <p className="font-bold text-primary">{user.name || 'Unknown'}</p>
                       <p className="text-xs text-primary/60 mt-1">{user.email || 'No email'}</p>
@@ -170,7 +216,7 @@ export default function AdminUsersPage() {
                 {
                   key: 'meta',
                   header: 'Role & Region',
-                  render: (user: any) => (
+                  render: (user) => (
                     <div>
                       <p className="text-sm font-semibold text-primary">{user.role || 'Unknown'}</p>
                       <p className="text-xs text-primary/55 mt-1">{user.country || 'Unknown'}</p>
@@ -180,28 +226,28 @@ export default function AdminUsersPage() {
                 {
                   key: 'status',
                   header: 'Status',
-                  render: (user: any) => <AdminStatusPill label={user.status || 'Unknown'} tone={statusTone(user.status || 'Unknown')} />,
+                  render: (user) => <AdminStatusPill label={user.status || 'Unknown'} tone={statusTone(user.status || 'Unknown')} />,
                 },
                 {
                   key: 'joined',
                   header: 'Joined',
-                  render: (user: any) => <p className="text-sm text-primary/70">{user.createdAt || 'Unknown'}</p>,
+                  render: (user) => <p className="text-sm text-primary/70">{user.createdAt || 'Unknown'}</p>,
                 },
                 {
                   key: 'actions',
                   header: 'Actions',
-                  render: (user: any) => (
+                  render: (user) => (
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/admin/users/${encodeURIComponent(user.id)}`}
-                        className="inline-flex items-center rounded-full bg-surface-container-high px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary"
+                        className="inline-flex items-center rounded-full border border-primary/15 bg-surface-container-high px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-primary transition-colors hover:bg-surface-container-medium"
                       >
                         View Account Details
                       </Link>
 
                       <Link
                         href={`/admin/users/${encodeURIComponent(user.id)}/edit`}
-                        className="inline-flex items-center rounded-full bg-primary-container px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-surface-container-lowest"
+                        className="inline-flex items-center rounded-full bg-gradient-to-r from-primary to-primary-container px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-surface-container-lowest transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
                       >
                         Edit Account
                       </Link>
@@ -210,7 +256,7 @@ export default function AdminUsersPage() {
                         href={buildWhatsAppHref(user.name || 'User', user.id)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center rounded-full bg-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-[#128C7E]"
+                        className="inline-flex items-center rounded-full border border-[#25D366]/40 bg-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-lexend font-bold uppercase tracking-[0.12em] text-[#128C7E] transition-colors hover:bg-[#25D366]/30"
                       >
                         Quick Chat on WhatsApp
                       </a>

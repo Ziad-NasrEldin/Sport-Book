@@ -6,6 +6,7 @@ import type {
   ListUsersInput,
   UpdateUserInput,
   CreateFacilityInput,
+  UpdateFacilityInput,
   CreateCoachInput,
   CreateStoreProductInput,
   UpdateStoreProductInput,
@@ -1039,8 +1040,27 @@ export async function listFacilities(filters: { page: number; limit: number; sta
       include: {
         operator: {
           select: {
+            id: true,
             name: true,
             email: true,
+            phone: true,
+            status: true,
+          },
+        },
+        branches: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            city: true,
+            phone: true,
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+        },
+        sports: {
+          select: {
+            sportId: true,
           },
         },
         _count: {
@@ -1295,6 +1315,243 @@ export async function createFacility(data: CreateFacilityInput, actorId?: string
     utilization: 0,
     createdAt: createdFacility.createdAt.toISOString(),
     updatedAt: createdFacility.updatedAt.toISOString(),
+  }
+}
+
+export async function updateFacility(facilityId: string, data: UpdateFacilityInput, actorId?: string) {
+  const facility = await prisma.facility.findUnique({
+    where: { id: facilityId },
+    include: {
+      operator: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          status: true,
+        },
+      },
+      branches: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          city: true,
+          phone: true,
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 1,
+      },
+    },
+  })
+
+  if (!facility) {
+    throw new NotFoundError('Facility')
+  }
+
+  const normalizedName = data.name?.trim()
+  const normalizedCity = data.city?.trim()
+  const normalizedAddress = data.address?.trim()
+  const normalizedDescription = data.description?.trim()
+  const normalizedPhone = data.phone?.trim()
+  const normalizedEmail = data.email?.trim().toLowerCase()
+  const normalizedOperatorName = data.operatorName?.trim()
+  const normalizedOperatorEmail = data.operatorEmail?.trim().toLowerCase()
+  const normalizedOperatorPhone = data.operatorPhone?.trim()
+  const normalizedBranchName = data.branchName?.trim()
+  const normalizedBranchAddress = data.branchAddress?.trim()
+
+  if (data.name !== undefined && !normalizedName) {
+    throw new BadRequestError('Facility name is required')
+  }
+  if (data.city !== undefined && !normalizedCity) {
+    throw new BadRequestError('Facility city is required')
+  }
+
+  const nextName = normalizedName ?? facility.name
+  const nextCity = normalizedCity ?? facility.city
+  const nextAddress = data.address !== undefined ? normalizedAddress || null : facility.address
+  const nextDescription = data.description !== undefined ? normalizedDescription || null : facility.description
+  const nextPhone = data.phone !== undefined ? normalizedPhone || null : facility.phone
+  const nextEmail = data.email !== undefined ? normalizedEmail || null : facility.email
+  const nextStatus = data.status ?? facility.status
+  const nextOperatorName = data.operatorName !== undefined ? normalizedOperatorName || facility.operator.name : facility.operator.name
+  const nextOperatorEmail = data.operatorEmail !== undefined ? normalizedOperatorEmail || facility.operator.email : facility.operator.email
+  const nextOperatorPhone =
+    data.operatorPhone !== undefined ? normalizedOperatorPhone || null : (facility.operator.phone ?? null)
+
+  if (nextName !== facility.name) {
+    const existingFacilityWithName = await prisma.facility.findFirst({
+      where: {
+        name: nextName,
+        id: { not: facilityId },
+      },
+      select: { id: true },
+    })
+
+    if (existingFacilityWithName) {
+      throw new BadRequestError('Facility name already exists')
+    }
+  }
+
+  if (nextEmail && nextEmail !== facility.email) {
+    const existingFacilityWithEmail = await prisma.facility.findFirst({
+      where: {
+        email: nextEmail,
+        id: { not: facilityId },
+      },
+      select: { id: true },
+    })
+
+    if (existingFacilityWithEmail) {
+      throw new BadRequestError('Facility email already exists')
+    }
+  }
+
+  if (nextOperatorEmail !== facility.operator.email) {
+    const existingOperator = await prisma.user.findFirst({
+      where: {
+        email: nextOperatorEmail,
+        id: { not: facility.operatorId },
+      },
+      select: { id: true },
+    })
+
+    if (existingOperator) {
+      throw new BadRequestError('Operator email already exists')
+    }
+  }
+
+  const uniqueSportIds = data.sportIds ? Array.from(new Set(data.sportIds)) : null
+  if (uniqueSportIds) {
+    const existingSports = await prisma.sport.count({
+      where: { id: { in: uniqueSportIds } },
+    })
+
+    if (existingSports !== uniqueSportIds.length) {
+      throw new BadRequestError('One or more selected sports do not exist')
+    }
+  }
+
+  const currentBranch = facility.branches[0] ?? null
+  const fallbackAddress = nextAddress || `${nextName} HQ, ${nextCity}`
+  const nextBranchName = normalizedBranchName || currentBranch?.name || 'Main Branch'
+  const nextBranchAddress = normalizedBranchAddress || currentBranch?.address || fallbackAddress
+  const nextBranchPhone = nextPhone || nextOperatorPhone || currentBranch?.phone || null
+  const nextOperatorStatus = nextStatus === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE'
+
+  const updatedFacility = await prisma.$transaction(async (tx: any) => {
+    await tx.user.update({
+      where: { id: facility.operatorId },
+      data: {
+        name: nextOperatorName,
+        email: nextOperatorEmail,
+        phone: nextOperatorPhone,
+        status: nextOperatorStatus,
+      },
+    })
+
+    if (currentBranch) {
+      await tx.branch.update({
+        where: { id: currentBranch.id },
+        data: {
+          name: nextBranchName,
+          address: nextBranchAddress,
+          city: nextCity,
+          phone: nextBranchPhone,
+        },
+      })
+    } else {
+      await tx.branch.create({
+        data: {
+          facilityId,
+          name: nextBranchName,
+          address: nextBranchAddress,
+          city: nextCity,
+          phone: nextBranchPhone,
+        },
+      })
+    }
+
+    if (uniqueSportIds !== null) {
+      await tx.facilitySport.deleteMany({
+        where: { facilityId },
+      })
+
+      if (uniqueSportIds.length > 0) {
+        await tx.facilitySport.createMany({
+          data: uniqueSportIds.map((sportId) => ({
+            facilityId,
+            sportId,
+          })),
+          skipDuplicates: true,
+        })
+      }
+    }
+
+    return tx.facility.update({
+      where: { id: facilityId },
+      data: {
+        name: nextName,
+        city: nextCity,
+        address: nextAddress,
+        description: nextDescription,
+        phone: nextPhone,
+        email: nextEmail,
+        status: nextStatus,
+      },
+      include: {
+        operator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            status: true,
+          },
+        },
+        branches: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            city: true,
+            phone: true,
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+        },
+        sports: {
+          select: {
+            sportId: true,
+          },
+        },
+        _count: {
+          select: {
+            branches: true,
+          },
+        },
+      },
+    })
+  })
+
+  await logAudit({
+    actorId,
+    action: AuditAction.UPDATE,
+    object: 'Facility',
+    details: {
+      facilityId: updatedFacility.id,
+      operatorId: updatedFacility.operator.id,
+      status: updatedFacility.status,
+    },
+  })
+
+  return {
+    ...updatedFacility,
+    monthlyRevenue: 0,
+    utilization: 0,
+    createdAt: updatedFacility.createdAt.toISOString(),
+    updatedAt: updatedFacility.updatedAt.toISOString(),
   }
 }
 

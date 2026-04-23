@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Bell, Map, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -12,7 +12,6 @@ import { NotificationsModal } from '@/components/modals/NotificationsModal'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
-import { hasCompletedOnboarding } from '@/lib/onboarding'
 
 function asArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : []
@@ -29,23 +28,9 @@ export default function Home() {
   const unreadCount = notificationsResponse?.count || 0
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
-  const [isOnboardingGateReady, setIsOnboardingGateReady] = useState(false)
-
-  useEffect(() => {
-    if (!hasCompletedOnboarding()) {
-      router.replace('/onboarding')
-      return
-    }
-
-    setIsOnboardingGateReady(true)
-  }, [router])
 
   if (categoriesError || courtsError) {
     return <APIErrorFallback error={categoriesError || courtsError as any} onRetry={() => window.location.reload()} />
-  }
-
-  if (!isOnboardingGateReady) {
-    return <main className="w-full flex-1 min-h-screen bg-surface" />
   }
 
   return (

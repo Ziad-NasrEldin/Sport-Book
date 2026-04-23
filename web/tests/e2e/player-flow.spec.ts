@@ -31,13 +31,13 @@ async function signIn(browser: Browser, email: string, password: string, expecte
 
 test.describe('Player Flow Smoke Tests', () => {
   test('player can sign in and see home page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await expect(page.locator('body')).toBeVisible()
     await context.close()
   })
 
   test('player can view profile', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/profile', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.getByRole('heading', { name: /profile/i }).first()).toBeVisible()
@@ -45,7 +45,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view account details', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/profile/account-details', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.getByRole('heading', { name: /account details/i }).first()).toBeVisible()
@@ -53,7 +53,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view bookings history', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/profile/bookings-history', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.getByRole('heading', { name: /history/i }).first()).toBeVisible()
@@ -61,7 +61,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view preferences page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/preferences', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.getByRole('heading', { name: 'Preferences' }).first()).toBeVisible()
@@ -69,7 +69,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view wallet top-up page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/profile/wallet/topup', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.getByRole('heading', { name: /top up wallet/i }).first()).toBeVisible()
@@ -77,7 +77,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view favorites page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/favorites', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.getByRole('heading', { name: /favorites/i }).first()).toBeVisible()
@@ -85,7 +85,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view courts page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/courts', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.locator('body')).toBeVisible()
@@ -93,7 +93,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view coaches page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/coaches', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.locator('body')).toBeVisible()
@@ -101,7 +101,7 @@ test.describe('Player Flow Smoke Tests', () => {
   })
 
   test('player can view categories page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/categories', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.locator('body')).toBeVisible()
@@ -111,7 +111,7 @@ test.describe('Player Flow Smoke Tests', () => {
 
 test.describe('Store Flow Smoke Tests', () => {
   test('player can view store page', async ({ browser }) => {
-    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /(?:\/|\/onboarding)$/)
+    const { page, context } = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
     await page.goto('/store', { waitUntil: 'domcontentloaded' })
     await waitForInteractive(page)
     await expect(page.locator('body')).toBeVisible()

@@ -18,14 +18,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <main className="min-h-screen bg-surface-container-low">
-      <div className="grid lg:grid-cols-[260px_minmax(0,1fr)] min-h-screen">
-        <AdminSidebar />
+    <main className="h-screen overflow-hidden bg-surface-container-low">
+      <div className="flex h-full">
+        <div className="hidden lg:flex lg:flex-col lg:w-[292px] lg:flex-shrink-0 lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:z-30">
+          <AdminSidebar />
+        </div>
 
-        <div className="min-w-0">
+        <div className="flex flex-col min-w-0 flex-1 lg:ml-[292px] h-full overflow-hidden">
           <AdminTopbar />
           <AdminMobileTabs />
-          <div className="px-4 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8 space-y-6">{children}</div>
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8 space-y-6">{children}</div>
         </div>
       </div>
     </main>

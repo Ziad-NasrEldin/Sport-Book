@@ -11,6 +11,7 @@ import {
   listAuditLogs,
   listFacilities,
   createFacility,
+  updateFacility,
   listCoaches,
   createCoach,
   listBookings,
@@ -45,6 +46,7 @@ import {
 import {
   updateUserSchema,
   createFacilitySchema,
+  updateFacilitySchema,
   createCoachSchema,
   createStoreProductSchema,
   updateStoreProductSchema,
@@ -166,6 +168,22 @@ export async function adminWorkspaceRoutes(app: FastifyInstance) {
   app.post('/facilities', async (request: FastifyRequest) => {
     const data = createFacilitySchema.parse(request.body)
     const result = await createFacility(data, request.user!.userId)
+    return success(result)
+  })
+
+  // PATCH /admin-workspace/facilities/:id - Update facility
+  app.patch('/facilities/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateFacilitySchema.parse(request.body)
+    const result = await updateFacility(id, data, request.user!.userId)
+    return success(result)
+  })
+
+  // PUT /admin-workspace/facilities/:id - Update facility
+  app.put('/facilities/:id', async (request: FastifyRequest) => {
+    const { id } = request.params as { id: string }
+    const data = updateFacilitySchema.parse(request.body)
+    const result = await updateFacility(id, data, request.user!.userId)
     return success(result)
   })
 

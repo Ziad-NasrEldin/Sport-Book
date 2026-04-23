@@ -26,6 +26,7 @@ export const AdminSelect = forwardRef<HTMLSelectElement, AdminSelectProps>(
       <div className="relative inline-flex items-center">
         <select
           ref={ref}
+          data-select-icon
           className={clsx(
             "appearance-none rounded-full bg-surface-container-low font-lexend font-bold",
             "text-primary outline-none cursor-pointer",

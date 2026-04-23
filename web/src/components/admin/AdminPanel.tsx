@@ -23,6 +23,7 @@ export const AdminPanel = memo(function AdminPanel({
       className={clsx(
         'rounded-[var(--radius-lg)] bg-surface-container-lowest shadow-ambient',
         'transition-all duration-150',
+        'card-lift',
         noPadding ? '' : 'p-4 md:p-5',
         className ?? ''
       )}

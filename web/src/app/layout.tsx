@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Lexend } from 'next/font/google'
+import { RouteFrame } from '@/components/layout/RouteFrame'
 import { ToastContainer } from '@/components/ui/Toast'
 import './globals.css'
 
@@ -28,14 +29,9 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${lexend.variable} font-sans bg-surface text-primary antialiased min-h-screen`}
       >
-        <div className="min-h-screen md:bg-surface-container-low md:px-6 md:py-8 lg:px-10 lg:py-10">
-          <div className="w-full max-w-[1200px] mx-auto min-h-screen bg-surface relative md:rounded-[2rem] md:shadow-ambient">
-            {children}
-          </div>
-        </div>
+        <RouteFrame>{children}</RouteFrame>
         <ToastContainer />
       </body>
     </html>
   )
 }
-

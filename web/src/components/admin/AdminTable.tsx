@@ -58,8 +58,19 @@ export function AdminTable<T>({
               key={getRowKey(item)}
               className={clsx(
                 'border-b border-primary/5 align-top transition-colors duration-150',
+                'animate-table-row-stagger',
                 zebraStriping && index % 2 === 1 && 'bg-primary/[0.02]',
-                hover && 'hover:bg-primary/[0.04] cursor-pointer'
+                hover && 'hover:bg-primary/[0.04] cursor-pointer',
+                index === 0 && 'animation-delay-75',
+                index === 1 && 'animation-delay-100',
+                index === 2 && 'animation-delay-150',
+                index === 3 && 'animation-delay-200',
+                index === 4 && 'animation-delay-250',
+                index === 5 && 'animation-delay-300',
+                index === 6 && 'animation-delay-350',
+                index === 7 && 'animation-delay-400',
+                index === 8 && 'animation-delay-450',
+                index >= 9 && 'animation-delay-500'
               )}
             >
               {columns.map((column) => (

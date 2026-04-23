@@ -61,9 +61,7 @@ async function getFirstVerificationLink(page: Page) {
 }
 
 test('verification flow works end to end', async ({ browser }) => {
-  const playerLandingPath = /(?:\/|\/onboarding)$/
-
-  const playerOne = await signIn(browser, 'player1@example.com', 'password123', playerLandingPath)
+  const playerOne = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
   await submitFacilityRequest(playerOne.page, 'Player One Arena')
 
   await expect(playerOne.page.getByText('Request submitted successfully.')).toBeVisible()
@@ -107,7 +105,7 @@ test('verification flow works end to end', async ({ browser }) => {
 
   await adminDetail.context.close()
 
-  const playerOneReview = await signIn(browser, 'player1@example.com', 'password123', playerLandingPath)
+  const playerOneReview = await signIn(browser, 'player1@example.com', 'password123', /\/$/)
   await playerOneReview.page.goto('/auth/send-request', { waitUntil: 'domcontentloaded' })
   await waitForInteractiveForm(playerOneReview.page)
   await expect(playerOneReview.page.getByText('Needs Info')).toBeVisible()
@@ -128,7 +126,7 @@ test('verification flow works end to end', async ({ browser }) => {
   await expect(playerOneApproved.page.getByText('Operator Dashboard')).toBeVisible()
   await playerOneApproved.context.close()
 
-  const playerTwo = await signIn(browser, 'player2@example.com', 'password123', playerLandingPath)
+  const playerTwo = await signIn(browser, 'player2@example.com', 'password123', /\/$/)
   const playerTwoRequestId = await submitFacilityRequest(playerTwo.page, 'Player Two Arena')
   await expect(playerTwo.page.getByText('Pending Review')).toBeVisible()
 

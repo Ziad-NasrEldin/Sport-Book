@@ -41,18 +41,6 @@ export async function createApp() {
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
   app.get('/api/v1/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 
-  // Public onboarding stats endpoint (no auth required)
-  app.get('/api/v1/onboarding/stats', async () => {
-    const { prisma } = await import('@lib/prisma')
-    const [courts, coaches, cities, products] = await Promise.all([
-      prisma.court.count({ where: { status: 'ACTIVE' } }),
-      prisma.coach.count({ where: { isActive: true, isVerified: true } }),
-      prisma.facility.findMany({ where: { status: 'ACTIVE' }, select: { city: true } }).then((facs) => new Set(facs.map((f) => f.city)).size),
-      prisma.storeProduct.count({ where: { status: 'IN_STOCK' } }),
-    ])
-    return { courts, coaches, cities, products }
-  })
-
   // Register module routes
   await app.register(authRoutes, { prefix: '/api/v1/auth' })
   await app.register(userRoutes, { prefix: '/api/v1/users' })
