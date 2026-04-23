@@ -48,8 +48,8 @@ export default function CategoriesPage() {
   return (
     <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 -left-10 h-72 w-72 rounded-full bg-primary-container/12 blur-[100px]" />
-        <div className="absolute bottom-8 -right-14 h-80 w-80 rounded-full bg-secondary-container/20 blur-[120px]" />
+        <div className="absolute -top-20 -left-10 h-72 w-72 rounded-full bg-primary-container/12 blur-[100px] animate-float-blob" />
+        <div className="absolute bottom-8 -right-14 h-80 w-80 rounded-full bg-secondary-container/20 blur-[120px] animate-float-blob animation-delay-200" />
       </div>
 
       <header className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
@@ -57,13 +57,13 @@ export default function CategoriesPage() {
           <button
             type="button"
             onClick={handleBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-all duration-200 active:scale-95"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
           </button>
 
-          <div>
+          <div className="animate-soft-drop">
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">All Categories</h1>
             <p className="text-sm md:text-base text-primary/60">Browse sports categories and discover available courts</p>
           </div>
@@ -77,7 +77,7 @@ export default function CategoriesPage() {
       ) : (
         <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-6 md:space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
-            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient animate-spring-in">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Sports</span>
                 <Trophy className="w-5 h-5 text-primary-container" />
@@ -85,7 +85,7 @@ export default function CategoriesPage() {
               <p className="text-4xl font-black tracking-tight text-primary">{sports.length}</p>
             </article>
 
-            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient animate-spring-in animation-delay-75">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Total Courts</span>
                 <Sparkles className="w-5 h-5 text-secondary-container" />
@@ -93,7 +93,7 @@ export default function CategoriesPage() {
               <p className="text-4xl font-black tracking-tight text-primary">{totalCourts}</p>
             </article>
 
-            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient">
+            <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient animate-spring-in animation-delay-150">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Starting From</span>
                 <span className="text-xs font-lexend font-bold uppercase tracking-widest text-secondary-container">EGP</span>
@@ -103,7 +103,7 @@ export default function CategoriesPage() {
           </div>
 
           <section className="space-y-4 md:space-y-5">
-            <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">Choose Your Sport</h2>
+            <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary animate-soft-rise">Choose Your Sport</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               {sports.map((category: any) => (

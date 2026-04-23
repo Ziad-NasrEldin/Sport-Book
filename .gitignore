@@ -28,6 +28,8 @@ logs/
 *.log
 npm-debug.log*
 
+docs/*
+
 # IDE
 .vscode/
 .idea/
