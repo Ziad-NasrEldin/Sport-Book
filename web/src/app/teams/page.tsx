@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock3, MapPin, Plus, Users } from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
-import { CourtSport, courtSports, courts } from '@/lib/courts'
 import { useApiCall } from '@/lib/api/hooks'
 import { stringValue } from '@/lib/api/extract'
 import { api } from '@/lib/api/client'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+
+type CourtSport = string
 
 type CreateFormState = {
   sport: CourtSport
@@ -46,6 +47,19 @@ function getNoticeFeedbackFromUrl() {
 type CurrentUser = {
   id: string
   name: string
+}
+
+type CourtRecord = {
+  id: string
+  name: string
+  sport?: {
+    displayName?: string
+    name?: string
+  }
+  branch?: {
+    name?: string
+    city?: string
+  }
 }
 
 type TeamPost = {
@@ -135,9 +149,15 @@ function normalizeTeamPost(post: TeamPostApiResponse): TeamPost {
 export default function TeamsPage() {
   const { data: teamsResponse, loading, error, refetch } = useApiCall('/teams')
   const { data: currentUser } = useApiCall<CurrentUser>('/users/me')
+  const { data: courtsResponse } = useApiCall<{ items: CourtRecord[] }>('/courts?limit=50')
 
   const [mounted, setMounted] = useState(false)
   const [feedbackVisible, setFeedbackVisible] = useState(true)
+
+  const courtsData = useMemo(
+    () => (Array.isArray(courtsResponse?.items) ? courtsResponse.items : []),
+    [courtsResponse],
+  )
 
   const teamsData = useMemo(
     () => (Array.isArray(teamsResponse?.data) ? teamsResponse.data.map(normalizeTeamPost) : []),
@@ -149,22 +169,28 @@ export default function TeamsPage() {
   )
 
   const availableSports = useMemo(() => {
-    return courtSports
-  }, [])
+    const sportsFromCourts = courtsData
+      .map((court) => court.sport?.displayName ?? court.sport?.name)
+      .filter((sport): sport is string => Boolean(sport?.trim()))
+    const sportsFromPosts = teamsData.map((post) => post.sport).filter((sport) => Boolean(sport?.trim()))
+
+    return Array.from(
+      new Set(
+        [...sportsFromCourts, ...sportsFromPosts],
+      ),
+    )
+  }, [courtsData, teamsData])
 
   const [activeUserId, setActiveUserState] = useState('')
   const [teamPosts, setTeamPosts] = useState<TeamPost[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [feedback, setFeedback] = useState(getNoticeFeedbackFromUrl)
-  const [selectedSportFilter, setSelectedSportFilter] = useState<'All' | CourtSport>('All')
+  const [selectedSportFilter, setSelectedSportFilter] = useState<'All' | string>('All')
   const [selectedDateFilter, setSelectedDateFilter] = useState('')
 
-  const initialSport = availableSports[0] ?? 'Tennis'
-  const initialCourt = courts.find((court) => court.sport === initialSport) ?? courts[0]
-
   const [createForm, setCreateForm] = useState<CreateFormState>({
-    sport: initialSport,
-    courtId: initialCourt?.id ?? '',
+    sport: '',
+    courtId: '',
     date: toDateInputValue(new Date()),
     startHour: 18,
     durationHours: 1,
@@ -209,6 +235,29 @@ export default function TeamsPage() {
     }
   }, [feedback])
 
+  useEffect(() => {
+    if (courtsData.length === 0) return
+
+    const fallbackSport = courtsData[0]?.sport?.displayName ?? courtsData[0]?.sport?.name ?? ''
+
+    setCreateForm((prev) => {
+      const isCurrentCourtValid = courtsData.some((court) => court.id === prev.courtId)
+      if (isCurrentCourtValid && prev.sport) return prev
+
+      const sport = prev.sport || fallbackSport
+      const firstCourtForSport = courtsData.find((court) => {
+        const sportName = court.sport?.displayName ?? court.sport?.name ?? ''
+        return sportName === sport
+      })
+
+      return {
+        ...prev,
+        sport,
+        courtId: firstCourtForSport?.id ?? courtsData[0]?.id ?? '',
+      }
+    })
+  }, [courtsData])
+
   const filteredPosts = useMemo(() => {
     return teamPosts.filter((post) => {
       const sportMatch = selectedSportFilter === 'All' || post.sport === selectedSportFilter
@@ -218,12 +267,22 @@ export default function TeamsPage() {
   }, [selectedDateFilter, selectedSportFilter, teamPosts])
 
   const selectableCourts = useMemo(
-    () => courts.filter((court) => court.sport === createForm.sport),
-    [createForm.sport],
+    () =>
+      courtsData.filter((court) => {
+        const sportName = court.sport?.displayName ?? court.sport?.name ?? ''
+        return sportName === createForm.sport
+      }),
+    [courtsData, createForm.sport],
   )
 
   const handleCreatePost = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (!createForm.courtId) {
+      setFeedback('No court available for selected sport.')
+      setFeedbackVisible(true)
+      return
+    }
 
     try {
       await api.post('/teams', {
@@ -338,13 +397,16 @@ export default function TeamsPage() {
                 <select
                   value={createForm.sport}
                   onChange={(event) => {
-                    const value = event.target.value as CourtSport
-                    const firstCourtForSport = courts.find((court) => court.sport === value)
+                    const value = event.target.value
+                    const firstCourtForSport = courtsData.find((court) => {
+                      const sportName = court.sport?.displayName ?? court.sport?.name ?? ''
+                      return sportName === value
+                    })
 
                     setCreateForm((prev) => ({
                       ...prev,
                       sport: value,
-                      courtId: firstCourtForSport?.id ?? prev.courtId,
+                      courtId: firstCourtForSport?.id ?? '',
                     }))
                   }}
                   className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
@@ -369,9 +431,14 @@ export default function TeamsPage() {
                   }}
                   className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
                 >
+                  {selectableCourts.length === 0 && (
+                    <option value="">
+                      No courts available
+                    </option>
+                  )}
                   {selectableCourts.map((court) => (
                     <option key={court.id} value={court.id}>
-                      {court.title}
+                      {court.name}
                     </option>
                   ))}
                 </select>
@@ -459,6 +526,7 @@ export default function TeamsPage() {
 
             <button
               type="submit"
+              disabled={!createForm.courtId}
               className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-full bg-secondary-container text-on-secondary-container font-bold hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_oklch(var(--color-secondary-container)/0.45)] active:scale-95 transition-[transform,box-shadow] duration-200"
             >
               Publish Team Post

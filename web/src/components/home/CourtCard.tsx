@@ -26,7 +26,7 @@ export function CourtCard({
   const isAvailable = status === 'AVAILABLE'
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-ambient md:rounded-[2rem]">
+    <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-ambient md:rounded-[2rem] card-lift">
       <div className="relative h-[220px] w-full md:h-[280px]">
         <Image
           src={image}

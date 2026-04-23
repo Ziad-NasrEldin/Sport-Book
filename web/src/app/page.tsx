@@ -51,7 +51,7 @@ export default function Home() {
   return (
     <main className="w-full flex-1 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem]">
       {/* Header Top Bar */}
-      <header className="px-5 pt-12 pb-6 flex items-center justify-between md:px-10 md:pt-10 md:pb-8 lg:px-14">
+      <header className="px-5 pt-12 pb-6 flex items-center justify-between md:px-10 md:pt-10 md:pb-8 lg:px-14 opacity-0 animate-soft-drop">
         <h1 className="text-[28px] font-extrabold tracking-tight text-primary leading-none md:text-[40px]">
           Court Advantage
         </h1>
@@ -63,7 +63,7 @@ export default function Home() {
           >
             <Bell className="w-6 h-6 stroke-[2]" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-secondary-container text-primary text-[10px] rounded-full border border-surface font-black inline-flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-secondary-container text-primary text-[10px] rounded-full border border-surface font-black inline-flex items-center justify-center animate-badge-pop">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -72,7 +72,7 @@ export default function Home() {
       </header>
 
       {/* Category Section */}
-      <section className="mb-10 md:mb-12">
+      <section className="mb-10 md:mb-12 opacity-0 animate-soft-rise animation-delay-75">
         <div className="px-5 pt-2 flex items-end justify-between mb-4 md:px-10 md:mb-5 lg:px-14">
           <div>
             <h2 className="text-xl font-bold text-primary mb-1 md:text-[32px] md:mb-2">Choose Category</h2>
@@ -105,10 +105,12 @@ export default function Home() {
       </section>
 
       {/* Date Selector component added between categories and courts */}
-      <DateSelector />
+      <div className="opacity-0 animate-soft-rise animation-delay-150">
+        <DateSelector />
+      </div>
 
       {/* Courts Nearby Section */}
-      <section className="px-5 md:px-10 lg:px-14">
+      <section className="px-5 md:px-10 lg:px-14 opacity-0 animate-soft-rise animation-delay-200">
         <div className="flex items-end justify-between mb-6 md:mb-7">
           <h2 className="text-xl font-bold text-primary md:text-[32px]">Courts Nearby</h2>
           <button onClick={() => router.push('/courts')} className="text-secondary-container font-lexend text-[10px] uppercase font-bold tracking-wider flex items-center gap-1 hover:text-secondary transition-colors pb-0.5 md:text-xs md:gap-2">
@@ -119,18 +121,23 @@ export default function Home() {
         <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-7">
           {courtsLoading ? (
             <SkeletonStat />
-          ) : courtsData.slice(0, 2).map((court: any) => (
-            <CourtCard
+          ) : courtsData.slice(0, 2).map((court: any, idx: number) => (
+            <div
               key={court.id}
-              title={court.title || court.name}
-              image={court.image}
-              rating={court.rating || 0}
-              distance={`${court.distance || 0} km away`}
-              location={court.location}
-              price={court.price || 0}
-              status={court.status || 'AVAILABLE'}
-              type={court.type || `${court.sportLabel || 'TENNIS'} • ${court.surface || 'HARD COURT'}`}
-            />
+              className="opacity-0 animate-card-stagger"
+              style={{ animationDelay: `${180 + idx * 110}ms` }}
+            >
+              <CourtCard
+                title={court.title || court.name}
+                image={court.image}
+                rating={court.rating || 0}
+                distance={`${court.distance || 0} km away`}
+                location={court.location}
+                price={court.price || 0}
+                status={court.status || 'AVAILABLE'}
+                type={court.type || `${court.sportLabel || 'TENNIS'} • ${court.surface || 'HARD COURT'}`}
+              />
+            </div>
           ))}
         </div>
 

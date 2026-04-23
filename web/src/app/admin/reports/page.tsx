@@ -90,7 +90,7 @@ export default function AdminReportsPage() {
                 type="button"
                 onClick={() => handleReportAction('schedule')}
                 disabled={savingAction !== null}
-                className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+                className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 <CalendarRange className="w-4 h-4" />
                 {savingAction === 'schedule' ? 'Scheduling...' : 'Schedule Report'}
@@ -99,7 +99,7 @@ export default function AdminReportsPage() {
                 type="button"
                 onClick={() => handleReportAction('generate')}
                 disabled={savingAction !== null}
-                className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+                className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 <Download className="w-4 h-4" />
                 {savingAction === 'generate' ? 'Generating...' : 'Generate Now'}

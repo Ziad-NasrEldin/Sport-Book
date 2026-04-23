@@ -217,6 +217,115 @@ async function main() {
         status: "ACTIVE",
       }
     }),
+    // Squash courts
+    prisma.court.create({
+      data: {
+        branchId: mainBranch.id,
+        sportId: squash.id,
+        name: 'Squash Court 1 - Glass Back',
+        description: 'Professional glass-back squash court with viewing gallery',
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1592650892303-7e6e8c6e8e5c?auto=format&fit=crop&w=1200&q=80'
+        ]),
+        indoor: true,
+        hasLighting: true,
+        hasParking: true,
+        basePrice: 350,
+        status: "ACTIVE",
+        pricingRules: {
+          create: [
+            { dayOfWeek: 5, startHour: 17, endHour: 22, price: 450, isPeak: true },
+            { dayOfWeek: 6, startHour: 10, endHour: 22, price: 450, isPeak: true },
+          ]
+        }
+      }
+    }),
+    prisma.court.create({
+      data: {
+        branchId: newCairoBranch.id,
+        sportId: squash.id,
+        name: 'Squash Court 2 - Standard',
+        description: 'Standard all-glass squash court',
+        images: JSON.stringify(['https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80']),
+        indoor: true,
+        hasLighting: true,
+        basePrice: 300,
+        status: "ACTIVE",
+      }
+    }),
+    // More Tennis courts
+    prisma.court.create({
+      data: {
+        branchId: newCairoBranch.id,
+        sportId: tennis.id,
+        name: 'Tennis Court 3 - Championship',
+        description: 'Championship-level hard court with ITF certification, floodlights, and player amenities',
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1617083934551-ac1f1b6a50ea?auto=format&fit=crop&w=1200&q=80'
+        ]),
+        indoor: false,
+        hasLighting: true,
+        hasParking: true,
+        basePrice: 650,
+        status: "ACTIVE",
+        pricingRules: {
+          create: [
+            { dayOfWeek: 4, startHour: 18, endHour: 22, price: 800, isPeak: true },
+            { dayOfWeek: 5, startHour: 16, endHour: 23, price: 900, isPeak: true },
+            { dayOfWeek: 6, startHour: 8, endHour: 23, price: 900, isPeak: true },
+            { dayOfWeek: 0, startHour: 8, endHour: 21, price: 750, isPeak: true },
+          ]
+        }
+      }
+    }),
+    // More Padel courts
+    prisma.court.create({
+      data: {
+        branchId: mainBranch.id,
+        sportId: padel.id,
+        name: 'Padel Court 2 - Championship',
+        description: 'World Padel Tour certified court with premium lighting and spectator seating',
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1592595896616-c37162298647?auto=format&fit=crop&w=1200&q=80'
+        ]),
+        indoor: true,
+        hasLighting: true,
+        hasParking: true,
+        basePrice: 950,
+        status: "ACTIVE",
+        pricingRules: {
+          create: [
+            { startHour: 17, endHour: 23, price: 1200, isPeak: true },
+            { dayOfWeek: 0, startHour: 10, endHour: 20, price: 1000, isPeak: true },
+          ]
+        }
+      }
+    }),
+    // Another Football court (5-a-side)
+    prisma.court.create({
+      data: {
+        branchId: mainBranch.id,
+        sportId: football.id,
+        name: '5-A-Side Football Pitch',
+        description: 'Compact 5-a-side football pitch with artificial turf and barrier walls',
+        images: JSON.stringify(['https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80']),
+        indoor: false,
+        hasLighting: true,
+        hasParking: true,
+        basePrice: 600,
+        status: "ACTIVE",
+        pricingRules: {
+          create: [
+            { dayOfWeek: 5, startHour: 18, endHour: 23, price: 800, isPeak: true },
+            { dayOfWeek: 6, startHour: 14, endHour: 23, price: 850, isPeak: true },
+            { dayOfWeek: 0, startHour: 12, endHour: 20, price: 700, isPeak: true },
+          ]
+        }
+      }
+    }),
   ])
 
   console.log('Created courts')

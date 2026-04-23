@@ -12,7 +12,7 @@ export function CategoryCard({ title, courtsCount, color, href }: CategoryCardPr
   return (
     <Link
       href={href}
-      className={`relative snap-center shrink-0 w-[160px] h-[220px] rounded-lg flex flex-col p-5 overflow-hidden transition-transform active:scale-95 md:w-full md:h-[260px] md:rounded-[2rem] md:p-7 ${color}`}
+      className={`relative snap-center shrink-0 w-[160px] h-[220px] rounded-lg flex flex-col p-5 overflow-hidden transition-transform active:scale-95 md:w-full md:h-[260px] md:rounded-[2rem] md:p-7 card-lift opacity-0 animate-stagger-pop ${color}`}
     >
       <h3 className="text-white text-2xl font-bold font-sans tracking-tight text-left md:text-4xl">
         {title}

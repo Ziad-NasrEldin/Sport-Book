@@ -203,7 +203,7 @@ export default function AdminFacilitiesPage() {
             <button
               type="button"
               onClick={exportFacilities}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Download className="w-4 h-4" />
               Export Facilities
@@ -211,7 +211,7 @@ export default function AdminFacilitiesPage() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Building2 className="w-4 h-4" />
               Add Facility

@@ -79,7 +79,7 @@ export default function AdminBookingsPage() {
         actions={
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+            className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <Download className="w-4 h-4" />
             Export Ledger
