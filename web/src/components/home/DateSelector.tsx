@@ -102,7 +102,7 @@ export function DateSelector() {
   }, [selectedDate])
 
   return (
-    <section className="mb-10 md:mb-12">
+    <section className="mb-10 md:mb-12 opacity-0 animate-soft-rise animation-delay-100">
       <div className="px-5 mb-5 md:px-10 lg:px-14 flex items-end justify-between">
         <h2 className="text-[28px] font-extrabold text-primary tracking-tight md:text-[32px]">
           August 2024
@@ -132,11 +132,12 @@ export function DateSelector() {
                     dayRefs.current[index] = el
                   }}
                   onClick={() => handleDayTap(index, item.date)}
+                  style={{ animationDelay: `${index * 45}ms` }}
                   className={`relative flex-none w-[88px] h-[106px] flex flex-col items-center justify-center rounded-[2.5rem] snap-center transition-[transform,background-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
                     isSelected
                       ? 'bg-tertiary-fixed shadow-[0_12px_28px_-10px_rgba(195,244,0,0.55)] scale-105'
                       : 'bg-transparent scale-100'
-                  }`}
+                  } opacity-0 animate-stagger-pop`}
                 >
                   <span
                     className={`text-[10px] font-bold font-lexend uppercase tracking-wider mb-2 transition-[transform,color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -171,11 +172,12 @@ export function DateSelector() {
               <button
                 key={item.date}
                 onClick={() => handleDayTap(index, item.date)}
+                style={{ animationDelay: `${index * 45}ms` }}
                 className={`relative flex flex-col items-center justify-center rounded-[2.5rem] transition-[transform,background-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] min-w-[88px] h-[106px] ${
                   isSelected
                     ? 'bg-tertiary-fixed shadow-[0_12px_28px_-10px_rgba(195,244,0,0.55)] scale-105'
                     : 'bg-transparent hover:bg-black/5 scale-100'
-                }`}
+                } opacity-0 animate-stagger-pop`}
               >
                 <span
                   className={`text-[11px] font-bold font-lexend uppercase tracking-wider mb-2 transition-[transform,color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${

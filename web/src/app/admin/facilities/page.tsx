@@ -309,7 +309,7 @@ export default function AdminFacilitiesPage() {
                 type="button"
                 onClick={closeCreateModal}
                 aria-label="Close add facility dialog"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:scale-105 active:scale-95 transition-all"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -495,14 +495,14 @@ export default function AdminFacilitiesPage() {
                 <button
                   type="button"
                   onClick={closeCreateModal}
-                  className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors"
+                  className="inline-flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createFacilityMutation.loading}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Plus className="h-4 w-4" />
                   {createFacilityMutation.loading ? 'Creating…' : 'Create Facility'}

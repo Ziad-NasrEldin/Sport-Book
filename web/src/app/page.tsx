@@ -91,14 +91,19 @@ export default function Home() {
           <SkeletonStat />
         ) : (
           <div className="flex overflow-x-auto snap-x hide-scrollbar px-5 gap-4 pb-4 md:px-10 md:grid md:grid-cols-3 md:overflow-visible md:snap-none lg:px-14">
-            {categoriesData.slice(0, 3).map((category: any) => (
-              <CategoryCard
+            {categoriesData.slice(0, 3).map((category: any, idx: number) => (
+              <div
                 key={category.id}
-                title={category.name}
-                courtsCount={category.courtsCount || 0}
-                color={category.color || 'bg-primary-container text-white'}
-                href={`/courts?sport=${category.name}`}
-              />
+                className="opacity-0 animate-card-stagger"
+                style={{ animationDelay: `${90 + idx * 80}ms` }}
+              >
+                <CategoryCard
+                  title={category.name}
+                  courtsCount={category.courtsCount || 0}
+                  color={category.color || 'bg-primary-container text-white'}
+                  href={`/courts?sport=${category.name}`}
+                />
+              </div>
             ))}
           </div>
         )}

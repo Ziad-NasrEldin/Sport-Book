@@ -123,43 +123,6 @@ setAccessToken(accessToken)
               </div>
             </label>
 
-            <label className="block space-y-1.5">
-              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Email</span>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="alex@example.com"
-                  required
-                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
-                />
-              </div>
-            </label>
-
-            <label className="block space-y-1.5">
-              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Password</span>
-              <div className="relative">
-                <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
-                <input
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a password"
-                  required
-                  className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  aria-pressed={showPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center -mr-1 text-primary/45 hover:text-primary transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </label>
-
             {error && (
               <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg animate-shake">
                 {error}

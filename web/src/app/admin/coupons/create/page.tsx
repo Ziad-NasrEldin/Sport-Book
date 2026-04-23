@@ -181,7 +181,7 @@ export default function AdminCreateCouponPage() {
           <>
             <Link
               href="/admin/coupons"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Coupons
@@ -438,7 +438,7 @@ export default function AdminCreateCouponPage() {
             <button
               type="button"
               onClick={resetForm}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <RefreshCcw className="w-4 h-4" />
               Reset
@@ -456,7 +456,7 @@ export default function AdminCreateCouponPage() {
               type="button"
               onClick={() => saveCoupon('ACTIVE')}
               disabled={savingStatus !== null}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Upload className="w-4 h-4" />
               {savingStatus === 'ACTIVE' ? 'Publishing...' : 'Publish Coupon'}

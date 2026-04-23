@@ -98,7 +98,7 @@ export default function AdminUserEditPage() {
           actions={
             <Link
               href="/admin/users"
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to User Directory
@@ -213,7 +213,7 @@ export default function AdminUserEditPage() {
           <>
             <Link
               href={`/admin/users/${encodeURIComponent(user.id)}`}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               View Account
@@ -222,7 +222,7 @@ export default function AdminUserEditPage() {
               type="button"
               onClick={handleSave}
               disabled={!canSave}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest disabled:opacity-45 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-semibold text-surface-container-lowest hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-45 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
               {isSaving ? 'Saving...' : 'Save Changes'}
