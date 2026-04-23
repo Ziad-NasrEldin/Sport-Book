@@ -6,7 +6,7 @@ SportBook deploys as two Docker containers behind host Nginx:
 | --- | --- | --- | --- |
 | Next.js web | sportbook-web | 3000 | 127.0.0.1:3000 |
 | Fastify API | sportbook-api | 3001 | 127.0.0.1:3001 |
-| SQLite data | sportbook-data volume | /data/sportbook.db | Docker volume |
+| PostgreSQL | sportbook-postgres | 5432 | 127.0.0.1:5432 |
 
 ## Prerequisites
 
@@ -47,7 +47,10 @@ Required values:
 | NEXT_PUBLIC_SITE_URL | Canonical web URL |
 | NEXT_PUBLIC_API_URL | Browser API path, use `/api/v1` for same-domain Nginx |
 | WEB_ORIGIN | Allowed browser origin |
-| DATABASE_URL | SQLite file path inside container |
+| DATABASE_URL | PostgreSQL connection URI |
+| POSTGRES_DB | PostgreSQL database name |
+| POSTGRES_USER | PostgreSQL username |
+| POSTGRES_PASSWORD | PostgreSQL password |
 | JWT_SECRET | 32+ char signing secret |
 | SMTP_* | Email provider credentials |
 | PAYMOB_* | Payment provider credentials |
@@ -114,25 +117,23 @@ Expected API health response:
 
 ## Database Management
 
-SQLite database lives in Docker volume `sportbook-data`.
+PostgreSQL data lives in Docker volume `sportbook-postgres`.
 
 Backup:
 
 ```bash
 mkdir -p backups
-docker compose exec api sh -c 'cp /data/sportbook.db /tmp/sportbook.db'
-docker cp sportbook-api:/tmp/sportbook.db "backups/sportbook-$(date +%F-%H%M).db"
+docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "backups/sportbook-$(date +%F-%H%M).sql"
 ```
 
 Restore:
 
 ```bash
 docker compose down
-docker run --rm -v sportbook_sportbook-data:/data -v "$PWD/backups:/backups" alpine cp /backups/sportbook.db /data/sportbook.db
+docker compose up -d postgres
+cat backups/sportbook.sql | docker compose exec -T postgres psql -U "$POSTGRES_USER" "$POSTGRES_DB"
 docker compose up -d
 ```
-
-PostgreSQL note: current Prisma schema uses SQLite. Move to PostgreSQL only after changing `api/prisma/schema.prisma`, regenerating migrations, and testing migration flow.
 
 ## Updates
 
@@ -194,5 +195,5 @@ CORS or cookies fail:
 - Use HTTPS only
 - Rotate JWT secret after compromise
 - Keep `.env` out of Git
-- Back up SQLite before updates
+- Back up PostgreSQL before updates
 - Run `docker compose pull` monthly for base image updates

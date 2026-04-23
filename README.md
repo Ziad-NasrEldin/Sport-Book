@@ -5,7 +5,7 @@ A modern sports booking platform with a Next.js frontend and Fastify backend.
 ## Architecture
 
 - **Frontend**: Next.js 16 with React 19, Tailwind CSS
-- **Backend**: Fastify + Prisma + SQLite (PostgreSQL for production)
+- **Backend**: Fastify + Prisma + SQLite (local dev), PostgreSQL (production)
 - **Authentication**: JWT access tokens + HTTP-only refresh token cookies
 
 ## Getting Started
@@ -25,12 +25,14 @@ npm install
 ### Database Setup
 
 ```bash
-# The database is SQLite (dev.db) - no external DB needed for development
-# Run migrations
+# Local dev uses SQLite file (api/prisma/dev.db)
 npm run db:migrate
 
 # Seed with test data
 npm run db:seed
+
+# Optional: one-time copy from SQLite to PostgreSQL target
+npm run db:migrate:sqlite-to-postgres
 ```
 
 ### Running the Application
@@ -204,7 +206,7 @@ Sport-Book/
 ### Completed
 - [x] Monorepo workspace setup
 - [x] Fastify API scaffold with plugins
-- [x] Prisma schema (SQLite-compatible)
+- [x] Prisma schema (SQLite local + PostgreSQL production path)
 - [x] Database migrations and seeding
 - [x] Auth module (login, register, logout, refresh, role upgrade)
 - [x] Users module (profile, wallet, favorites, notifications, bookings, orders)
@@ -229,6 +231,7 @@ Create `api/.env`:
 
 ```env
 DATABASE_URL="file:./dev.db"
+SOURCE_DATABASE_URL="file:./dev.db"
 JWT_SECRET="your-super-secret-jwt-key-min-32-chars"
 JWT_EXPIRES_IN="15m"
 REFRESH_TOKEN_DAYS="7"

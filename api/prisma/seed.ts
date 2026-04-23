@@ -1,7 +1,27 @@
-import { PrismaClient } from '@prisma/client'
+import path from 'node:path'
+import { PrismaClient as SqlitePrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
+import dotenv from 'dotenv'
 
-const prisma = new PrismaClient()
+dotenv.config()
+
+const isPostgresUrl = /^postgres(?:ql)?:\/\//i.test(process.env.DATABASE_URL ?? '')
+
+const PrismaClientCtor: typeof SqlitePrismaClient = (() => {
+  if (!isPostgresUrl) return SqlitePrismaClient
+
+  try {
+    const postgresClientPath = path.join(process.cwd(), 'generated', 'postgres-client')
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const postgresClientModule = require(postgresClientPath) as { PrismaClient: typeof SqlitePrismaClient }
+    return postgresClientModule.PrismaClient
+  } catch (error) {
+    console.error('Failed loading generated postgres Prisma client for seed. Falling back to default client.', error)
+    return SqlitePrismaClient
+  }
+})()
+
+const prisma = new PrismaClientCtor()
 
 async function main() {
   console.log('Starting seed...')

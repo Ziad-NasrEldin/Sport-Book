@@ -147,7 +147,7 @@ function normalizeTeamPost(post: TeamPostApiResponse): TeamPost {
 }
 
 export default function TeamsPage() {
-  const { data: teamsResponse, loading, error, refetch } = useApiCall('/teams')
+  const { data: teamsResponse, loading, error, refetch } = useApiCall<{ data: TeamPostApiResponse[] }>('/teams')
   const { data: currentUser } = useApiCall<CurrentUser>('/users/me')
   const { data: courtsResponse } = useApiCall<{ items: CourtRecord[] }>('/courts?limit=50')
 
@@ -160,7 +160,7 @@ export default function TeamsPage() {
   )
 
   const teamsData = useMemo(
-    () => (Array.isArray(teamsResponse?.data) ? teamsResponse.data.map(normalizeTeamPost) : []),
+    () => (Array.isArray(teamsResponse?.data) ? teamsResponse.data.map((post: TeamPostApiResponse) => normalizeTeamPost(post)) : []),
     [teamsResponse],
   )
   const usersData = useMemo(

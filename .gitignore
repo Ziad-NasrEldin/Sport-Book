@@ -18,6 +18,7 @@ build/
 prisma/migrations/*/migration_engine.log
 *.db
 *.db-journal
+api/generated/
 
 # Testing
 coverage/

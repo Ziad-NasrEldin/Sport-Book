@@ -12,7 +12,7 @@ RUN npm ci --include-workspace-root
 FROM base AS api-build
 COPY api ./api
 WORKDIR /app/api
-RUN npm run db:generate && npm run build
+RUN npm run build
 
 FROM node:20-alpine AS api
 WORKDIR /app
@@ -21,22 +21,20 @@ ENV PORT=3001
 ENV HOST=0.0.0.0
 RUN apk add --no-cache openssl dumb-init wget \
   && addgroup -S sportbook \
-  && adduser -S sportbook -G sportbook \
-  && mkdir -p /data \
-  && chown -R sportbook:sportbook /data
+  && adduser -S sportbook -G sportbook
 COPY package.json package-lock.json ./
 COPY api/package.json api/package-lock.json ./api/
 RUN npm ci --omit=dev --workspace=api --include-workspace-root && npm cache clean --force
 COPY --from=api-build --chown=sportbook:sportbook /app/api/dist ./api/dist
 COPY --from=api-build --chown=sportbook:sportbook /app/api/prisma ./api/prisma
+COPY --from=api-build --chown=sportbook:sportbook /app/api/prisma-postgres ./api/prisma-postgres
+COPY --from=api-build --chown=sportbook:sportbook /app/api/generated ./api/generated
 WORKDIR /app/api
-RUN npm run db:generate
 USER sportbook
 EXPOSE 3001
-VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3001/health >/dev/null || exit 1
-CMD ["dumb-init", "sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+CMD ["dumb-init", "sh", "-c", "npx prisma migrate deploy --schema prisma-postgres/schema.prisma && node dist/main.js"]
 
 FROM base AS web-build
 ARG NEXT_PUBLIC_API_URL=/api/v1

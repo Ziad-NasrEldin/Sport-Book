@@ -5,7 +5,7 @@
 | File | Purpose |
 | --- | --- |
 | `Dockerfile` | Multi-target production image for API and web |
-| `docker-compose.yml` | Runs API and web containers with persistent SQLite volume |
+| `docker-compose.yml` | Runs PostgreSQL, API, and web containers |
 | `.dockerignore` | Keeps local build artifacts and secrets out of Docker context |
 | `.env.example` | Production environment template |
 | `nginx.conf.example` | HTTPS reverse proxy for web and API |
@@ -26,7 +26,7 @@ Nginx :443
   |-- /api/v1/   -> 127.0.0.1:3001 -> sportbook-api
   |-- /health    -> 127.0.0.1:3001 -> sportbook-api
 
-sportbook-api -> /data/sportbook.db in sportbook-data Docker volume
+sportbook-api -> sportbook-postgres:5432
 ```
 
 ## Commands
@@ -45,7 +45,7 @@ docker compose logs -f
 - HTTPS redirect in Nginx
 - HSTS, frame, content-type, referrer, permissions, and CSP headers
 - API rate limit zone at Nginx layer
-- SQLite data kept in Docker volume
+- PostgreSQL data kept in Docker volume
 
 ## Performance Notes
 
@@ -56,7 +56,7 @@ docker compose logs -f
 
 ## Important Runtime Notes
 
-- Current Prisma provider is SQLite.
-- Production database path is `file:/data/sportbook.db`.
+- Local Prisma provider is SQLite; Docker production path uses PostgreSQL schema.
+- Default production database points to `sportbook-postgres`.
 - API migrations run during container startup.
 - Browser API URL should stay `/api/v1` for same-domain deployment.

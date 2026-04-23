@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 
 const baseConfig: NextConfig = {
   output: 'standalone',
-  allowedDevOrigins: ['localhost', '127.0.0.1'],
+  allowedDevOrigins: ['localhost', '127.0.0.1', 'sport-book.mavoid.com'],
   turbopack: {
     // Keep dev watcher scoped to web app folder.
     root: path.resolve(__dirname),
