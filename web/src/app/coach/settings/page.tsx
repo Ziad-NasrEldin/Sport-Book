@@ -9,7 +9,8 @@ import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import type { CoachSettingsData } from '@/lib/coach/types'
 
 export default function CoachSettingsPage() {
-  const { data: settingsData, error, refetch } = useApiCall<CoachSettingsData>('/coach/settings')
+  const [isLoaded, setIsLoaded] = useState(false)
+  const { data: settingsData, loading, error, refetch } = useApiCall<CoachSettingsData>('/coach/settings')
   const { data: securityInfo } = useApiCall<{
     twoFactorEnabled: boolean
     apiTokenCount: number
@@ -22,6 +23,13 @@ export default function CoachSettingsPage() {
   const [notifications, setNotifications] = useState<Record<string, boolean>>({})
   const [policies, setPolicies] = useState<Record<string, boolean>>({})
   const [payoutCycle, setPayoutCycle] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly')
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setIsLoaded(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   useEffect(() => {
     if (!settingsData) return
@@ -44,7 +52,7 @@ export default function CoachSettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Settings"
         subtitle="Fine-tune your booking and communication controls so operations stay predictable at scale."
@@ -61,7 +69,7 @@ export default function CoachSettingsPage() {
         }
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-2 gap-6 transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Notifications" title="Communication Preferences">
           <div className="space-y-4">
             {(settingsData?.notifications ?? []).map((item) => (
@@ -138,15 +146,15 @@ export default function CoachSettingsPage() {
 
         <AdminPanel eyebrow="Security" title="Access Controls">
           <div className="space-y-4">
-            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="font-black text-primary text-base">Two-factor authentication</p>
               <p className="text-sm text-primary/70 mt-1.5 font-semibold">{securityInfo?.twoFactorEnabled ? 'Enabled on all sign-ins and payout actions.' : 'Not yet enabled. Consider enabling for enhanced security.'}</p>
             </article>
-            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="font-black text-primary text-base">API token access</p>
               <p className="text-sm text-primary/70 mt-1.5 font-semibold">{securityInfo?.apiTokenCount ?? 0} active API token{((securityInfo?.apiTokenCount ?? 0) !== 1) ? 's' : ''}. Rotate tokens every 90 days for external integrations.</p>
             </article>
-            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="font-black text-primary text-base">Device sessions</p>
               <p className="text-sm text-primary/70 mt-1.5 font-semibold">{securityInfo?.activeDeviceSessions ?? 0} active device{((securityInfo?.activeDeviceSessions ?? 0) !== 1) ? 's' : ''} currently trusted.</p>
             </article>

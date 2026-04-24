@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { CalendarClock, Pencil, Plus, Trash2 } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
+import { InputField } from '@/components/admin/InputField'
+import { SelectField } from '@/components/admin/SelectField'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
@@ -34,8 +36,16 @@ const EMPTY_EXCEPTION = {
 }
 
 export default function CoachAvailabilityPage() {
-  const { data: availabilityData, error, refetch } = useApiCall<CoachAvailabilityData>('/coach/availability')
+  const [isLoaded, setIsLoaded] = useState(false)
+  const { data: availabilityData, loading, error, refetch } = useApiCall<CoachAvailabilityData>('/coach/availability')
   const { data: templatesData } = useApiCall<{ id: string; title: string; description: string }[]>('/coach/availability-templates')
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setIsLoaded(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   const templateCards = templatesData || []
 
@@ -85,7 +95,7 @@ export default function CoachAvailabilityPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Availability"
         subtitle="Control your working windows, exceptions, and seasonal templates before sessions go live to athletes."
@@ -101,7 +111,7 @@ export default function CoachAvailabilityPage() {
         }
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-2 gap-6 transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Create window" title={editingWindowId ? 'Edit Availability Block' : 'Add Availability Block'}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectField label="Day" value={windowForm.day} onChange={(value) => setWindowForm((current) => ({ ...current, day: value }))} options={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']} />
@@ -132,7 +142,7 @@ export default function CoachAvailabilityPage() {
         </AdminPanel>
       </section>
 
-      <AdminPanel eyebrow="Day selector" title="Weekly Coverage">
+      <AdminPanel eyebrow="Day selector" title="Weekly Coverage" className={`transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <div className="flex flex-wrap gap-3">
           {(availableDays.length > 0 ? availableDays : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']).map((day) => {
             const active = day === selectedDay
@@ -155,11 +165,11 @@ export default function CoachAvailabilityPage() {
         </div>
       </AdminPanel>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 transition-all duration-500 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Selected day" title={`${selectedDay} Session Windows`}>
           <div className="space-y-4">
             {filteredWindows.map((window) => (
-              <article key={window.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-shadow">
+              <article key={window.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-base font-black text-primary">{window.start} - {window.end}</p>
@@ -205,7 +215,7 @@ export default function CoachAvailabilityPage() {
         <AdminPanel eyebrow="Exceptions" title="Blocked Dates & Overrides">
           <div className="space-y-4">
             {availabilityExceptions.map((exception) => (
-              <article key={exception.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-shadow">
+              <article key={exception.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] transition-shadow">
                 <p className="text-base font-black text-primary">{new Date(exception.date).toLocaleDateString()}</p>
                 <p className="text-sm text-primary/70 mt-1.5 font-semibold">{exception.reason}</p>
                 <p className="text-sm font-bold text-primary mt-2.5">{exception.impact}</p>
@@ -244,10 +254,10 @@ export default function CoachAvailabilityPage() {
         </AdminPanel>
       </section>
 
-      <AdminPanel eyebrow="Automation" title="Reusable Templates">
+      <AdminPanel eyebrow="Automation" title="Reusable Templates" className={`transition-all duration-500 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {templateCards.map((template) => (
-            <article key={template.id} className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md hover:shadow-lg transition-shadow">
+            <article key={template.id} className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] transition-shadow">
               <p className="text-base font-black text-primary">{template.title}</p>
               <p className="text-sm text-primary/70 mt-2.5 leading-relaxed font-semibold">{template.description}</p>
             </article>

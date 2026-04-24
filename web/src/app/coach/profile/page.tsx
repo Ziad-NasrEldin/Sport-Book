@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { Camera, Plus, Save, X } from 'lucide-react'
+import { Camera, Plus, X, Save } from 'lucide-react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { useApiCall, useApiMutation } from '@/lib/api/hooks'
@@ -13,6 +13,7 @@ const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=400&q=80'
 
 export default function CoachProfilePage() {
+  const [isLoaded, setIsLoaded] = useState(false)
   const { data: profileData, error, refetch } = useApiCall<CoachProfileData>('/coach/profile')
   const updateMutation = useApiMutation<CoachProfileData, Partial<CoachProfileData>>('/coach/profile', 'PUT')
 
@@ -62,7 +63,7 @@ export default function CoachProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Profile"
         subtitle="Shape how athletes discover you: your headline, credentials, and coaching identity directly affect conversion."
@@ -79,10 +80,10 @@ export default function CoachProfilePage() {
         }
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6 transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Public identity" title="Coach Card">
           <div className="flex flex-col sm:flex-row gap-6">
-            <div className="relative w-32 h-32 rounded-[var(--radius-lg)] overflow-hidden shrink-0 bg-surface-container-low shadow-lg">
+            <div className="relative w-32 h-32 rounded-[var(--radius-lg)] overflow-hidden shrink-0 bg-surface-container-low shadow-lg transition-transform duration-300 hover:scale-105">
               <Image
                 src={avatar || DEFAULT_AVATAR}
                 alt="Coach avatar"
@@ -92,7 +93,7 @@ export default function CoachProfilePage() {
               <button
                 type="button"
                 onClick={() => setAvatar(window.prompt('Paste a public image URL for your profile photo', avatar) || avatar)}
-                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary-container text-surface-container-lowest grid place-items-center shadow-md hover:shadow-lg transition-shadow"
+                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary-container text-surface-container-lowest grid place-items-center shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110"
                 aria-label="Change profile image"
               >
                 <Camera className="w-5 h-5" />
@@ -132,7 +133,7 @@ export default function CoachProfilePage() {
 
         <AdminPanel eyebrow="Visibility" title="Profile Reach">
           <div className="space-y-4">
-            <div className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="text-base font-black text-primary">Public Profile Status</p>
               <p className="text-sm text-primary/70 mt-1.5 font-semibold">Control whether athletes can discover your services now.</p>
               <button
@@ -148,7 +149,7 @@ export default function CoachProfilePage() {
               </button>
             </div>
 
-            <div className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md">
+            <div className="rounded-[var(--radius-md)] bg-surface-container-low p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="text-base font-black text-primary">Completeness</p>
               <p className="text-sm text-primary/70 mt-1.5 font-semibold">
                 {[displayName, headline, bio, city].filter(Boolean).length * 25}% complete.
@@ -158,7 +159,7 @@ export default function CoachProfilePage() {
         </AdminPanel>
       </section>
 
-      <AdminPanel eyebrow="About" title="Coach Story">
+      <AdminPanel eyebrow="About" title="Coach Story" className={`transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <label className="block space-y-2">
           <span className="text-[11px] font-lexend uppercase tracking-[0.2em] text-primary/40 font-bold">Bio</span>
           <textarea
@@ -170,7 +171,7 @@ export default function CoachProfilePage() {
         </label>
       </AdminPanel>
 
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-3 gap-6 transition-all duration-500 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <TagEditorPanel
           eyebrow="Sports"
           title="Specialties"

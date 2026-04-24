@@ -1,13 +1,15 @@
 'use client'
 
-import { Download, Filter } from 'lucide-react'
-import { AdminDonut } from '@/components/admin/AdminDonut'
+import { Download, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatCard } from '@/components/admin/AdminStatCard'
-import { AdminTable } from '@/components/admin/AdminTable'
 import { AdminTrendBars } from '@/components/admin/AdminTrendBars'
+import { AdminDonut } from '@/components/admin/AdminDonut'
+import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonStat } from '@/components/ui/SkeletonLoader'
+import { SkeletonTable } from '@/components/ui/SkeletonLoader'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { downloadCsv, type CoachReportsData } from '@/lib/coach/types'
@@ -23,7 +25,15 @@ function formatEgp(value: number) {
 }
 
 export default function CoachReportsPage() {
+  const [isLoaded, setIsLoaded] = useState(false)
   const { data: reportsData, loading, error, refetch } = useApiCall<CoachReportsData>('/coach/reports')
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setIsLoaded(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={refetch} />
@@ -39,7 +49,7 @@ export default function CoachReportsPage() {
   const estimatedPayout = coachBookings.reduce((sum, booking) => sum + (typeof booking.payout === 'number' ? booking.payout : 0), 0)
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Reports"
         subtitle="Analyze earnings, utilization, and delivery quality to optimize weekly coaching capacity."
@@ -71,7 +81,7 @@ export default function CoachReportsPage() {
         }
       />
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         {loading ? (
           <>
             <SkeletonStat />
@@ -87,7 +97,7 @@ export default function CoachReportsPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6 transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'`}>
         <AdminPanel eyebrow="Revenue trend" title="Earnings Trajectory">
           <AdminTrendBars values={coachRevenueTrend.map((p: { value: number }) => p.value)} colorClassName="bg-secondary-container" />
         </AdminPanel>
@@ -97,7 +107,7 @@ export default function CoachReportsPage() {
         </AdminPanel>
       </section>
 
-      <AdminPanel eyebrow="Monthly snapshots" title="Performance Ledger">
+      <AdminPanel eyebrow="Monthly snapshots" title="Performance Ledger" className={`transition-all duration-500 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminTable
           items={monthSnapshots}
           getRowKey={(row) => row.id}

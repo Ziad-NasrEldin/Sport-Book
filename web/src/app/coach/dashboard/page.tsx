@@ -2,6 +2,7 @@
 
 import { Download, Plus, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { AdminDonut } from '@/components/admin/AdminDonut'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -26,7 +27,15 @@ function formatEgp(value: number) {
 
 export default function CoachDashboardPage() {
   const router = useRouter()
+  const [isLoaded, setIsLoaded] = useState(false)
   const { data: dashboardData, loading, error, refetch } = useApiCall<CoachDashboardData>('/coach/dashboard')
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setIsLoaded(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   if (error) {
     return <APIErrorFallback error={error} onRetry={refetch} />
@@ -56,7 +65,7 @@ export default function CoachDashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Coach Dashboard"
         subtitle="Run your coaching operation from one command center: revenue, schedule quality, service performance, and booking readiness."
@@ -82,7 +91,7 @@ export default function CoachDashboardPage() {
         }
       />
 
-      <section className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
+      <section className={`grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         {loading ? (
           <>
             <SkeletonStat />
@@ -103,7 +112,7 @@ export default function CoachDashboardPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6 transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel
           eyebrow="Revenue pulse"
           title="Earnings Momentum"
@@ -151,11 +160,11 @@ export default function CoachDashboardPage() {
         </AdminPanel>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 transition-all duration-500 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Today" title="Session Pipeline">
           <div className="space-y-4">
             {coachBookings.map((booking) => (
-              <article key={booking.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-shadow">
+              <article key={booking.id} className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-base font-black text-primary">{booking.athlete}</p>
@@ -180,21 +189,21 @@ export default function CoachDashboardPage() {
             <button
               type="button"
               onClick={() => router.push('/coach/availability')}
-              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-colors shadow-md"
+              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-all duration-300 hover:scale-[1.02] shadow-md"
             >
               <p className="text-base font-bold text-primary">Open availability editor for next week blocks.</p>
             </button>
             <button
               type="button"
               onClick={() => router.push('/coach/services')}
-              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-colors shadow-md"
+              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-all duration-300 hover:scale-[1.02] shadow-md"
             >
               <p className="text-base font-bold text-primary">Publish latest service pricing to booking pages.</p>
             </button>
             <button
               type="button"
               onClick={() => router.push('/coach/bookings')}
-              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-colors shadow-md"
+              className="w-full rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 text-left hover:bg-surface-container-high transition-all duration-300 hover:scale-[1.02] shadow-md"
             >
               <p className="text-base font-bold text-primary">Review pending athlete requests before 6 PM.</p>
             </button>

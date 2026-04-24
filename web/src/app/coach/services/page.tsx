@@ -66,6 +66,7 @@ const EMPTY_SERVICE: ServiceFormState = {
 }
 
 export default function CoachServicesPage() {
+  const [isLoaded, setIsLoaded] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'PAUSED' | 'DRAFT'>('all')
   const [isSessionTypeFormOpen, setIsSessionTypeFormOpen] = useState(false)
@@ -75,10 +76,16 @@ export default function CoachServicesPage() {
   const [sessionTypeForm, setSessionTypeForm] = useState<SessionTypeFormState>(EMPTY_SESSION_TYPE)
   const [serviceForm, setServiceForm] = useState<ServiceFormState>(EMPTY_SERVICE)
 
-  const { data: coachServices, loading: servicesLoading, error: servicesError, refetch: refetchServices } =
-    useApiCall<CoachService[]>('/coach/services')
+  const { data: coachServices, loading: servicesLoading, error: servicesError, refetch: refetchServices } = useApiCall<CoachService[]>('/coach/services')
   const { data: sessionTypes, loading: sessionTypesLoading, error: sessionTypesError, refetch: refetchSessionTypes } =
     useApiCall<CoachSessionType[]>('/coach/session-types')
+
+  useEffect(() => {
+    if (!servicesLoading) {
+      const timer = setTimeout(() => setIsLoaded(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [servicesLoading])
 
   const createSessionType = useApiMutation('/coach/session-types', 'POST')
   const createService = useApiMutation('/coach/services', 'POST')
@@ -167,7 +174,7 @@ export default function CoachServicesPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Services"
         subtitle="Design your service catalog and session formats. Session types here power player booking experiences."
@@ -194,7 +201,7 @@ export default function CoachServicesPage() {
       />
 
       {(isSessionTypeFormOpen || isServiceFormOpen) && (
-        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <section className={`grid grid-cols-1 xl:grid-cols-2 gap-6 transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
           {isSessionTypeFormOpen && (
             <AdminPanel eyebrow="Compose" title={editingSessionTypeId ? 'Edit Session Type' : 'Create Session Type'}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,13 +285,13 @@ export default function CoachServicesPage() {
         </section>
       )}
 
-      <AdminPanel eyebrow="Coach-managed" title="Session Type Formats">
+      <AdminPanel eyebrow="Coach-managed" title="Session Type Formats" className={`transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
           {sessionTypesLoading ? (
             <p className="text-sm text-primary/60">Loading session types...</p>
           ) : (
             safeSessionTypes.map((sessionType) => (
-              <article key={sessionType.id} className="rounded-[var(--radius-md)] bg-surface-container-low p-5 space-y-4 shadow-md hover:shadow-lg transition-shadow">
+              <article key={sessionType.id} className="rounded-[var(--radius-md)] bg-surface-container-low p-5 space-y-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-base font-black text-primary">{sessionType.name}</p>

@@ -1,15 +1,15 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { AdminFilterBar } from '@/components/admin/AdminFilterBar'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AdminStatusPill } from '@/components/admin/AdminStatusPill'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { SkeletonTable } from '@/components/ui/SkeletonLoader'
-import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
 import { statusTone } from '@/lib/admin/ui'
+import { useApiCall } from '@/lib/api/hooks'
 import type { CoachDashboardBooking } from '@/lib/coach/types'
 
 function formatEgp(value: number) {
@@ -23,8 +23,16 @@ function formatEgp(value: number) {
 export default function CoachBookingsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'>('all')
+  const [isLoaded, setIsLoaded] = useState(false)
 
   const { data: coachBookings, loading, error, refetch } = useApiCall<CoachDashboardBooking[]>('/coach/bookings')
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setIsLoaded(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   const filteredBookings = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -46,13 +54,13 @@ export default function CoachBookingsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <AdminPageHeader
         title="Bookings"
         subtitle="Track your full booking lifecycle, prioritize high-intent athletes, and keep payouts predictable."
       />
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.9fr] gap-6">
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.3fr_0.9fr] gap-6 transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Pipeline" title="Session Requests & Confirmations">
           <AdminFilterBar
             searchValue={search}
@@ -131,15 +139,15 @@ export default function CoachBookingsPage() {
 
         <AdminPanel eyebrow="Today" title="Operational Notes">
           <div className="space-y-4">
-            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="text-base font-bold text-primary">
                 {(coachBookings ?? []).filter((booking) => booking.status === 'PENDING').length} pending confirmations should be reviewed today.
               </p>
             </article>
-            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="text-base font-bold text-primary">Travel buffer is reflected by your current availability windows.</p>
             </article>
-            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md">
+            <article className="rounded-[var(--radius-md)] bg-surface-container-low px-5 py-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <p className="text-base font-bold text-primary">Completed sessions automatically feed the reports page payout totals.</p>
             </article>
           </div>
