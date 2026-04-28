@@ -264,9 +264,9 @@ export default function SendRequestPage() {
 
       <section className="px-5 pt-32 pb-12 md:px-10 lg:px-14 md:pt-40 z-10 relative flex justify-center">
         <div
-          className="w-full max-w-2xl bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] border border-primary/5 backdrop-blur-sm animate-soft-rise"
+          className="w-full max-w-2xl bg-surface-container-lowest rounded-[var(--radius-lg)] p-8 md:p-10 shadow-ambient border border-primary/5 backdrop-blur-sm animate-soft-rise"
         >
-          <h1 className="text-4xl md:text-5xl font-display font-bold uppercase tracking-tight text-primary leading-none">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-primary leading-none">
             Send a Request
           </h1>
           <p className="mt-3 text-sm md:text-base font-sans font-medium text-primary/70">
@@ -327,19 +327,19 @@ export default function SendRequestPage() {
 
           <form className="mt-8 space-y-6 animate-soft-rise" onSubmit={handleSubmit}>
             <div className="space-y-3">
-              <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 block">
+              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 ml-2 block">
                 I Want To Apply As
               </span>
-              <div className="relative flex bg-surface-container-low p-1.5 rounded-[1.5rem] border-2 border-primary/5 shadow-inner">
+              <div className="relative flex bg-surface-container-low p-1.5 rounded-[var(--radius-full)] border border-primary/5 shadow-inner">
                 <div
-                  className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-[1.25rem] bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-[calc(var(--radius-full)-6px)] bg-surface-container-lowest shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
                   style={{ left: requestedRole === 'coach' ? '6px' : 'calc(50% - 0px)' }}
                 />
                 <button
                   type="button"
                   onClick={() => setRequestedRole('coach')}
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-12 rounded-[1.25rem] transition-all duration-200 font-sans font-bold text-sm ${requestedRole === 'coach' ? 'text-primary' : 'text-primary/50 hover:text-primary/80'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 rounded-[calc(var(--radius-full)-6px)] transition-all duration-200 font-sans font-bold text-sm ${requestedRole === 'coach' ? 'text-primary' : 'text-primary/50 hover:text-primary/80'}`}
                 >
                   <Dumbbell className={`w-4 h-4 transition-transform duration-300 ${requestedRole === 'coach' ? 'scale-100' : 'scale-85'}`} />
                   Coach
@@ -348,7 +348,7 @@ export default function SendRequestPage() {
                   type="button"
                   onClick={() => setRequestedRole('facility')}
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-12 rounded-[1.25rem] transition-all duration-200 font-sans font-bold text-sm ${requestedRole === 'facility' ? 'text-primary' : 'text-primary/50 hover:text-primary/80'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 rounded-[calc(var(--radius-full)-6px)] transition-all duration-200 font-sans font-bold text-sm ${requestedRole === 'facility' ? 'text-primary' : 'text-primary/50 hover:text-primary/80'}`}
                 >
                   <Building2 className={`w-4 h-4 transition-transform duration-300`} />
                   Facility
@@ -357,8 +357,8 @@ export default function SendRequestPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <label className="block space-y-2 group">
-                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Full Name</span>
+              <label className="block space-y-1.5 group">
+                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Full Name</span>
                 <input
                   type="text"
                   required
@@ -366,12 +366,12 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('fullName', event.target.value)}
                   placeholder="Your full name"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
                 />
               </label>
 
-              <label className="block space-y-2 group">
-                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Email</span>
+              <label className="block space-y-1.5 group">
+                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Email</span>
                 <input
                   type="email"
                   required
@@ -379,12 +379,12 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('email', event.target.value)}
                   placeholder="name@example.com"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
                 />
               </label>
 
-              <label className="block space-y-2 group">
-                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Phone Number</span>
+              <label className="block space-y-1.5 group">
+                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Phone Number</span>
                 <input
                   type="tel"
                   required
@@ -392,12 +392,12 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('phone', event.target.value)}
                   placeholder="+20 10 0000 0000"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
                 />
               </label>
 
-              <label className="block space-y-2 group">
-                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">City</span>
+              <label className="block space-y-1.5 group">
+                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">City</span>
                 <input
                   type="text"
                   required
@@ -405,7 +405,7 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('city', event.target.value)}
                   placeholder="Cairo"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
+                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
                 />
               </label>
             </div>
@@ -413,7 +413,7 @@ export default function SendRequestPage() {
             {requestedRole === 'coach' ? (
               <div key="coach" className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-[shake_0.1s_ease-in-out]">
                 <label className="block space-y-2 group">
-                  <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Sport Specialization</span>
+                  <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Sport Specialization</span>
                   <input
                     type="text"
                     required
@@ -534,9 +534,9 @@ export default function SendRequestPage() {
             </div>
           </form>
 
-          <p className={`mt-5 text-center text-sm text-primary/65 ${baseEntrance} ${entranceTransition}`} style={{ transitionDelay: '580ms' }}>
+          <p className={`mt-5 text-center text-sm font-medium text-primary/70 ${baseEntrance} ${entranceTransition}`} style={{ transitionDelay: '580ms' }}>
             Looking for a player account?{' '}
-            <Link href="/auth/sign-up" className="font-bold text-secondary-container hover:text-secondary transition-colors">
+            <Link href="/auth/sign-up" className="font-bold text-primary hover:text-primary/70 transition-colors underline underline-offset-4">
               Create a regular account
             </Link>
           </p>
