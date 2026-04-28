@@ -3,7 +3,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Medal, Clock3, ChevronRight, Search, ChevronDown, ChevronUp, Heart } from 'lucide-react'
+import {
+  ArrowLeft,
+  Medal,
+  Clock3,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  ArrowRight,
+  Star,
+} from 'lucide-react'
 import { FloatingNav } from '@/components/layout/FloatingNav'
 import { useApiCall } from '@/lib/api/hooks'
 import { APIErrorFallback } from '@/components/ui/ErrorBoundary'
@@ -88,57 +98,68 @@ export default function CoachesPage() {
   }
 
   return (
-    <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px] animate-float-blob" />
-        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px] animate-float-blob animation-delay-300" />
-      </div>
+    <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative overflow-hidden">
+      {/* Geometric background */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: `repeating-linear-gradient(90deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 80px), repeating-linear-gradient(0deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 80px)`,
+      }} />
+      <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] bg-[#c3f400]/6 blur-[120px] rounded-full -translate-y-1/3 translate-x-1/4" />
 
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low active:scale-95 transition-all duration-150"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
-          </Link>
-          <div>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Coaches</h1>
-            <p className="text-sm md:text-base text-primary/60">Choose your coach and view available session slots.</p>
+      {/* HERO */}
+      <header className="relative bg-[#0a1631] overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#c3f400]" />
+
+        <div className="relative max-w-[1440px] mx-auto px-5 pt-10 pb-8 md:px-8 md:pt-14 md:pb-10">
+          <div className="flex items-center gap-4 pb-6">
+            <Link
+              href="/"
+              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-[#c3f400] hover:text-[#0a1631] transition-colors duration-200"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div>
+              <p className="text-[#c3f400] text-xs font-black uppercase tracking-[0.3em]">Find Your Trainer</p>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white">Coaches</h1>
+            </div>
           </div>
+          <p className="text-white/60 text-sm md:text-base max-w-xl leading-relaxed">
+            Elite trainers across every sport. Book sessions, sharpen skills, and level up your game.
+          </p>
         </div>
       </header>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-4 md:space-y-5">
+      <section className="px-5 md:px-6 lg:px-8 max-w-[1440px] mx-auto space-y-4 md:space-y-6 py-5 md:py-8">
+        {/* Search & Filters */}
         <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-primary/40" />
             <input
               type="text"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search coaches or sport"
-              className="w-full h-11 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary text-sm md:text-base outline-none focus:border-primary-container"
+              placeholder="Search coaches or sport..."
+              className="w-full h-12 pl-11 pr-4 rounded-full border border-primary/10 bg-surface-container-low text-primary text-sm md:text-base outline-none focus:border-[#0a1631] focus:ring-2 focus:ring-[#0a1631]/10 transition-all"
             />
           </div>
 
           <div className="flex items-center justify-between md:hidden">
-            <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Filters</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">Filters</p>
             <button
               type="button"
               onClick={() => setIsFiltersOpen((previous) => !previous)}
               aria-expanded={isFiltersOpen}
               aria-controls="coach-filters"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low text-primary text-[11px] font-lexend font-bold uppercase tracking-wide"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-low text-primary text-[11px] font-black uppercase tracking-wide active:scale-95 transition-all"
             >
-              {isFiltersOpen ? 'Minimize' : 'Maximize'}
+              {isFiltersOpen ? 'Hide' : 'Show'}
               {isFiltersOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
 
-          <div id="coach-filters" className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} md:block`}>
-            <div className="space-y-2.5">
-              <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Sport</p>
+          <div id="coach-filters" className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} md:block animate-fade-in`}>
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">Sport</p>
               <div className="flex flex-wrap gap-2">
                 {sports.map((sport) => {
                   const isActive = activeSport === sport
@@ -148,10 +169,10 @@ export default function CoachesPage() {
                       key={sport}
                       type="button"
                       onClick={() => setActiveSport(sport)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-all animate-fade-in ${
+                      className={`px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wide transition-all active:scale-95 ${
                         isActive
-                          ? 'bg-primary-container text-surface-container-lowest chip-select'
-                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high active:scale-95'
+                          ? 'bg-[#0a1631] text-[#c3f400]'
+                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high'
                       }`}
                     >
                       {sport}
@@ -161,8 +182,8 @@ export default function CoachesPage() {
               </div>
             </div>
 
-            <div className="space-y-2.5">
-              <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.16em] text-primary/50">Minimum Experience</p>
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">Experience</p>
               <div className="flex flex-wrap gap-2">
                 {[0, 5, 10].map((years) => {
                   const isActive = minExperience === years
@@ -172,10 +193,10 @@ export default function CoachesPage() {
                       key={years}
                       type="button"
                       onClick={() => setMinExperience(years)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-lexend font-bold uppercase tracking-wide transition-all animate-fade-in ${
+                      className={`px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wide transition-all active:scale-95 ${
                         isActive
-                          ? 'bg-secondary-container text-on-secondary-container chip-select'
-                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high active:scale-95'
+                          ? 'bg-[#0a1631] text-[#c3f400]'
+                          : 'bg-surface-container-low text-primary/75 hover:bg-surface-container-high'
                       }`}
                     >
                       {years === 0 ? 'Any' : `${years}+ Years`}
@@ -186,65 +207,89 @@ export default function CoachesPage() {
             </div>
           </div>
 
-          <p className="text-xs md:text-sm text-primary/60 font-lexend">
+          <p className="text-xs md:text-sm text-primary/50 font-black uppercase tracking-wider">
             Showing {filteredCoaches.length} {filteredCoaches.length === 1 ? 'coach' : 'coaches'}
           </p>
         </article>
 
         {loading ? (
           <SkeletonStat />
-        ) : filteredCoaches.map((coach) => (
-          <article key={coach.slug} className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient animate-spring-in hover:scale-[1.01] transition-transform duration-200">
-            <div className="flex gap-3 md:gap-4 items-start">
-              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius-default)] overflow-hidden shrink-0">
-                <Image src={coach.image} alt={coach.name} fill className="object-cover" />
+        ) : filteredCoaches.map((coach, index) => (
+          <article
+            key={coach.slug}
+            className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-0 shadow-ambient overflow-hidden group hover:shadow-[0_16px_40px_-12px_rgba(10,22,49,0.15)] transition-all duration-300 animate-spring-in"
+            style={{ animationDelay: `${Math.min(index * 75, 500)}ms` }}
+          >
+            <div className="flex flex-col sm:flex-row">
+              {/* Image */}
+              <div className="relative w-full sm:w-32 md:w-40 aspect-[16/10] sm:aspect-auto sm:min-h-[140px] shrink-0">
+                <Image
+                  src={coach.image}
+                  alt={coach.name}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-[#0a1631]/10 sm:bg-transparent" />
               </div>
 
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg md:text-xl font-extrabold text-primary truncate">{coach.name}</h2>
-                <p className="text-sm text-primary/65 mt-1 line-clamp-2">{coach.bio}</p>
+              <div className="flex-1 p-4 md:p-5 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="text-lg md:text-2xl font-black text-primary truncate group-hover:text-[#0a1631] transition-colors">
+                      {coach.name}
+                    </h2>
+                    <p className="text-sm text-primary/60 mt-1 line-clamp-2">{coach.bio}</p>
+                  </div>
 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-[11px] font-lexend font-bold uppercase tracking-wide text-primary/75">
-                    <Medal className="w-3.5 h-3.5" />
+                  <button
+                    type="button"
+                    onClick={() => handleToggleCoachFavorite(coach)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 shrink-0 ${
+                      favoriteCoachSlugs.includes(coach.slug)
+                        ? 'bg-[#0a1631] text-[#c3f400]'
+                        : 'bg-surface-container-low text-primary/50 hover:bg-[#0a1631] hover:text-white'
+                    }`}
+                    aria-label={favoriteCoachSlugs.includes(coach.slug) ? 'Remove coach from favorites' : 'Add coach to favorites'}
+                  >
+                    <Heart className={`w-4 h-4 ${favoriteCoachSlugs.includes(coach.slug) ? 'fill-[#c3f400]' : ''}`} />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0a1631]/5 text-[11px] font-black uppercase tracking-wide text-primary/80">
+                    <Medal className="w-3.5 h-3.5 text-[#0a1631]" />
                     {coach.experienceYears} Years
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-[11px] font-lexend font-bold uppercase tracking-wide text-primary/75">
-                    <Clock3 className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0a1631]/5 text-[11px] font-black uppercase tracking-wide text-primary/80">
+                    <Clock3 className="w-3.5 h-3.5 text-[#0a1631]" />
                     {sportLabel(coach.sport)}
                   </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#c3f400]/20 text-[11px] font-black uppercase tracking-wide text-[#0a1631]">
+                    <Star className="w-3 h-3 fill-[#0a1631]" />
+                    {getCoachRating(coach.experienceYears)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-primary/5">
+                  <p className="text-lg font-black text-[#0a1631]">{coach.sessionRate}</p>
+                  <Link
+                    href={`/coaches/${coach.slug}`}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#0a1631] text-white text-xs font-black uppercase tracking-wider hover:bg-[#c3f400] hover:text-[#0a1631] active:scale-95 transition-all duration-200"
+                  >
+                    View Slots <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => handleToggleCoachFavorite(coach)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 ${
-                  favoriteCoachSlugs.includes(coach.slug)
-                    ? 'bg-secondary-container text-white heart-burst'
-                    : 'bg-surface-container-low text-primary/70 hover:text-primary hover:scale-110'
-                }`}
-                aria-label={favoriteCoachSlugs.includes(coach.slug) ? 'Remove coach from favorites' : 'Add coach to favorites'}
-              >
-                <Heart className={`w-4 h-4 ${favoriteCoachSlugs.includes(coach.slug) ? 'fill-white' : ''}`} />
-              </button>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm md:text-base font-bold text-primary">{coach.sessionRate}</p>
-              <Link
-                href={`/coaches/${coach.slug}`}
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-secondary-container hover:text-secondary transition-all hover:translate-x-1"
-              >
-                View Slots <ChevronRight className="w-4 h-4" />
-              </Link>
             </div>
           </article>
         ))}
 
         {filteredCoaches.length === 0 && !loading && (
-          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 shadow-ambient text-center">
-            <h2 className="text-lg font-extrabold text-primary">No coaches found</h2>
+          <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-6 shadow-ambient text-center animate-fade-in">
+            <div className="w-16 h-16 rounded-full bg-[#0a1631]/5 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-7 h-7 text-primary/40" />
+            </div>
+            <h2 className="text-xl font-black text-primary">No coaches found</h2>
             <p className="text-sm text-primary/60 mt-2">Try clearing filters or using a broader search term.</p>
           </article>
         )}

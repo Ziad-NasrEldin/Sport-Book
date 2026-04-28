@@ -26,76 +26,57 @@ export function CourtCard({
   const isAvailable = status === 'AVAILABLE'
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-ambient md:rounded-[2rem] card-lift">
-      <div className="relative h-[220px] w-full md:h-[280px]">
+    <div className="group relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-[0_16px_40px_-12px_rgba(0,17,58,0.12)] hover:-translate-y-1">
+      <div className="relative h-[180px] w-full overflow-hidden">
         <Image
           src={image}
           alt={title}
           fill
-          className="object-cover object-center"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
-        {/* Deep gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1631]/80 via-transparent to-transparent transition-opacity duration-300" />
 
-        <div className="absolute top-4 left-4 md:top-5 md:left-5">
+        <div className="absolute top-3 left-3">
           <span
-            className={`px-3 py-1 rounded-full text-xs font-bold font-sans tracking-wide md:text-sm md:px-4 md:py-1.5 ${
-              isAvailable
-                ? 'bg-tertiary-fixed text-primary'
-                : 'bg-red-100 text-red-700'
-            }`}
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider animate-badge-pop ${isAvailable ? 'bg-[#c3f400] text-[#0a1631]' : 'bg-white/90 text-red-700'}`}
           >
             {status}
           </span>
         </div>
 
-        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md rounded-full px-3 py-1 flex items-center gap-1 shadow-sm md:top-5 md:right-5 md:px-4 md:py-1.5 md:gap-2">
-          <Star className="fill-orange-400 text-orange-400 w-3 h-3 md:w-4 md:h-4" />
-          <span className="text-white font-bold font-lexend text-xs md:text-base">
-            {rating.toFixed(1)}
-          </span>
+        <div className="absolute top-3 right-3 bg-white/90 rounded-full px-2 py-0.5 flex items-center gap-0.5 transition-transform duration-200 group-hover:scale-105">
+          <Star className="fill-[#c3f400] text-[#c3f400] w-3 h-3" />
+          <span className="text-[#0a1631] font-black text-[10px]">{rating.toFixed(1)}</span>
         </div>
 
-        <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6">
-          <p className="text-tertiary-fixed/90 font-bold text-[10px] tracking-[0.15em] mb-1 font-sans uppercase md:text-xs md:mb-2">
-            {type}
-          </p>
-          <h3 className="text-white text-xl font-bold font-sans tracking-tight md:text-4xl">
-            {title}
-          </h3>
+        <div className="absolute bottom-3 left-3 right-3">
+          <p className="text-[#c3f400]/80 font-bold text-[9px] tracking-wider uppercase mb-0.5">{type}</p>
+          <h3 className="text-white text-lg font-black tracking-tight leading-tight">{title}</h3>
         </div>
       </div>
 
-      <div className="p-5 flex items-center justify-between md:p-7">
+      <div className="p-3 flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-1.5 text-primary pb-2 md:gap-2 md:pb-3">
-            <span className="flex-shrink-0 bg-surface-container-low rounded-full p-1">
-              <MapPin className="w-3 h-3 text-primary/70 md:w-4 md:h-4" />
-            </span>
-            <p className="text-xs font-medium text-primary/70 truncate pr-2 max-w-[180px] md:max-w-[300px] md:text-sm">
-              {location} &bull; <span className="font-lexend">{distance}</span>
-            </p>
+          <div className="flex items-center gap-1 text-primary/60 mb-1">
+            <MapPin className="w-3 h-3 flex-none" />
+            <p className="text-[11px] font-medium truncate max-w-[150px]">{location} · <span className="font-bold">{distance}</span></p>
           </div>
-          <p className="font-lexend font-bold text-primary group">
-            <span className="text-xl leading-none md:text-4xl">{price} EGP</span>
-            <span className="text-xs text-primary/60 ml-1 font-medium pb-0.5 inline-block align-bottom font-sans md:text-base">
-              / hr
-            </span>
+          <p className="flex items-baseline gap-0.5">
+            <span className="text-lg font-black text-[#0a1631]">{price}</span>
+            <span className="text-[10px] text-primary/50 font-bold">EGP</span>
+            <span className="text-[10px] text-primary/40">/hr</span>
           </p>
         </div>
 
         {isAvailable ? (
           <Link
             href="/book"
-            className="flex items-center justify-center h-12 px-6 rounded-full font-bold text-sm tracking-wide transition-transform active:scale-[0.98] md:h-14 md:px-8 md:text-lg bg-gradient-to-br from-secondary to-secondary-container text-white shadow-md"
+            className="flex items-center justify-center h-9 px-4 rounded-full font-bold text-[11px] uppercase tracking-wide bg-[#0a1631] text-white hover:bg-[#c3f400] hover:text-[#0a1631] transition-all duration-200 hover:scale-105 active:scale-95"
           >
-            Book Now
+            Book
           </Link>
         ) : (
-          <button
-            disabled
-            className="h-12 px-6 rounded-full font-bold text-sm tracking-wide md:h-14 md:px-8 md:text-lg bg-surface-container-high text-primary/50 cursor-not-allowed"
-          >
+          <button disabled className="h-9 px-4 rounded-full font-bold text-[11px] uppercase tracking-wide bg-surface-container-high text-primary/40 cursor-not-allowed">
             Full
           </button>
         )}

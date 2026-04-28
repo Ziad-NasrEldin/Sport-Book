@@ -119,57 +119,60 @@ export default function PreferencesPage() {
 
   if (error) {
     return (
-      <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans flex items-center justify-center">
+      <main className="w-full min-h-screen bg-surface flex items-center justify-center px-5">
         <APIErrorFallback error={error} onRetry={refetch} />
       </main>
     )
   }
 
   return (
-    <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans">
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
-        <div className="flex items-center gap-4 max-w-4xl mx-auto">
+    <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative selection:bg-tertiary-fixed selection:text-primary">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-16 -left-20 h-[30rem] w-[30rem] rounded-full bg-primary-container/5 blur-[120px]" />
+        <div className="absolute bottom-[20%] -right-20 h-[25rem] w-[25rem] rounded-full bg-secondary-container/10 blur-[100px]" />
+      </div>
+
+      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-8 pb-6 md:px-10 lg:px-14 md:pt-12 md:pb-8 flex items-center gap-5 justify-between">
+        <div className="flex items-center gap-5">
           <button
             type="button"
             onClick={handleBack}
-            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-surface-container-high text-primary flex items-center justify-center shadow-ambient hover:scale-105 transition-transform"
+            className="w-12 h-12 flex items-center justify-center rounded-[1.25rem] bg-white shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:bg-surface-container-low hover:scale-95 transition-all duration-200"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
+            <ArrowLeft className="w-6 h-6 text-primary stroke-[2.5]" />
           </button>
-
-          <div>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Preferences</h1>
-            <p className="text-sm md:text-base text-primary/60">Personalize language, sports, and notifications</p>
+          <div className="pt-1">
+            <h1 className="text-4xl md:text-5xl font-display font-bold uppercase tracking-tight text-primary leading-none">Preferences</h1>
+            <p className="text-[10px] md:text-xs text-primary/60 font-sans font-bold uppercase tracking-[0.2em] mt-1.5">Language, sports & alerts</p>
           </div>
         </div>
       </header>
 
-      <section className="max-w-4xl mx-auto px-4 md:px-8 pt-2 flex flex-col gap-5 md:gap-7" ref={containerRef}>
-        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '0ms' }}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
-              <Globe2 className="w-5 h-5" />
-            </span>
+      <section className="px-5 md:px-10 lg:px-14 md:max-w-4xl md:mx-auto pt-2 flex flex-col gap-6 md:gap-8 pb-12" ref={containerRef}>
+        <article className={`bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '0ms' }}>
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-12 h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center shrink-0">
+              <Globe2 className="w-5 h-5 text-tertiary-fixed stroke-[2.5]" />
+            </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-primary">Language</h2>
-              <p className="text-sm text-primary/60">Choose your app language</p>
+              <h2 className="text-2xl md:text-3xl font-display font-medium uppercase tracking-tight text-primary leading-none">Language</h2>
+              <p className="text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-primary/60 mt-1.5">Choose your app language</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {languageOptions.map((item) => {
               const isActive = language === item
-
               return (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setLanguage(item)}
-                  className={`rounded-[var(--radius-md)] px-4 py-4 font-semibold transition-all duration-300 ${
+                  className={`w-full py-4 text-center font-sans font-bold uppercase tracking-widest text-sm rounded-[2rem] transition-all ${
                     isActive
-                      ? 'bg-tertiary-fixed text-primary shadow-[0_10px_25px_-10px_rgba(195,244,0,0.6)] scale-105'
-                      : 'bg-surface-container-high text-primary/70 hover:bg-surface-container-low hover:scale-102 active:scale-95'
+                      ? 'bg-tertiary-fixed text-primary shadow-[0_4px_0_0_#00113a] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]'
+                      : 'bg-surface-container-high text-primary/60 hover:text-primary border-2 border-transparent hover:border-primary/10'
                   }`}
                 >
                   {item}
@@ -179,33 +182,32 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-secondary-container">
-              <Sparkles className="w-5 h-5" />
-            </span>
+        <article className={`bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-12 h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-tertiary-fixed stroke-[2.5]" />
+            </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-primary">Favorite Sports</h2>
-              <p className="text-sm text-primary/60">Pick one or multiple sports you play most</p>
+              <h2 className="text-2xl md:text-3xl font-display font-medium uppercase tracking-tight text-primary leading-none">Favorite Sports</h2>
+              <p className="text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-primary/60 mt-1.5">Pick sports you play most</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-wrap gap-4">
             {sportsOptions.map((sport) => {
               const isSelected = sports.includes(sport)
-
               return (
                 <button
                   key={sport}
                   type="button"
                   onClick={() => toggleSport(sport)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                  className={`inline-flex items-center justify-center gap-2 px-6 py-3 font-sans font-bold uppercase tracking-widest text-xs rounded-[2rem] transition-all ${
                     isSelected
-                      ? 'bg-primary-container text-surface-container-lowest scale-105 shadow-lg'
-                      : 'bg-surface-container-high text-primary/70 hover:text-primary hover:scale-105 active:scale-95'
+                      ? 'bg-tertiary-fixed text-primary shadow-[0_4px_0_0_#00113a] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]'
+                      : 'bg-surface-container-high text-primary/60 hover:text-primary border-2 border-transparent hover:border-primary/10'
                   }`}
                 >
-                  {isSelected && <Check className="w-3.5 h-3.5 animate-scale-in" />}
+                  {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
                   {sport}
                 </button>
               )
@@ -213,30 +215,29 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '200ms' }}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
-              <SlidersHorizontal className="w-5 h-5" />
-            </span>
+        <article className={`bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '200ms' }}>
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-12 h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center shrink-0">
+              <SlidersHorizontal className="w-5 h-5 text-tertiary-fixed stroke-[2.5]" />
+            </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-primary">Match Defaults</h2>
-              <p className="text-sm text-primary/60">Set your preferred match duration</p>
+              <h2 className="text-2xl md:text-3xl font-display font-medium uppercase tracking-tight text-primary leading-none">Match Defaults</h2>
+              <p className="text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-primary/60 mt-1.5">Set preferred match duration</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-3 gap-3">
             {durationOptions.map((item) => {
               const isSelected = duration === item
-
               return (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setDuration(item)}
-                  className={`rounded-full px-3 py-2.5 text-sm font-bold transition-all duration-200 ${
+                  className={`w-full py-3 text-center font-sans font-bold uppercase tracking-widest text-xs rounded-[2rem] transition-all ${
                     isSelected 
-                      ? 'bg-secondary-container text-on-secondary-container scale-105 shadow-md' 
-                      : 'bg-surface-container-high text-primary/70 hover:scale-105 active:scale-95'
+                      ? 'bg-tertiary-fixed text-primary shadow-[0_4px_0_0_#00113a] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]'
+                      : 'bg-surface-container-high text-primary/60 hover:text-primary border-2 border-transparent hover:border-primary/10'
                   }`}
                 >
                   {item}
@@ -246,21 +247,21 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
-              <BellRing className="w-5 h-5" />
-            </span>
+        <article className={`bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-12 h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center shrink-0">
+              <BellRing className="w-5 h-5 text-tertiary-fixed stroke-[2.5]" />
+            </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-primary">Notifications</h2>
-              <p className="text-sm text-primary/60">Control what updates you receive</p>
+              <h2 className="text-2xl md:text-3xl font-display font-medium uppercase tracking-tight text-primary leading-none">Notifications</h2>
+              <p className="text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-primary/60 mt-1.5">Control your updates</p>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <ToggleRow
               label="Booking reminders"
-              description="Remind me before my sessions"
+              description="Reminders before sessions"
               enabled={notifications.bookingReminders}
               onToggle={() =>
                 setNotifications((prev) => ({
@@ -271,7 +272,7 @@ export default function PreferencesPage() {
             />
             <ToggleRow
               label="Court availability"
-              description="Notify me when favorite courts are free"
+              description="Notify when courts free up"
               enabled={notifications.courtAvailability}
               onToggle={() =>
                 setNotifications((prev) => ({
@@ -281,8 +282,8 @@ export default function PreferencesPage() {
               }
             />
             <ToggleRow
-              label="Offers and promotions"
-              description="Send occasional discounts and campaigns"
+              label="Offers & promotions"
+              description="Occasional discounts"
               enabled={notifications.promotions}
               onToggle={() =>
                 setNotifications((prev) => ({
@@ -294,21 +295,21 @@ export default function PreferencesPage() {
           </div>
         </article>
 
-        <article className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-11 h-11 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
-              <Shield className="w-5 h-5" />
-            </span>
+        <article className={`bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-12 h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center shrink-0">
+              <Shield className="w-5 h-5 text-tertiary-fixed stroke-[2.5]" />
+            </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-primary">Privacy</h2>
-              <p className="text-sm text-primary/60">Manage profile visibility and stats sharing</p>
+              <h2 className="text-2xl md:text-3xl font-display font-medium uppercase tracking-tight text-primary leading-none">Privacy</h2>
+              <p className="text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-primary/60 mt-1.5">Manage visibility</p>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <ToggleRow
               label="Profile visible"
-              description="Allow others to discover your profile"
+              description="Allow others to find you"
               enabled={privacy.profileVisible}
               onToggle={() =>
                 setPrivacy((prev) => ({
@@ -319,7 +320,7 @@ export default function PreferencesPage() {
             />
             <ToggleRow
               label="Share match stats"
-              description="Include results in public leaderboards"
+              description="Include in leaderboards"
               enabled={privacy.showStats}
               onToggle={() =>
                 setPrivacy((prev) => ({
@@ -332,31 +333,30 @@ export default function PreferencesPage() {
         </article>
 
         {saveError && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold animate-shake">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-[1.5rem] px-5 py-4 text-xs font-sans font-bold uppercase tracking-widest text-red-500 animate-shake text-center">
             {saveError}
           </div>
         )}
 
         {saveSuccess && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-green-400 font-semibold animate-scale-in">
+          <div className="bg-primary/5 border border-primary/10 rounded-[1.5rem] px-5 py-4 text-xs font-sans font-bold uppercase tracking-widest text-primary animate-scale-in text-center">
             Preferences saved successfully!
           </div>
         )}
 
-        <div className="pb-1">
+        <div className="pt-4">
           <button
             onClick={handleSavePreferences}
             disabled={saving}
-            className="group w-full py-4 md:py-5 rounded-[var(--radius-full)] bg-gradient-to-br from-secondary to-secondary-container text-white font-black text-lg shadow-ambient hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
+            className="block w-full py-5 text-center bg-tertiary-fixed text-primary font-sans font-bold uppercase tracking-widest text-sm rounded-[2rem] shadow-[0_4px_0_0_#00113a] hover:shadow-[0_2px_0_0_#00113a] hover:translate-y-[2px] transition-all active:shadow-none active:translate-y-[4px] disabled:opacity-60 disabled:pointer-events-none"
           >
             {saving ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="inline-flex items-center justify-center gap-3">
+                <span className="w-5 h-5 border-[3px] border-primary/30 border-t-primary rounded-full animate-spin" />
                 Saving...
               </span>
             ) : 'Save Preferences'}
           </button>
-
         </div>
       </section>
 
@@ -377,21 +377,21 @@ function ToggleRow({ label, description, enabled, onToggle }: ToggleRowProps) {
     <button
       type="button"
       onClick={onToggle}
-      className="group w-full flex items-center justify-between gap-4 bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3.5 transition-all duration-200 hover:bg-surface-container-low active:scale-[0.99]"
+      className="group w-full flex items-center justify-between gap-5 p-5 md:p-6 bg-surface-container-high rounded-[2rem] shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:bg-primary transition-all duration-200"
     >
-      <div className="text-left">
-        <p className="font-bold text-primary leading-tight">{label}</p>
-        <p className="text-xs text-primary/60 mt-1">{description}</p>
+      <div className="text-left flex-1 min-w-0">
+        <h3 className="text-xl md:text-2xl font-display font-medium uppercase tracking-tight text-primary group-hover:text-white truncate transition-colors">{label}</h3>
+        <p className="text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-primary/60 group-hover:text-tertiary-fixed mt-1 truncate transition-colors">{description}</p>
       </div>
 
-      <span
-        className={`w-12 h-7 rounded-full p-1 transition-all duration-300 ${enabled ? 'bg-tertiary-fixed' : 'bg-primary/20'}`}
+      <div
+        className={`shrink-0 w-14 h-8 rounded-full p-1.5 transition-all duration-300 ${enabled ? 'bg-tertiary-fixed' : 'bg-primary/20 group-hover:bg-white/20'}`}
         aria-pressed={enabled}
       >
         <span
-          className={`block w-5 h-5 rounded-full bg-surface-container-lowest shadow-sm transition-all duration-300 ${enabled ? 'translate-x-5 scale-110' : 'translate-x-0 scale-100'}`}
+          className={`block w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${enabled ? 'translate-x-6' : 'translate-x-0'}`}
         />
-      </span>
+      </div>
     </button>
   )
 }

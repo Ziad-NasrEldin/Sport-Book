@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
@@ -67,6 +67,11 @@ export default function StorePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [cartItems, setCartItems] = useState<StoreCartItem[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const refreshCart = () => {
@@ -152,66 +157,74 @@ export default function StorePage() {
 
   return (
     <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-16 -left-20 h-72 w-72 rounded-full bg-primary-container/10 blur-[95px]" />
-        <div className="absolute bottom-10 -right-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px]" />
-      </div>
+      {/* Geometric background */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: `repeating-linear-gradient(90deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 80px), repeating-linear-gradient(0deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 80px)`,
+      }} />
+      <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] bg-[#c3f400]/6 blur-[120px] rounded-full -translate-y-1/3 translate-x-1/4" />
 
-      <header className="sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Facility Store</h1>
-            <p className="text-sm md:text-base text-primary/60 mt-1 max-w-[38ch]">Sports gear sold directly by verified facilities</p>
-          </div>
+      {/* HERO: Editorial sportswear header */}
+      <header className={`relative z-40 bg-[#0a1631] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#c3f400]" />
+        <div className="absolute bottom-0 right-0 w-1/3 h-2 bg-[#c3f400]" style={{ clipPath: 'polygon(30% 0, 100% 0, 100% 100%, 0% 100%)' }} />
 
-          <div className="flex items-center gap-2 md:gap-3">
+        <div className="relative max-w-[1440px] mx-auto px-5 pt-10 pb-8 md:px-8 md:pt-14 md:pb-10">
+          <div className="flex items-end justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-[#c3f400] text-xs font-black uppercase tracking-[0.3em] animate-soft-rise">Verified Facilities</p>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.04em] text-white leading-[0.85]">
+                STORE
+              </h1>
+              <p className="text-white/50 text-sm md:text-base max-w-md mt-3 leading-relaxed">
+                Premium sports gear sold directly by verified facilities. No middlemen.
+              </p>
+            </div>
+
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-surface-container-high text-primary flex items-center justify-center hover:bg-surface-container-lowest transition-colors"
+              className={`group flex-none relative w-14 h-14 rounded-full bg-[#c3f400] text-[#0a1631] flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgba(195,244,0,0.5)] active:scale-95 ${mounted ? 'animate-soft-rise' : 'opacity-0'}`}
+              style={{ animationDelay: '150ms' }}
               aria-label="Open cart"
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="w-6 h-6" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-secondary-container text-primary text-[10px] font-black flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1 bg-white text-[#0a1631] text-[10px] font-black flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
             </button>
-
-            <span className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-high text-primary text-xs font-lexend font-bold uppercase tracking-widest">
-              <Sparkles className="w-3.5 h-3.5" />
-              New Arrivals
-            </span>
           </div>
-        </div>
 
-        <div className="relative mt-5">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/45" />
-          <input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            type="text"
-            placeholder="Search products, facilities, categories..."
-            className="w-full bg-surface-container-high rounded-[var(--radius-lg)] py-4 pl-12 pr-4 text-primary placeholder:text-primary/55 outline-none"
-          />
+          {/* Search bar */}
+          <div className={`relative mt-5 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '200ms' }}>
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              type="text"
+              placeholder="Search products, facilities, categories..."
+              className="w-full bg-white/5 border-l-4 border-[#c3f400] rounded-[var(--radius-lg)] py-5 pl-14 pr-5 text-white placeholder:text-white/40 outline-none focus:bg-white/10 transition-colors duration-200"
+            />
+          </div>
         </div>
       </header>
 
       {loading ? (
-        <section className="px-5 md:px-10 lg:px-14 md:max-w-6xl md:mx-auto py-12 flex items-center justify-center">
+        <section className="px-5 md:px-6 lg:px-8 max-w-[1440px] mx-auto py-6 flex items-center justify-center">
           <LoadingSpinner size="lg" />
         </section>
       ) : (
-        <section className="px-5 md:px-10 lg:px-14 md:max-w-6xl md:mx-auto space-y-5 md:space-y-6">
-          <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-1">
+        <section className="px-5 md:px-6 lg:px-8 max-w-[1440px] mx-auto space-y-5 py-4 md:py-6">
+          {/* Category filters */}
+          <div className={`flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '250ms' }}>
             {productCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`shrink-0 px-5 py-2.5 rounded-full text-[12px] font-lexend font-bold uppercase tracking-widest transition-colors ${
+                className={`shrink-0 px-5 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-200 ${
                   activeCategory === category
-                    ? 'bg-tertiary-fixed text-primary'
-                    : 'bg-surface-container-high text-primary/75 hover:text-primary'
+                    ? 'bg-[#0a1631] text-white'
+                    : 'bg-surface-container-high text-primary/70 hover:text-primary hover:bg-surface-container-lowest'
                 }`}
               >
                 {category}
@@ -219,17 +232,33 @@ export default function StorePage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6 pb-2">
-            {filteredProducts.map((product) => (
-              <article key={product.id} className="bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient">
-                <div className="relative w-full aspect-[4/3]">
-                  <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Store product'} fill className="object-cover" />
+          {/* Products grid - editorial asymmetric */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {filteredProducts.map((product, index) => {
+              const isFeatured = index === 0 && filteredProducts.length > 1
+              return (
+              <article
+                key={product.id}
+                className={`group relative bg-surface-container-lowest rounded-[var(--radius-lg)] overflow-hidden shadow-ambient transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_48px_-20px_rgba(0,17,58,0.3)] ${
+                  isFeatured ? 'md:col-span-2 lg:col-span-1 lg:row-span-2' : ''
+                } ${mounted ? 'animate-soft-rise' : 'opacity-0'}`}
+                style={{ animationDelay: `${300 + index * 80}ms` }}
+              >
+                {/* Image */}
+                <div className={`relative w-full overflow-hidden ${isFeatured ? 'aspect-[4/3] lg:aspect-[3/4]' : 'aspect-[4/3]'}`}>
+                  <Image
+                    src={getStoreProductImage(product)}
+                    alt={product.title || product.name || 'Store product'}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-[#0a1631]/0 group-hover:bg-[#0a1631]/10 transition-colors duration-300" />
 
                   <span
-                    className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
+                    className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
                       product.status === 'In Stock'
-                        ? 'bg-[#d8f7e8] text-[#0d7a44]'
-                        : 'bg-[#ffe8cc] text-[#8c4a00]'
+                        ? 'bg-[#c3f400] text-[#0a1631]'
+                        : 'bg-white/90 text-[#8c4a00]'
                     }`}
                   >
                     {product.status === 'In Stock' ? <CircleCheck className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
@@ -237,124 +266,131 @@ export default function StorePage() {
                   </span>
                 </div>
 
-                <div className="p-5">
-                  <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{categoryLabel(product.category)}</p>
-                  <h3 className="text-lg md:text-xl font-bold text-primary mt-2 leading-tight">{product.title || product.name || 'Store product'}</h3>
-
-                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                {/* Content */}
+                <div className="p-4 md:p-5 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Price</p>
-                      <p className="text-2xl font-black text-primary">{product.price} EGP</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">{categoryLabel(product.category)}</p>
+                      <h3 className={`font-black text-primary leading-tight mt-1 group-hover:translate-x-1 transition-transform duration-300 ${isFeatured ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'}`}>
+                        {product.title || product.name || 'Store product'}
+                      </h3>
                     </div>
-
-                    <Link
-                      href={`/store/${product.id}`}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-secondary-container text-on-secondary-container font-bold text-sm hover:opacity-90 transition-opacity text-center"
-                    >
-                      View Item
-                    </Link>
+                    <div className="text-right flex-none">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-primary/40">Price</p>
+                      <p className="text-xl md:text-2xl font-black text-[#0a1631]">{product.price}</p>
+                      <p className="text-xs font-bold text-primary/50">EGP</p>
+                    </div>
                   </div>
 
-                  <div className="mt-4 text-sm text-primary/70 min-w-0">
-                    <p className="font-semibold text-primary break-words">{stringValue(product.facility || product.facilityName)}</p>
-                    <p className="inline-flex items-center gap-1.5 mt-1 break-words">
-                      <MapPin className="w-4 h-4 text-primary/40" />
+                  <div className="pt-3 border-t border-outline-variant/20">
+                    <p className="font-bold text-primary text-sm">{stringValue(product.facility || product.facilityName)}</p>
+                    <p className="inline-flex items-center gap-1.5 text-xs text-primary/60 mt-1">
+                      <MapPin className="w-3.5 h-3.5 flex-none" />
                       {stringValue(product.location)}
                     </p>
                   </div>
+
+                  <Link
+                    href={`/store/${product.id}`}
+                    className="block w-full text-center py-3 rounded-full bg-[#0a1631] text-white font-black text-sm uppercase tracking-wider hover:bg-[#c3f400] hover:text-[#0a1631] active:scale-[0.98] transition-all duration-200"
+                  >
+                    View Item
+                  </Link>
                 </div>
               </article>
-            ))}
+            )
+            })}
 
             {filteredProducts.length === 0 && !loading && (
-              <div className="md:col-span-2 xl:col-span-3 bg-surface-container-lowest rounded-[var(--radius-lg)] p-8 text-center shadow-ambient">
-                <p className="text-lg font-bold text-primary">No matching products</p>
-                <p className="text-sm text-primary/65 mt-1">
-                  Try another category or search term to find facility-listed items.
-                </p>
+              <div className="md:col-span-2 lg:col-span-4 bg-surface-container-high rounded-[var(--radius-lg)] px-8 py-6 text-center">
+                <Sparkles className="w-16 h-16 text-primary/20 mx-auto mb-4" />
+                <p className="text-2xl font-black text-primary">No matching products</p>
+                <p className="text-sm text-primary/60 mt-2">Try another category or search term.</p>
               </div>
             )}
           </div>
         </section>
       )}
 
+      {/* Cart sidebar */}
       {isCartOpen && (
         <div
-          className="fixed inset-0 z-[90] bg-primary/35 backdrop-blur-sm p-4 md:p-6 flex justify-end"
+          className="fixed inset-0 z-[90] bg-[#0a1631]/60 backdrop-blur-sm flex justify-end"
           onClick={() => setIsCartOpen(false)}
         >
           <aside
-            className="w-full max-w-md h-full bg-surface-container-lowest rounded-[var(--radius-xl)] shadow-ambient flex flex-col"
+            className="w-full max-w-md h-full bg-white flex flex-col rounded-[var(--radius-xl)] shadow-[0_0_60px_-20px_rgba(0,17,58,0.4)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <header className="px-5 py-4 border-b border-outline-variant/30 flex items-center justify-between">
+            <header className="px-6 py-5 border-b-2 border-[#0a1631] flex items-center justify-between bg-[#0a1631]">
               <div>
-                <h2 className="text-xl font-extrabold text-primary">My Cart</h2>
-                <p className="text-xs text-primary/60">{cartCount} item(s)</p>
+                <h2 className="text-xl font-black text-white tracking-tight">My Cart</h2>
+                <p className="text-xs text-white/60 font-bold">{cartCount} item(s)</p>
               </div>
               <button
                 onClick={() => setIsCartOpen(false)}
-                className="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center"
+                className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-[#c3f400] hover:text-[#0a1631] transition-colors duration-200"
                 aria-label="Close cart"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {cartDetails.length === 0 && (
                 <div className="h-full flex items-center justify-center text-center px-4">
                   <div>
-                    <p className="text-lg font-bold text-primary">Your cart is empty</p>
-                    <p className="text-sm text-primary/65 mt-1">Add items from product details to see them here.</p>
+                    <ShoppingCart className="w-16 h-16 text-primary/15 mx-auto mb-4" />
+                    <p className="text-lg font-black text-primary">Your cart is empty</p>
+                    <p className="text-sm text-primary/60 mt-1">Add items from product details to see them here.</p>
                   </div>
                 </div>
               )}
 
               {cartDetails.map(({ item, product }) => (
-                <article key={item.productId} className="bg-surface-container-high rounded-[var(--radius-md)] p-3">
-                  <div className="flex items-start gap-3">
-                    <div className="relative w-16 h-16 rounded-[var(--radius-default)] overflow-hidden shrink-0">
+                <article key={item.productId} className="bg-surface-container-high p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="relative w-20 h-20 rounded-[var(--radius-default)] overflow-hidden shrink-0 bg-surface-container-lowest">
                       <Image src={getStoreProductImage(product)} alt={product.title || product.name || 'Store product'} fill className="object-cover" />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-bold text-primary truncate">{product.title || product.name || 'Store product'}</h3>
-                      <p className="text-xs text-primary/60 mt-0.5 truncate">{stringValue(product.facility || product.facilityName)}</p>
-                      <p className="text-sm font-black text-primary mt-1">{product.price * item.quantity} EGP</p>
+                      <h3 className="text-sm font-black text-primary leading-tight">{product.title || product.name || 'Store product'}</h3>
+                      <p className="text-xs text-primary/50 mt-0.5">{stringValue(product.facility || product.facilityName)}</p>
+                      <p className="text-lg font-black text-[#0a1631] mt-1">{product.price * item.quantity} EGP</p>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-surface-container-lowest px-2 py-1.5">
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-1 bg-surface-container-lowest">
                       <button
                         onClick={() => handleDecreaseQuantity(item.productId, item.quantity)}
-                        className="w-7 h-7 rounded-full bg-surface-container-high text-primary flex items-center justify-center"
+                        className="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center hover:bg-[#0a1631] hover:text-white transition-colors duration-200"
                         aria-label="Decrease cart quantity"
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <Minus className="w-4 h-4" />
                       </button>
-                      <span className="min-w-6 text-center text-sm font-black text-primary">{item.quantity}</span>
+                      <span className="min-w-8 text-center text-sm font-black text-primary">{item.quantity}</span>
                       <button
                         onClick={() => handleIncreaseQuantity(item.productId, item.quantity)}
-                        className="w-7 h-7 rounded-full bg-surface-container-high text-primary flex items-center justify-center"
+                        className="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center hover:bg-[#0a1631] hover:text-white transition-colors duration-200"
                         aria-label="Increase cart quantity"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                       </button>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/store/checkout?product=${encodeURIComponent(item.productId)}&qty=${item.quantity}&fulfillment=${item.fulfillment}`}
-                        className="px-3 py-2 rounded-full bg-primary-container text-surface-container-lowest text-xs font-bold"
+                        className="px-4 py-2 rounded-full bg-[#0a1631] text-white text-xs font-black uppercase tracking-wider hover:bg-[#c3f400] hover:text-[#0a1631] transition-colors duration-200"
                         onClick={() => setIsCartOpen(false)}
                       >
                         Checkout
                       </Link>
                       <button
                         onClick={() => handleRemoveItem(item.productId)}
-                        className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center"
+                        className="w-9 h-9 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors duration-200"
                         aria-label="Remove cart item"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -365,16 +401,16 @@ export default function StorePage() {
               ))}
             </div>
 
-            <footer className="p-4 border-t border-outline-variant/30 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-primary/70">Cart Subtotal</span>
-                <span className="text-xl font-black text-primary">{cartSubtotal} EGP</span>
+            <footer className="p-5 border-t-2 border-[#0a1631] space-y-4 bg-surface-container-lowest">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-bold text-primary/70 uppercase tracking-wider">Subtotal</span>
+                <span className="text-3xl font-black text-[#0a1631]">{cartSubtotal} EGP</span>
               </div>
 
               <button
                 onClick={handleClearCart}
                 disabled={cartDetails.length === 0}
-                className="w-full py-2.5 rounded-full bg-surface-container-high text-primary font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-full bg-surface-container-high text-primary font-black text-sm uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-500 hover:text-white transition-colors duration-200"
               >
                 Clear Cart
               </button>

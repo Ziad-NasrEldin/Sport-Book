@@ -197,14 +197,14 @@ export default function AdminFacilitiesPage() {
     const utilizationTotal = facilitiesData.reduce((total: number, facility: any) => total + Number(facility.utilization || 0), 0)
     const averageUtilization = totalFacilities > 0 ? utilizationTotal / totalFacilities : 0
 
-    const cityTotals = facilitiesData.reduce<Record<string, number>>((accumulator, facility: any) => {
+    const cityTotals: Record<string, number> = facilitiesData.reduce((accumulator: Record<string, number>, facility: any) => {
       const city = String(facility.city || '').trim()
       if (!city) {
         return accumulator
       }
       accumulator[city] = (accumulator[city] || 0) + 1
       return accumulator
-    }, {})
+    }, {} as Record<string, number>)
 
     const [topCityName = 'No city data', topCityCount = 0] = Object.entries(cityTotals).sort((a, b) => b[1] - a[1])[0] || []
 

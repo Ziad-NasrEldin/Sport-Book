@@ -30,7 +30,7 @@ const REFRESH_COOKIE_OPTS = (secure: boolean) => ({
   secure,
   sameSite: secure ? ('strict' as const) : ('lax' as const),
   path: '/',
-  maxAge: 7 * 24 * 60 * 60,
+  maxAge: 14 * 24 * 60 * 60,
 })
 
 export async function authRoutes(app: FastifyInstance) {

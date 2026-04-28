@@ -178,3 +178,14 @@ pm run build\).
 - Added `SocialAccount` Prisma linkage, Firebase Admin token verification, and social account auto-link/create behavior.
 - Wired frontend Firebase popup sign-in buttons into `/auth/sign-in` and documented required public Firebase env vars.
 - Added auth route/service coverage for social login and verified API tests plus API/web production builds.
+
+- Updated the Saved Favorites page (web/src/app/favorites/page.tsx) to implement the new SportBook Bold Design System (Teko/Saira typography, ounded-[2.5rem] shapes, ambient shadows, and new hover inversion patterns).
+
+- Updated the Preferences page (web/src/app/preferences/page.tsx) to implement the new SportBook Bold Design System (Teko/Saira typography, ounded-[2.5rem] card shapes, bold interaction states for sports/language options, and new ToggleRow patterns).
+
+- Updated the Store Purchases page (web/src/app/profile/store-purchases/page.tsx) to implement the new SportBook Bold Design System (minimal floating sticky header, removed colored solid hero, ounded-[2.5rem] cards with deeper ambient shadows, and unified typography structure utilizing Teko and Saira).
+
+- Updated the Legal and Policy pages (privacy-policy, 	erms-of-service, data-deletion) to implement the SportBook Bold Design System (floating blurred headers, Teko display headings, simplified list/section structures, and rounded-[2.5rem] depth containers).
+
+- Redesigned the Sign In and Sign Up pages (\web/src/app/auth/sign-in/page.tsx\ and \web/src/app/auth/sign-up/page.tsx\) to implement the bold design system using squircle inputs, animated floating states, and updated Saira/Teko typography.
+- migrated forgot-password and reset-password auth pages to bold design system

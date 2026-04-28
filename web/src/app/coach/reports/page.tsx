@@ -1,6 +1,6 @@
 'use client'
 
-import { Download, RefreshCw } from 'lucide-react'
+import { Download, RefreshCw, Filter } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminPanel } from '@/components/admin/AdminPanel'
@@ -97,7 +97,7 @@ export default function CoachReportsPage() {
         )}
       </section>
 
-      <section className={`grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6 transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'`}>
+      <section className={`grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6 transition-all duration-500 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <AdminPanel eyebrow="Revenue trend" title="Earnings Trajectory">
           <AdminTrendBars values={coachRevenueTrend.map((p: { value: number }) => p.value)} colorClassName="bg-secondary-container" />
         </AdminPanel>

@@ -37,45 +37,46 @@ export default function ForgotPasswordPage() {
         <div className="absolute bottom-0 -right-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px]" />
       </div>
 
-      <section className="px-5 py-8 md:px-10 lg:px-14">
+      <header className="absolute top-0 left-0 w-full z-40 px-5 pt-8 md:px-10 lg:px-14 md:pt-12 flex items-center">
         <Link
           href="/auth/sign-in"
-          className="inline-flex items-center gap-2 text-primary/75 hover:text-primary font-bold transition-colors"
+          className="w-12 h-12 flex items-center justify-center rounded-[1.25rem] bg-white shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:bg-surface-container-low hover:scale-95 transition-all duration-200"
+          aria-label="Go back to Sign In"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Sign In
+          <ArrowLeft className="w-6 h-6 text-primary stroke-[2.5]" />
         </Link>
-      </section>
+      </header>
 
-      <section className="px-5 pb-12 md:px-10 lg:px-14">
-        <div className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5">
-          <h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight text-primary">Forgot Password</h1>
-          <p className="mt-2 text-sm md:text-base text-primary/60">
+      <section className="px-5 pt-32 pb-12 md:px-10 lg:px-14 md:pt-40 z-10 relative flex justify-center">
+        <div className="w-full max-w-md bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] border border-primary/5 backdrop-blur-sm animate-soft-rise">
+          <h1 className="text-4xl md:text-5xl font-display font-bold uppercase tracking-tight text-primary leading-none">Forgot Password</h1>
+          <p className="mt-3 text-sm md:text-base font-sans font-medium text-primary/70">
             Enter your account email and we will send a reset link.
           </p>
 
           {sent ? (
-            <div className="mt-6 rounded-[var(--radius-default)] border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-800 flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-              <p>Reset link sent. Check your inbox and follow the instructions.</p>
+            <div className="mt-8 rounded-[1.5rem] border-2 border-emerald-500/20 bg-emerald-500/10 p-5 text-sm font-medium text-emerald-800 flex items-start gap-4 shadow-sm animate-soft-rise">
+              <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-600" />
+              <p className="pt-0.5 leading-relaxed">Reset link sent. Check your inbox and follow the instructions to securely reset your password.</p>
             </div>
           ) : (
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <label className="block space-y-1.5">
-                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Email</span>
+            <form className="mt-8 space-y-5 animate-soft-rise" onSubmit={handleSubmit}>
+              <label className="block space-y-2 group">
+                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Email</span>
                 <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                  <Mail className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-primary/45" />
                   <input
                     type="email"
                     name="email"
                     required
                     placeholder="alex@example.com"
-                    className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                    className="w-full h-14 pl-12 pr-4 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium"
                   />
                 </div>
               </label>
 
               {error && (
-                <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+                <div className="bg-red-50 text-red-600 text-sm font-medium px-5 py-3 rounded-[1rem] animate-[shake_0.5s_ease-in-out]">
                   {error}
                 </div>
               )}
@@ -83,7 +84,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="mt-8 w-full h-14 rounded-full bg-primary text-tertiary-fixed font-sans font-bold uppercase tracking-[0.1em] text-sm transition-all duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_8px_20px_-8px_rgba(0,17,58,0.2)]"
               >
                 {loading ? (
                   <>
@@ -97,9 +98,9 @@ export default function ForgotPasswordPage() {
             </form>
           )}
 
-          <p className="mt-5 text-center text-sm text-primary/65">
+          <p className="mt-8 text-center text-sm font-sans font-medium text-primary/60">
             Remembered your password?{' '}
-            <Link href="/auth/sign-in" className="font-bold text-secondary-container hover:text-secondary transition-colors">
+            <Link href="/auth/sign-in" className="font-bold text-primary hover:text-primary/70 transition-colors underline underline-offset-4">
               Sign in
             </Link>
           </p>

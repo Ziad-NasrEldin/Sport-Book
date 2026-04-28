@@ -46,7 +46,6 @@ function WalletTopUpPageContent() {
     if (!Number.isNaN(parsedCustom) && parsedCustom > 0) {
       return parsedCustom
     }
-
     return selectedAmount
   }, [customAmount, selectedAmount])
 
@@ -58,7 +57,6 @@ function WalletTopUpPageContent() {
       router.back()
       return
     }
-
     router.push('/profile')
   }
 
@@ -91,51 +89,57 @@ function WalletTopUpPageContent() {
 
   if (walletError) {
     return (
-      <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] font-sans flex items-center justify-center">
+      <main className="w-full min-h-screen bg-surface-container-low pb-32 font-sans flex items-center justify-center">
         <APIErrorFallback error={walletError} onRetry={refetchWallet} />
       </main>
     )
   }
 
   return (
-    <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px]" />
-        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px]" />
-      </div>
+    <main className="w-full min-h-screen bg-surface-container-low pb-32 font-sans relative">
+      {/* HERO */}
+      <section className="relative w-full h-[35vh] md:h-[42vh] flex flex-col justify-end overflow-hidden rounded-b-[3rem] md:rounded-b-[4rem]">
+        <div className="absolute inset-0 bg-primary" />
+        <div 
+          className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none" 
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} 
+        />
 
-<header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            aria-label="Go back"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low transition-all duration-200 active:scale-95"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary" />
-          </button>
-          <div className="animate-soft-drop">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Top Up Wallet</h1>
-            <p className="text-sm md:text-base text-primary/60">Add funds to your SportBook wallet</p>
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 md:px-8 pb-8 md:pb-12">
+          <div className="flex items-end gap-4 md:gap-5">
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className="w-12 h-12 rounded-[1rem] bg-tertiary-fixed text-primary flex items-center justify-center flex-shrink-0 hover:bg-white transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div className="text-white">
+              <h1 className="font-display text-4xl md:text-6xl uppercase font-bold tracking-tighter leading-[0.85]">Top Up Wallet</h1>
+              <p className="text-sm md:text-base font-sans font-medium text-white/70 mt-2">Add funds to your SportBook wallet</p>
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-4xl md:mx-auto space-y-5 md:space-y-7">
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 md:p-7 shadow-ambient">
-          <div className="flex items-start justify-between gap-4 mb-5">
+      <section className="relative z-10 px-4 md:px-8 pt-10 md:pt-16 md:max-w-4xl md:mx-auto flex flex-col gap-6 md:gap-8">
+        {/* Balance Card */}
+        <article className="bg-surface-container-lowest rounded-[2.5rem] p-6 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] animate-spring-in">
+          <div className="flex items-start justify-between gap-4 mb-8">
             <div>
-              <p className="text-[11px] md:text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">Current Balance</p>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-primary mt-1">
-                {walletLoading ? '...' : (wallet.balance ?? 0)} EGP
+              <p className="text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-primary/50">Current Balance</p>
+              <h2 className="font-display text-6xl md:text-7xl font-bold text-primary tracking-tighter leading-none mt-2">
+                {walletLoading ? '...' : (wallet.balance ?? 0)} <span className="text-3xl text-primary/40">EGP</span>
               </h2>
             </div>
-            <div className="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary-container">
-              <Wallet className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-[1rem] bg-primary/5 flex items-center justify-center text-primary">
+              <Wallet className="w-7 h-7" />
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 md:gap-3">
+          <p className="text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-primary/50 mb-3">Quick Amounts</p>
+          <div className="grid grid-cols-3 gap-3 md:gap-4">
             {quickAmounts.map((amount) => {
               const isSelected = customAmount === '' && selectedAmount === amount
 
@@ -147,9 +151,9 @@ function WalletTopUpPageContent() {
                     setCustomAmount('')
                     setSelectedAmount(amount)
                   }}
-                  className={`rounded-[var(--radius-default)] px-2 py-3 md:py-3.5 text-center font-bold text-sm md:text-base transition-colors ${
+                  className={`rounded-[2rem] px-2 py-3.5 md:py-4 text-center font-sans font-bold text-sm md:text-base transition-all ${
                     isSelected
-                      ? 'bg-primary-container text-surface-container-lowest'
+                      ? 'bg-primary text-white shadow-[0_4px_0_0_#00113a]'
                       : 'bg-surface-container-low text-primary hover:bg-surface-container-high'
                   }`}
                 >
@@ -159,8 +163,8 @@ function WalletTopUpPageContent() {
             })}
           </div>
 
-          <div className="mt-4">
-            <label htmlFor="custom-amount" className="text-sm md:text-base font-semibold text-primary block mb-2">
+          <div className="mt-6">
+            <label htmlFor="custom-amount" className="text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-primary/50 block mb-3">
               Custom Amount
             </label>
             <div className="relative">
@@ -172,88 +176,67 @@ function WalletTopUpPageContent() {
                 placeholder="Enter amount"
                 value={customAmount}
                 onChange={(event) => setCustomAmount(event.target.value)}
-                className="w-full h-12 md:h-14 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low px-4 pr-16 text-primary font-semibold outline-none focus:border-primary-container"
+                className="w-full h-14 md:h-16 rounded-[2rem] border-2 border-primary/10 bg-surface-container-low px-6 pr-20 text-primary font-sans font-semibold text-lg outline-none focus:border-primary transition-colors"
               />
-              <span className="absolute inset-y-0 right-4 flex items-center text-primary/60 text-sm font-bold">EGP</span>
+              <span className="absolute inset-y-0 right-6 flex items-center text-primary/40 text-sm font-sans font-bold uppercase tracking-widest">EGP</span>
             </div>
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 md:p-7 shadow-ambient">
-          <h3 className="text-lg md:text-xl font-extrabold tracking-tight text-primary mb-4">Payment Method</h3>
+        {/* Payment Method */}
+        <article className="bg-surface-container-lowest rounded-[2.5rem] p-6 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] animate-spring-in animation-delay-100">
+          <h3 className="font-display text-2xl md:text-3xl uppercase font-bold text-primary tracking-tight mb-6">Payment Method</h3>
 
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => setSelectedMethod('card')}
-              className={`w-full rounded-[var(--radius-default)] p-4 flex items-center justify-between transition-colors border ${
-                selectedMethod === 'card'
-                  ? 'border-primary-container bg-primary-container/10'
-                  : 'border-primary/10 bg-surface-container-low hover:bg-surface-container-high'
-              }`}
-            >
-              <span className="flex items-center gap-3 text-primary font-semibold">
-                <CreditCard className="w-5 h-5" />
-                Credit Card
-              </span>
-              {selectedMethod === 'card' ? <CheckCircle2 className="w-5 h-5 text-primary-container" /> : <Circle className="w-5 h-5 text-primary/45" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSelectedMethod('apple-pay')}
-              className={`w-full rounded-[var(--radius-default)] p-4 flex items-center justify-between transition-colors border ${
-                selectedMethod === 'apple-pay'
-                  ? 'border-primary-container bg-primary-container/10'
-                  : 'border-primary/10 bg-surface-container-low hover:bg-surface-container-high'
-              }`}
-            >
-              <span className="flex items-center gap-3 text-primary font-semibold">
-                <Smartphone className="w-5 h-5" />
-                Apple Pay
-              </span>
-              {selectedMethod === 'apple-pay' ? <CheckCircle2 className="w-5 h-5 text-primary-container" /> : <Circle className="w-5 h-5 text-primary/45" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSelectedMethod('wallet')}
-              className={`w-full rounded-[var(--radius-default)] p-4 flex items-center justify-between transition-colors border ${
-                selectedMethod === 'wallet'
-                  ? 'border-primary-container bg-primary-container/10'
-                  : 'border-primary/10 bg-surface-container-low hover:bg-surface-container-high'
-              }`}
-            >
-              <span className="flex items-center gap-3 text-primary font-semibold">
-                <Wallet className="w-5 h-5" />
-                Saved Wallet Card
-              </span>
-              {selectedMethod === 'wallet' ? <CheckCircle2 className="w-5 h-5 text-primary-container" /> : <Circle className="w-5 h-5 text-primary/45" />}
-            </button>
+          <div className="space-y-3 md:space-y-4">
+            {[
+              { id: 'card' as PaymentMethod, icon: CreditCard, label: 'Credit Card' },
+              { id: 'apple-pay' as PaymentMethod, icon: Smartphone, label: 'Apple Pay' },
+              { id: 'wallet' as PaymentMethod, icon: Wallet, label: 'Saved Wallet Card' },
+            ].map((method) => (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => setSelectedMethod(method.id)}
+                className={`w-full rounded-[2rem] p-4 md:p-5 flex items-center justify-between transition-all ${
+                  selectedMethod === method.id
+                    ? 'bg-primary text-white shadow-[0_4px_0_0_#00113a]'
+                    : 'bg-surface-container-low text-primary hover:bg-surface-container-high'
+                }`}
+              >
+                <span className="flex items-center gap-4 font-sans font-bold">
+                  <div className={`w-10 h-10 rounded-[1rem] flex items-center justify-center ${selectedMethod === method.id ? 'bg-white/10' : 'bg-primary/5'}`}>
+                    <method.icon className="w-5 h-5" />
+                  </div>
+                  {method.label}
+                </span>
+                {selectedMethod === method.id ? <CheckCircle2 className="w-6 h-6 text-tertiary-fixed" /> : <Circle className="w-6 h-6 text-primary/30" />}
+              </button>
+            ))}
           </div>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 md:p-7 shadow-ambient">
-          <h3 className="text-lg md:text-xl font-extrabold tracking-tight text-primary mb-4">Summary</h3>
+        {/* Summary */}
+        <article className="bg-surface-container-lowest rounded-[2.5rem] p-6 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] animate-spring-in animation-delay-200">
+          <h3 className="font-display text-2xl md:text-3xl uppercase font-bold text-primary tracking-tight mb-6">Summary</h3>
 
-          <div className="space-y-2.5 text-sm md:text-base">
-            <div className="flex items-center justify-between text-primary/75">
+          <div className="space-y-3 text-sm md:text-base font-sans">
+            <div className="flex items-center justify-between text-primary/70">
               <span>Top-up amount</span>
               <span className="font-bold text-primary">{activeAmount.toFixed(2)} EGP</span>
             </div>
-            <div className="flex items-center justify-between text-primary/75">
+            <div className="flex items-center justify-between text-primary/70">
               <span>Processing fee (1.5%)</span>
               <span className="font-bold text-primary">{fee.toFixed(2)} EGP</span>
             </div>
             <div className="h-px bg-primary/10 my-2" />
             <div className="flex items-center justify-between text-primary">
-              <span className="font-bold">Total charge</span>
-              <span className="text-xl md:text-2xl font-black tracking-tight">{total.toFixed(2)} EGP</span>
+              <span className="font-bold uppercase tracking-wider text-xs">Total charge</span>
+              <span className="font-display text-3xl md:text-4xl font-bold tracking-tight">{total.toFixed(2)} EGP</span>
             </div>
           </div>
 
           {submitError && (
-            <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-[var(--radius-md)] px-4 py-3 text-sm text-red-400 font-semibold">
+            <div className="mt-5 bg-red-500/10 rounded-[1.5rem] px-5 py-4 text-sm text-red-500 font-sans font-bold">
               {submitError}
             </div>
           )}
@@ -262,19 +245,19 @@ function WalletTopUpPageContent() {
             type="button"
             onClick={handleConfirmTopUp}
             disabled={submitting}
-            className="w-full mt-5 py-4 bg-gradient-to-br from-secondary to-secondary-container text-on-secondary-container font-bold rounded-[var(--radius-full)] shadow-ambient transition-all hover:opacity-90 disabled:opacity-60"
+            className="w-full mt-6 py-4 bg-tertiary-fixed text-primary font-sans font-bold uppercase tracking-widest text-sm rounded-[2rem] shadow-[0_4px_0_0_#00113a] hover:shadow-[0_2px_0_0_#00113a] hover:translate-y-[2px] transition-all active:shadow-none active:translate-y-[4px] disabled:opacity-60"
           >
             {submitting ? 'Processing...' : 'Confirm Top Up'}
           </button>
 
-          <p className="mt-3 inline-flex items-center gap-2 text-xs md:text-sm text-primary/60">
+          <p className="mt-4 inline-flex items-center gap-2 text-xs font-sans text-primary/50">
             <ShieldCheck className="w-4 h-4" />
             Secured payment powered by encrypted checkout.
           </p>
 
           <Link
             href="/profile"
-            className="block w-full mt-3 py-3 text-center text-sm md:text-base font-bold rounded-[var(--radius-full)] bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors"
+            className="block w-full mt-3 py-3 text-center text-sm font-sans font-bold rounded-[2rem] bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors"
           >
             Cancel
           </Link>

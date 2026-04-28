@@ -15,35 +15,38 @@ function ProfileBookingsPageContent() {
       router.back()
       return
     }
-
     router.push('/profile')
   }
 
   return (
-    <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px] animate-float-blob" />
-        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-secondary-container/18 blur-[110px] animate-float-blob animation-delay-350" />
-      </div>
+    <main className="w-full min-h-screen bg-surface-container-low pb-32 font-sans">
+      {/* HERO */}
+      <section className="relative w-full h-[35vh] md:h-[42vh] flex flex-col justify-end overflow-hidden rounded-b-[3rem] md:rounded-b-[4rem]">
+        <div className="absolute inset-0 bg-primary" />
+        <div 
+          className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none" 
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} 
+        />
 
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            aria-label="Go back"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low hover:scale-105 active:scale-95 transition-all duration-200"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5] transition-transform duration-200 group-hover:translate-x-[-1px]" />
-          </button>
-          <div className="animate-soft-drop">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">My Bookings</h1>
-            <p className="text-sm md:text-base text-primary/60 animate-fade-in animation-delay-150">Upcoming sessions overview</p>
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 md:px-8 pb-8 md:pb-12">
+          <div className="flex items-end gap-4 md:gap-5">
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className="w-12 h-12 rounded-[1rem] bg-tertiary-fixed text-primary flex items-center justify-center flex-shrink-0 hover:bg-white transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div className="text-white">
+              <h1 className="font-display text-4xl md:text-6xl uppercase font-bold tracking-tighter leading-[0.85]">My Bookings</h1>
+              <p className="text-sm md:text-base font-sans font-medium text-white/70 mt-2">Upcoming sessions overview</p>
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-5 md:space-y-8">
+      <section className="relative z-10 px-4 md:px-8 pt-10 md:pt-16 md:max-w-5xl md:mx-auto">
         <ProfileBookingsSection />
       </section>
 

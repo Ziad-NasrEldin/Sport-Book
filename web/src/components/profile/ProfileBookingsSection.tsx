@@ -65,18 +65,19 @@ export function ProfileBookingsSection() {
   }
 
   return (
-    <section id="my-bookings" className="space-y-4 md:space-y-5">
+    <section id="my-bookings" className="space-y-5 md:space-y-8">
       <div className="flex items-center justify-between animate-soft-rise">
-        <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-primary">My Bookings</h2>
+        <h2 className="font-display text-2xl md:text-4xl uppercase font-bold tracking-tight text-primary">My Bookings</h2>
         <Link
           href="/profile/bookings-history"
-          className="inline-flex items-center gap-1.5 text-[11px] md:text-xs font-lexend font-bold uppercase tracking-widest text-secondary-container hover:text-secondary transition-colors group"
+          className="inline-flex items-center gap-1.5 text-[10px] md:text-xs font-sans font-bold uppercase tracking-widest text-secondary-container hover:text-secondary transition-colors group"
         >
-          History <History className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          History <History className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5 md:gap-5">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 md:gap-5">
         {[
           { label: 'Upcoming', icon: CalendarClock, value: upcoming.length, suffix: '' },
           { label: 'Played', icon: CheckCircle2, value: completedCount, suffix: '' },
@@ -84,21 +85,23 @@ export function ProfileBookingsSection() {
         ].map((stat, i) => (
           <article
             key={stat.label}
-            className="bg-surface-container-lowest rounded-[var(--radius-md)] p-3 md:p-5 shadow-ambient h-[min(17svh,5.75rem)] md:h-auto max-h-[25svh] card-lift animate-stagger-pop"
+            className="bg-surface-container-lowest rounded-[2rem] p-4 md:p-6 shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] card-lift animate-stagger-pop"
             style={{ animationDelay: `${i * 100 + 150}ms` }}
           >
-            <div className="flex items-center justify-between mb-2 md:mb-6">
-              <span className="text-[9px] md:text-[10px] font-lexend font-bold uppercase tracking-[0.15em] md:tracking-[0.18em] text-primary/50">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <span className="text-[9px] md:text-[10px] font-sans font-bold uppercase tracking-[0.15em] md:tracking-[0.18em] text-primary/50">
                 {stat.label}
               </span>
-              <stat.icon className="w-4 h-4 md:w-5 md:h-5 text-primary-container" />
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center">
+                <stat.icon className="w-5 h-5 md:w-6 md:h-6 text-tertiary-fixed" />
+              </div>
             </div>
             {loading ? (
-              <div className="h-8 md:h-10 bg-surface-container-low rounded animate-pulse" />
+              <div className="h-8 md:h-10 bg-surface-container-low rounded-[1rem] animate-pulse" />
             ) : (
               <div className={loading ? '' : 'animate-number-pop'} style={!loading ? { animationDelay: `${i * 100 + 300}ms` } : undefined}>
-                <p className="text-xl md:text-4xl font-black tracking-tight text-primary leading-none">{stat.value}</p>
-                {stat.suffix && <p className="text-[10px] md:text-xs text-primary/55 font-lexend mt-1 leading-none">{stat.suffix}</p>}
+                <p className="font-display text-2xl md:text-4xl font-bold text-primary tracking-tight leading-none">{stat.value}</p>
+                {stat.suffix && <p className="text-[10px] md:text-xs text-primary/55 font-sans mt-1 leading-none uppercase tracking-wider">{stat.suffix}</p>}
               </div>
             )}
           </article>
@@ -106,21 +109,23 @@ export function ProfileBookingsSection() {
       </div>
 
       {loading ? (
-        <div className="space-y-3" ref={cardsReveal.ref}>
+        <div className="space-y-4" ref={cardsReveal.ref}>
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="bg-surface-container-lowest rounded-[var(--radius-md)] p-2.5 md:p-4 shadow-ambient h-[min(19svh,8.25rem)] max-h-[25svh] animate-pulse" />
+            <div key={i} className="bg-surface-container-lowest rounded-[2.5rem] p-4 md:p-6 animate-pulse h-32 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)]" />
           ))}
         </div>
       ) : upcoming.length === 0 ? (
-        <div className="bg-surface-container-lowest rounded-[var(--radius-md)] p-6 md:p-8 shadow-ambient text-center animate-fade-in">
-          <div className="inline-block mb-3 animate-empty-bob">
-            <CalendarClock className="w-10 h-10 text-primary/20 mx-auto" />
+        <div className="bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] text-center animate-fade-in">
+          <div className="inline-block mb-5 animate-empty-bob">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] bg-primary/5 flex items-center justify-center mx-auto">
+              <CalendarClock className="w-8 h-8 md:w-10 md:h-10 text-tertiary-fixed" />
+            </div>
           </div>
-          <p className="text-base font-bold text-primary">No upcoming bookings</p>
-          <p className="text-sm text-primary/60 mt-1">Your confirmed and pending bookings will appear here</p>
+          <p className="font-display text-2xl uppercase font-bold text-primary tracking-tight">No upcoming bookings</p>
+          <p className="text-sm text-primary/60 mt-1.5 font-sans font-medium">Your confirmed and pending bookings will appear here</p>
         </div>
       ) : (
-        <div className="space-y-3" ref={cardsReveal.ref}>
+        <div className="space-y-4" ref={cardsReveal.ref}>
           {upcoming.map((session, i) => {
             const sessionVenue = session.venue || session.courtName || session.coachName || 'Court Booking'
             const sessionCourt = session.court || session.courtName || ''
@@ -132,35 +137,35 @@ export function ProfileBookingsSection() {
             return (
               <article
                 key={session.id}
-                className="bg-surface-container-lowest rounded-[var(--radius-md)] p-2.5 md:p-4 shadow-ambient h-[min(19svh,8.25rem)] max-h-[25svh] card-lift"
+                className="bg-surface-container-lowest rounded-[2.5rem] p-4 md:p-6 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)]"
                 style={{
                   animation: cardsReveal.inView ? `card-stagger 0.45s cubic-bezier(0.22, 1, 0.36, 1) both` : 'none',
                   animationDelay: cardsReveal.inView ? `${i * 80}ms` : '0ms',
                 }}
               >
-                <div className="flex items-center gap-2.5 md:gap-4 h-full min-w-0">
-                  <div className="relative h-full w-16 sm:w-24 md:w-36 rounded-[var(--radius-default)] overflow-hidden shrink-0">
+                <div className="flex items-center gap-3 md:gap-5 h-full min-w-0">
+                  <div className="relative h-24 w-20 sm:w-28 md:w-36 rounded-[1.5rem] overflow-hidden shrink-0">
                     <Image src={sessionImage} alt={sessionVenue} fill className="object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 p-1.5 md:p-2 bg-gradient-to-t from-primary/75 to-transparent">
-                      <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white">{session.id}</span>
+                    <div className="absolute inset-x-0 bottom-0 p-2 md:p-3 bg-gradient-to-t from-primary/75 to-transparent">
+                      <span className="text-[9px] md:text-[10px] font-sans font-bold uppercase tracking-widest text-white">{session.id}</span>
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0 h-full flex flex-col justify-between">
+                  <div className="flex-1 min-w-0 h-full flex flex-col justify-between py-1">
                     <div className="min-w-0">
-                      <h3 className="text-sm md:text-lg font-bold text-primary leading-tight truncate">{sessionVenue}</h3>
-                      {sessionCourt && <p className="text-[11px] md:text-sm text-primary/65 mt-0.5 truncate">{sessionCourt}</p>}
+                      <h3 className="font-display text-lg md:text-xl uppercase font-bold text-primary tracking-tight truncate">{sessionVenue}</h3>
+                      {sessionCourt && <p className="text-xs md:text-sm text-primary/65 mt-0.5 truncate font-sans">{sessionCourt}</p>}
                     </div>
 
-                    <div className="flex flex-wrap gap-1.5 mt-1.5 md:mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2 md:mt-3">
                       {sessionDate && (
-                        <span className="inline-flex items-center gap-1 px-1.5 md:px-2 py-1 rounded-full bg-surface-container-low text-[9px] md:text-xs font-lexend font-bold uppercase tracking-wide text-primary/75">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 rounded-full bg-surface-container-low text-[10px] md:text-xs font-sans font-bold uppercase tracking-wide text-primary/75">
                           <CalendarClock className="w-3 h-3 md:w-3.5 md:h-3.5" />
                           {sessionDate}
                         </span>
                       )}
                       {sessionTime && (
-                        <span className="inline-flex items-center gap-1 px-1.5 md:px-2 py-1 rounded-full bg-surface-container-low text-[9px] md:text-xs font-lexend font-bold uppercase tracking-wide text-primary/75">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 rounded-full bg-surface-container-low text-[10px] md:text-xs font-sans font-bold uppercase tracking-wide text-primary/75">
                           <Clock3 className="w-3 h-3 md:w-3.5 md:h-3.5" />
                           {sessionTime}
                         </span>
@@ -168,16 +173,16 @@ export function ProfileBookingsSection() {
                     </div>
                   </div>
 
-                  <div className="text-right h-full flex flex-col items-end justify-between shrink-0">
+                  <div className="text-right h-full flex flex-col items-end justify-between py-1 shrink-0">
                     {sessionAmount && (
                       <div>
-                        <p className="text-[9px] md:text-[10px] font-lexend uppercase tracking-widest text-primary/45 mb-0.5">Amount</p>
-                        <p className="text-sm md:text-xl font-black text-primary leading-none">{sessionAmount}</p>
+                        <p className="text-[9px] md:text-[10px] font-sans uppercase tracking-widest text-primary/45 mb-0.5">Amount</p>
+                        <p className="font-display text-lg md:text-xl font-bold text-primary tracking-tight">{sessionAmount}</p>
                       </div>
                     )}
 
-                    <button className="inline-flex items-center gap-1 text-[11px] md:text-sm font-bold text-secondary-container hover:text-secondary transition-colors group/details">
-                      Details <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover/details:translate-x-0.5 group-hover/details:-translate-y-0.5" />
+                    <button className="px-5 py-2 mt-auto bg-tertiary-fixed text-primary font-sans font-bold uppercase tracking-widest text-[10px] md:text-[11px] rounded-[2rem] shadow-[0_3px_0_0_#00113a] hover:shadow-[0_1px_0_0_#00113a] hover:translate-y-[2px] transition-all active:shadow-none active:translate-y-[3px]">
+                      Details
                     </button>
                   </div>
                 </div>
@@ -190,18 +195,18 @@ export function ProfileBookingsSection() {
       <div ref={historyReveal.ref}>
         <Link
           href="/profile/bookings-history"
-          className="block w-full bg-surface-container-lowest rounded-[var(--radius-md)] p-4 md:p-5 shadow-ambient group card-lift"
+          className="flex items-center justify-between px-6 py-6 bg-surface-container-lowest rounded-[2rem] shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] group hover:bg-primary transition-all duration-200 card-lift"
           style={{
             animation: historyReveal.inView ? 'slide-in-right 0.35s cubic-bezier(0.22, 1, 0.36, 1) both' : 'none',
             animationDelay: '200ms',
           }}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] md:text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/50 group-hover:text-primary/70 transition-colors">Booking History</p>
-              <p className="text-base md:text-lg font-bold text-primary mt-1 group-hover:text-primary-container transition-colors">Open full history page</p>
-            </div>
-            <ArrowUpRight className="w-5 h-5 text-secondary-container transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <div>
+            <p className="text-[10px] md:text-[11px] font-sans font-bold uppercase tracking-[0.18em] text-primary/50 group-hover:text-white/60 transition-colors">Booking History</p>
+            <h3 className="font-display text-xl md:text-2xl uppercase font-bold text-primary tracking-tight mt-1 group-hover:text-white transition-colors">Open full history page</h3>
+          </div>
+          <div className="w-12 h-12 rounded-[1rem] bg-primary/5 flex items-center justify-center group-hover:bg-white/10 transition-colors shrink-0">
+            <ArrowUpRight className="w-6 h-6 text-tertiary-fixed transition-transform duration-200 group-hover:translate-x-1 group-hover:-translate-y-1" />
           </div>
         </Link>
       </div>

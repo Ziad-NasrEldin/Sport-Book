@@ -55,76 +55,77 @@ setAccessToken(accessToken)
         <div className="absolute bottom-0 -left-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px]" />
       </div>
 
-      <section className="px-5 py-8 md:px-10 lg:px-14">
+      <header className="absolute top-0 left-0 w-full z-40 px-5 pt-8 md:px-10 lg:px-14 md:pt-12 flex items-center">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-primary/75 hover:text-primary font-bold transition-colors"
+          className="w-12 h-12 flex items-center justify-center rounded-[1.25rem] bg-white shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:bg-surface-container-low hover:scale-95 transition-all duration-200"
+          aria-label="Go back to Home"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Home
+          <ArrowLeft className="w-6 h-6 text-primary stroke-[2.5]" />
         </Link>
-      </section>
+      </header>
 
-<section className="px-5 pb-12 md:px-10 lg:px-14">
-        <div style={{ animationDelay: '100ms' }} className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5 animate-soft-rise">
-          <h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight text-primary">Create Account</h1>
-          <p className="mt-2 text-sm md:text-base text-primary/60">Sign up to unlock fast booking and wallet checkout.</p>
+      <section className="px-5 pt-32 pb-12 md:px-10 lg:px-14 md:pt-40 z-10 relative flex justify-center">
+        <div style={{ animationDelay: '100ms' }} className="w-full max-w-md bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] border border-primary/5 animate-soft-rise">
+          <h1 className="text-4xl md:text-5xl font-display font-bold uppercase tracking-tight text-primary leading-none">Create Account</h1>
+          <p className="mt-3 text-sm md:text-base font-sans font-medium text-primary/70">Sign up to unlock fast booking and wallet checkout.</p>
 
-          <form className="space-y-4 mt-6" onSubmit={handleSignUp}>
-            <label style={{ animationDelay: '150ms' }} className="block space-y-1.5 animate-soft-rise">
-              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Full Name</span>
+          <form className="space-y-5 mt-8" onSubmit={handleSignUp}>
+            <label style={{ animationDelay: '150ms' }} className="block space-y-2 animate-soft-rise">
+              <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2">Full Name</span>
               <div className="relative">
-                <UserRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                <UserRound className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
                   name="name"
                   type="text"
                   placeholder="Alex Rivera"
                   required
-                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none transition-[border-color,transform,box-shadow] duration-200 focus:border-primary-container focus:-translate-y-0.5 focus:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.35)]"
+                  className="w-full h-14 pl-12 pr-4 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium"
                 />
               </div>
             </label>
 
-            <label style={{ animationDelay: '200ms' }} className="block space-y-1.5 animate-soft-rise">
-              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Email</span>
+            <label style={{ animationDelay: '200ms' }} className="block space-y-2 animate-soft-rise">
+              <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2">Email</span>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                <Mail className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
                   name="email"
                   type="email"
                   placeholder="alex@example.com"
                   required
-                  className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none transition-[border-color,transform,box-shadow] duration-200 focus:border-primary-container focus:-translate-y-0.5 focus:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.35)]"
+                  className="w-full h-14 pl-12 pr-4 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium"
                 />
               </div>
             </label>
 
-            <label style={{ animationDelay: '250ms' }} className="block space-y-1.5 animate-soft-rise">
-              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Password</span>
+            <label style={{ animationDelay: '250ms' }} className="block space-y-2 animate-soft-rise">
+              <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2">Password</span>
               <div className="relative">
-                <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+                <LockKeyhole className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-primary/45" />
                 <input
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Create a password"
                   required
-                  className="w-full h-12 pl-10 pr-10 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none transition-[border-color,transform,box-shadow] duration-200 focus:border-primary-container focus:-translate-y-0.5 focus:shadow-[0_12px_24px_-12px_rgba(0,17,58,0.35)]"
+                  className="w-full h-14 pl-12 pr-12 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-pressed={showPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/45 hover:text-primary transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/45 hover:text-primary transition-colors"
                 >
                   <span className="transition-transform duration-200 inline-flex">
-                    {showPassword ? <EyeOff className="w-4 h-4 animate-scale-in" /> : <Eye className="w-4 h-4 animate-scale-in" />}
+                    {showPassword ? <EyeOff className="w-5 h-5 animate-scale-in" /> : <Eye className="w-5 h-5 animate-scale-in" />}
                   </span>
                 </button>
               </div>
             </label>
 
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg animate-shake">
+              <div className="bg-red-50 text-red-600 text-sm font-medium px-5 py-3 rounded-[1rem] animate-shake">
                 {error}
               </div>
             )}
@@ -132,7 +133,7 @@ setAccessToken(accessToken)
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide transition-all duration-200 hover:shadow-[0_8px_20px_-6px_rgba(253,139,0,0.5)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+              className="mt-8 w-full h-14 rounded-full bg-primary text-tertiary-fixed font-sans font-bold uppercase tracking-[0.1em] text-sm transition-all duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_8px_20px_-8px_rgba(0,17,58,0.2)]"
             >
               {loading ? (
                 <>
@@ -145,19 +146,19 @@ setAccessToken(accessToken)
             </button>
           </form>
 
-          <div className="my-6 flex items-center gap-3 text-primary/35">
-            <div className="h-px bg-primary/10 flex-1" />
-            <span className="text-[10px] font-lexend uppercase tracking-[0.16em]">Or Continue With</span>
-            <div className="h-px bg-primary/10 flex-1" />
+          <div className="my-8 flex items-center gap-3 text-primary/30">
+            <div className="h-[2px] bg-primary/5 flex-1 rounded-full" />
+            <span className="text-[10px] font-sans font-bold uppercase tracking-[0.16em]">Or Continue With</span>
+            <div className="h-[2px] bg-primary/5 flex-1 rounded-full" />
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <button
               type="button"
               onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
-              className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high hover:-translate-y-0.5 transition-all duration-200"
+              className="w-full h-14 rounded-[1.5rem] bg-surface-container-low text-primary font-sans font-bold text-sm flex items-center justify-center gap-3 hover:bg-surface-container-high transition-all duration-200 border-2 border-transparent hover:border-primary/5"
             >
-              <span className="w-6 h-6 rounded-full bg-white text-primary-container text-sm font-black inline-flex items-center justify-center">
+              <span className="w-6 h-6 rounded-full bg-white text-primary-container text-sm font-black inline-flex items-center justify-center shadow-sm">
                 G
               </span>
               Sign up with Google
@@ -165,25 +166,25 @@ setAccessToken(accessToken)
             <button
               type="button"
               onClick={() => showToast('Coming soon! This feature is not yet available.', 'info')}
-              className="w-full h-12 rounded-[var(--radius-default)] bg-surface-container-low text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high hover:-translate-y-0.5 transition-all duration-200"
+              className="w-full h-14 rounded-[1.5rem] bg-surface-container-low text-primary font-sans font-bold text-sm flex items-center justify-center gap-3 hover:bg-surface-container-high transition-all duration-200 border-2 border-transparent hover:border-primary/5"
             >
-              <span className="w-6 h-6 rounded-full bg-[#1877F2] text-white text-sm font-black inline-flex items-center justify-center">
+              <span className="w-6 h-6 rounded-[0.75rem] inset-0 bg-[#1877F2] text-white text-sm font-black flex items-center justify-center shadow-sm">
                 f
               </span>
               Sign up with Facebook
             </button>
           </div>
 
-          <p className="mt-5 text-center text-sm text-primary/65">
+          <p className="mt-8 text-center text-sm font-sans font-medium text-primary/60">
             Already have an account?{' '}
-            <Link href="/auth/sign-in" className="font-bold text-secondary-container hover:text-secondary transition-colors">
+            <Link href="/auth/sign-in" className="font-bold text-primary hover:text-primary/70 transition-colors underline underline-offset-4">
               Sign in
             </Link>
           </p>
 
-          <p className="mt-3 text-center text-xs text-primary/65">
-            <Link href="/auth/send-request" className="font-bold text-primary/80 hover:text-primary transition-colors underline underline-offset-2">
-              Do you want to be a coach or a facility?
+          <p className="mt-4 text-center text-xs font-sans font-medium text-primary/60">
+            <Link href="/auth/send-request" className="font-bold text-primary/70 hover:text-primary transition-colors underline underline-offset-4">
+              Want to be a coach or a facility?
             </Link>
           </p>
         </div>

@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState } from 'react'
 import Image from 'next/image'
@@ -74,159 +74,169 @@ export default function ProductDetailsPage() {
 
   return (
     <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-16 -left-20 h-72 w-72 rounded-full bg-primary-container/10 blur-[95px]" />
-        <div className="absolute bottom-10 -right-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px]" />
-      </div>
+      {/* Geometric background */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: `repeating-linear-gradient(90deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 80px), repeating-linear-gradient(0deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 80px)`,
+      }} />
+      <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] bg-[#c3f400]/6 blur-[120px] rounded-full -translate-y-1/3 translate-x-1/4" />
 
-      <header className="sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              if (window.history.length > 1) {
-                router.back()
-              } else {
-                router.push('/store')
-              }
-            }}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-high text-primary hover:bg-surface-container-lowest transition-colors"
-            aria-label="Go back"
+      {/* HERO: Full-bleed product image */}
+      <header className="relative bg-[#0a1631] overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#c3f400]" />
+
+        <div className="relative max-w-[1440px] mx-auto px-5 pt-10 pb-8 md:px-8 md:pt-14 md:pb-10">
+          <div className="flex items-center gap-4 pb-6">
+            <button
+              onClick={() => {
+                if (window.history.length > 1) {
+                  router.back()
+                } else {
+                  router.push('/store')
+                }
+              }}
+              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-[#c3f400] hover:text-[#0a1631] transition-colors duration-200"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <p className="text-[#c3f400] text-xs font-black uppercase tracking-[0.3em]">Product</p>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">Details</h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Full-bleed product image */}
+        <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[50vh]">
+          <Image
+            src={getStoreProductImage(product)}
+            alt={product.title || product.name}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-[#0a1631]/20" />
+
+          <span
+            className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+              product.status === 'In Stock'
+                ? 'bg-[#c3f400] text-[#0a1631]'
+                : 'bg-white/90 text-[#8c4a00]'
+            }`}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+            {product.status === 'In Stock' ? <CircleCheck className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
+            {product.status}
+          </span>
 
-          <div>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Product Details</h1>
-            <p className="text-sm md:text-base text-primary/60 mt-1">Sold by verified facilities</p>
+          {/* Price overlay on image */}
+          <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Price</p>
+            <p className="text-4xl md:text-6xl font-black text-white leading-none">{product.price} <span className="text-lg md:text-2xl">EGP</span></p>
           </div>
         </div>
       </header>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-5 md:space-y-6 pb-2">
-        <article className="bg-surface-container-lowest rounded-[var(--radius-xl)] overflow-hidden shadow-ambient">
-          <div className="relative w-full aspect-[4/3]">
-            <Image src={getStoreProductImage(product)} alt={product.title || product.name} fill className="object-cover" />
-
-            <span
-              className={`absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
-                product.status === 'In Stock'
-                  ? 'bg-[#d8f7e8] text-[#0d7a44]'
-                  : 'bg-[#ffe8cc] text-[#8c4a00]'
-              }`}
-            >
-              {product.status === 'In Stock' ? <CircleCheck className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
-              {product.status}
-            </span>
-          </div>
-
-          <div className="p-5 md:p-6">
-            <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-secondary">{stringValue(product.category)}</p>
-            <h2 className="text-xl md:text-3xl font-extrabold text-primary mt-2 leading-tight">{product.title || product.name}</h2>
-
-            <p className="mt-3 text-sm md:text-base text-primary/75">{product.description}</p>
-
-            <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Price</p>
-                <p className="text-3xl md:text-4xl font-black text-primary">{product.price} EGP</p>
-              </div>
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3 py-2">
-                <button
-                  onClick={() => setQuantity((count) => Math.max(1, count - 1))}
-                  className="w-8 h-8 rounded-full bg-surface-container-lowest text-primary flex items-center justify-center hover:bg-surface transition-colors"
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-
-                <span className="min-w-8 text-center font-black text-primary">{quantity}</span>
-
-                <button
-                  onClick={() => setQuantity((count) => count + 1)}
-                  className="w-8 h-8 rounded-full bg-surface-container-lowest text-primary flex items-center justify-center hover:bg-surface transition-colors"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+      <section className="px-5 md:px-6 lg:px-8 max-w-[1440px] mx-auto space-y-5 py-4 md:py-6">
+        {/* Product info */}
+        <article className="space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">{stringValue(product.category)}</p>
+          <h2 className="text-3xl md:text-3xl font-black text-primary leading-tight">{product.title || product.name}</h2>
+          <p className="text-base md:text-lg text-primary/70 max-w-2xl leading-relaxed">{product.description}</p>
         </article>
 
-        <article className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-5 shadow-ambient space-y-4">
-          <h3 className="text-lg md:text-xl font-bold text-primary">Fulfillment</h3>
+        {/* Quantity selector */}
+        <div className="flex items-center gap-6">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">Quantity</span>
+          <div className="inline-flex items-center gap-1 bg-surface-container-high">
+            <button
+              onClick={() => setQuantity((count) => Math.max(1, count - 1))}
+              className="w-12 h-12 rounded-full bg-surface-container-lowest text-primary flex items-center justify-center hover:bg-[#0a1631] hover:text-white active:scale-95 transition-all duration-200"
+              aria-label="Decrease quantity"
+            >
+              <Minus className="w-5 h-5" />
+            </button>
+            <span className="min-w-12 text-center text-xl font-black text-primary">{quantity}</span>
+            <button
+              onClick={() => setQuantity((count) => count + 1)}
+              className="w-12 h-12 rounded-full bg-surface-container-lowest text-primary flex items-center justify-center hover:bg-[#0a1631] hover:text-white active:scale-95 transition-all duration-200"
+              aria-label="Increase quantity"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+          <span className="text-sm font-bold text-primary/60">Subtotal: <span className="text-lg font-black text-[#0a1631]">{subtotal} EGP</span></span>
+        </div>
+
+        {/* Fulfillment */}
+        <article className="bg-surface-container-lowest p-4 md:p-6 space-y-4">
+          <h3 className="text-lg md:text-xl font-black text-primary">Fulfillment</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               onClick={() => setFulfillment('pickup')}
-              className={`rounded-[var(--radius-md)] px-4 py-3 text-left transition-colors ${
+              className={`px-5 py-4 rounded-[var(--radius-md)] text-left border-l-4 transition-all duration-200 ${
                 fulfillment === 'pickup'
-                  ? 'bg-tertiary-fixed text-primary'
-                  : 'bg-surface-container-high text-primary/80'
+                  ? 'bg-[#0a1631] text-white border-[#c3f400]'
+                  : 'bg-surface-container-high text-primary/80 border-transparent hover:border-primary/20'
               }`}
             >
-              <span className="inline-flex items-center gap-2 font-bold">
-                <PackageCheck className="w-4 h-4" />
+              <span className="inline-flex items-center gap-2 font-black">
+                <PackageCheck className="w-5 h-5" />
                 Pick Up At Facility
               </span>
-              <p className="text-xs mt-1 opacity-80">Ready the same day for most products.</p>
+              <p className={`text-xs mt-2 ${fulfillment === 'pickup' ? 'text-white/70' : 'text-primary/60'}`}>Ready the same day for most products.</p>
             </button>
 
             <button
               onClick={() => setFulfillment('delivery')}
-              className={`rounded-[var(--radius-md)] px-4 py-3 text-left transition-colors ${
+              className={`px-5 py-4 rounded-[var(--radius-md)] text-left border-l-4 transition-all duration-200 ${
                 fulfillment === 'delivery'
-                  ? 'bg-tertiary-fixed text-primary'
-                  : 'bg-surface-container-high text-primary/80'
+                  ? 'bg-[#0a1631] text-white border-[#c3f400]'
+                  : 'bg-surface-container-high text-primary/80 border-transparent hover:border-primary/20'
               }`}
             >
-              <span className="inline-flex items-center gap-2 font-bold">
-                <Truck className="w-4 h-4" />
+              <span className="inline-flex items-center gap-2 font-black">
+                <Truck className="w-5 h-5" />
                 Home Delivery
               </span>
-              <p className="text-xs mt-1 opacity-80">Estimated delivery in 2-4 days.</p>
+              <p className={`text-xs mt-2 ${fulfillment === 'delivery' ? 'text-white/70' : 'text-primary/60'}`}>Estimated delivery in 2-4 days.</p>
             </button>
           </div>
 
-          <div className="bg-surface-container-high rounded-[var(--radius-md)] p-4 space-y-1">
-            <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Sold By</p>
-            <p className="font-bold text-primary inline-flex items-center gap-2">
-              <Store className="w-4 h-4" />
+          <div className="bg-surface-container-high rounded-[var(--radius-md)] p-4 space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/40">Sold By</p>
+            <p className="font-black text-primary inline-flex items-center gap-2">
+              <Store className="w-5 h-5" />
               {stringValue(product.facility || product.facilityName)}
             </p>
             <p className="text-sm text-primary/70 inline-flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-primary/45" />
+              <MapPin className="w-4 h-4 text-primary/40" />
               {stringValue(product.location)}
             </p>
           </div>
-
-          <div className="pt-1">
-            <p className="text-[10px] font-lexend uppercase tracking-widest text-primary/45">Subtotal</p>
-            <p className="text-2xl font-black text-primary">{subtotal} EGP</p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleAddToCart}
-              className={`w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full font-bold transition-colors ${
-                isAddedToCart
-                  ? 'bg-[#d8f7e8] text-[#0d7a44]'
-                  : 'bg-primary-container text-surface-container-lowest hover:bg-primary'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {isAddedToCart ? 'Update Cart' : 'Add To Cart'}
-            </button>
-
-            <Link
-              href={`/store/checkout?product=${encodeURIComponent(product.id)}&qty=${quantity}&fulfillment=${fulfillment}`}
-              className="w-full sm:w-auto flex-1 inline-flex items-center justify-center px-5 py-3 rounded-full bg-secondary-container text-on-secondary-container font-bold hover:opacity-90 transition-opacity"
-            >
-              Buy Now
-            </Link>
-          </div>
         </article>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={handleAddToCart}
+            className={`flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-full font-black text-sm uppercase tracking-wider transition-all duration-200 active:scale-[0.98] ${
+              isAddedToCart
+                ? 'bg-[#c3f400] text-[#0a1631] hover:shadow-[0_12px_24px_-8px_rgba(195,244,0,0.4)]'
+                : 'bg-[#0a1631] text-white hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgba(10,22,49,0.4)]'
+            }`}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {isAddedToCart ? 'Update Cart' : 'Add To Cart'}
+          </button>
+
+          <Link
+            href={`/store/checkout?product=${encodeURIComponent(product.id)}&qty=${quantity}&fulfillment=${fulfillment}`}
+            className="flex-1 inline-flex items-center justify-center py-4 rounded-full bg-surface-container-high text-primary font-black text-sm uppercase tracking-wider hover:bg-[#c3f400] hover:text-[#0a1631] active:scale-[0.98] transition-all duration-200"
+          >
+            Buy Now
+          </Link>
+        </div>
       </section>
 
       <FloatingNav />

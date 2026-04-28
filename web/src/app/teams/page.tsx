@@ -332,55 +332,73 @@ export default function TeamsPage() {
 
   return (
     <main className="w-full min-h-screen bg-surface-container-low pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] relative overflow-hidden">
-      <div className="pointer-events-none absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full bg-primary/5 blur-3xl animate-[float-blob_12s_ease-in-out_infinite]" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 w-[360px] h-[360px] rounded-full bg-secondary-container/10 blur-3xl animate-[float-blob_10s_ease-in-out_3s_infinite]" />
+      {/* Bold geometric background pattern */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: `repeating-linear-gradient(45deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 40px), repeating-linear-gradient(-45deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 40px)`,
+      }} />
+      <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] bg-[#c3f400]/8 blur-[120px] rounded-full -translate-y-1/4 translate-x-1/4" />
+      <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/6 blur-[100px] rounded-full translate-y-1/4 -translate-x-1/4" />
 
-      <header className={`sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-6 animate-soft-drop transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Teams</h1>
-            <p className="text-sm md:text-base text-primary/60 mt-1">Create squads, choose court slots, and join matches.</p>
+      {/* HERO: Full-bleed dramatic header */}
+      <header className={`relative z-40 bg-[#0a1631] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Diagonal accent line */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#c3f400]" />
+        <div className="absolute bottom-0 right-0 w-1/2 h-2 bg-[#c3f400]" style={{ clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0% 100%)' }} />
+
+        <div className="relative max-w-[1440px] mx-auto px-5 pt-10 pb-8 md:px-8 md:pt-14 md:pb-10">
+          <div className="flex items-end justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-[#c3f400] text-xs font-black uppercase tracking-[0.3em] animate-soft-rise">Find Your Squad</p>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.04em] text-white leading-[0.85]">
+                TEAMS
+              </h1>
+              <p className="text-white/50 text-sm md:text-base max-w-md mt-3 leading-relaxed">
+                Create squads, choose court slots, and join matches. Your next game starts here.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen((value) => !value)}
+              className={`group flex-none inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#c3f400] text-[#0a1631] font-black text-sm uppercase tracking-wider transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(195,244,0,0.5)] active:scale-95 ${mounted ? 'animate-soft-rise' : 'opacity-0'}`}
+              style={{ animationDelay: '150ms' }}
+            >
+              <Plus className={`w-5 h-5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCreateOpen ? 'rotate-45' : 'group-hover:rotate-90'}`} />
+              {isCreateOpen ? 'Close' : 'Post Team'}
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen((value) => !value)}
-            className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary-container text-surface-container-lowest font-bold text-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(0,17,58,0.45)] active:scale-95"
-          >
-            <Plus className={`w-4 h-4 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCreateOpen ? 'rotate-45' : 'group-hover:rotate-90'}`} />
-            {isCreateOpen ? 'Close' : 'Post Team'}
-          </button>
-        </div>
+          {/* Asymmetric info bar */}
+          <div className="mt-4 md:mt-5 grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-4">
+            <div className={`bg-white/5 border-l-4 border-[#c3f400] rounded-[var(--radius-md)] px-5 py-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`} style={{ transitionDelay: '200ms' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#c3f400]">Joining As</p>
+              <AppSelect
+                className="mt-2 w-full bg-[#0a1631] text-white font-bold text-lg outline-none focus:text-[#c3f400] transition-colors duration-200"
+                value={activeUserId}
+                onChange={(event) => {
+                  const nextUserId = event.target.value
+                  setActiveUserState(nextUserId)
+                }}
+              >
+              {usersData.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+                ))}
+              </AppSelect>
+            </div>
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className={`bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3 group transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-ambient transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
-            <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">You are joining as</span>
-            <AppSelect
-              className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
-              value={activeUserId}
-              onChange={(event) => {
-                const nextUserId = event.target.value
-                setActiveUserState(nextUserId)
-              }}
-            >
-            {usersData.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name}
-              </option>
-              ))}
-            </AppSelect>
-          </label>
-
-          <div className={`bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
-            <p className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55">Rules</p>
-            <p className="mt-1.5 text-sm font-semibold text-primary">Joining requires creator approval. Approved slots cannot overlap.</p>
+            <div className={`bg-white/5 border-l-4 border-white/20 rounded-[var(--radius-md)] px-5 py-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`} style={{ transitionDelay: '300ms' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Rules</p>
+              <p className="mt-2 text-sm font-semibold text-white/80">Joining requires creator approval. Approved slots cannot overlap.</p>
+            </div>
           </div>
         </div>
       </header>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-6xl md:mx-auto space-y-5">
+      <section className="px-5 md:px-6 lg:px-8 max-w-[1440px] mx-auto space-y-5 py-4 md:py-6">
         {feedback && (
-          <div className={`bg-tertiary-fixed rounded-[var(--radius-md)] px-4 py-3 text-sm font-semibold text-primary animate-badge-pop transition-opacity duration-300 ${feedbackVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`bg-[#c3f400] rounded-[var(--radius-md)] px-6 py-4 text-sm font-black text-[#0a1631] uppercase tracking-wider transition-opacity duration-300 ${feedbackVisible ? 'opacity-100' : 'opacity-0'}`}>
             {feedback}
           </div>
         )}
@@ -388,13 +406,18 @@ export default function TeamsPage() {
         {isCreateOpen && (
           <form
             onSubmit={handleCreatePost}
-            className="bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4 animate-soft-drop"
+            className="bg-[#0a1631] rounded-[var(--radius-lg)] p-4 md:p-6 space-y-4 animate-soft-drop border-l-4 border-[#c3f400]"
           >
-            <h2 className="text-lg md:text-xl font-bold text-primary">Create Team Post</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#c3f400] flex items-center justify-center">
+                <Plus className="w-5 h-5 text-[#0a1631]" />
+              </div>
+              <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Create Team Post</h2>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
-                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Sport</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <label className="group bg-white/5 rounded-[var(--radius-md)] px-4 py-3 border-l-2 border-transparent focus-within:border-[#c3f400] transition-colors duration-200">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 group-focus-within:text-[#c3f400] transition-colors duration-200">Sport</span>
                 <AppSelect
                   value={createForm.sport}
                   onChange={(event) => {
@@ -410,7 +433,7 @@ export default function TeamsPage() {
                       courtId: firstCourtForSport?.id ?? '',
                     }))
                   }}
-                  className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
+                  className="mt-1.5 w-full bg-transparent text-white font-bold outline-none focus:text-[#c3f400] transition-colors duration-200"
                 >
                   {availableSports.map((sport) => (
                     <option key={sport} value={sport}>
@@ -420,8 +443,8 @@ export default function TeamsPage() {
                 </AppSelect>
               </label>
 
-              <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
-                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Court</span>
+              <label className="group bg-white/5 rounded-[var(--radius-md)] px-4 py-3 border-l-2 border-transparent focus-within:border-[#c3f400] transition-colors duration-200">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 group-focus-within:text-[#c3f400] transition-colors duration-200">Court</span>
                 <AppSelect
                   value={createForm.courtId}
                   onChange={(event) => {
@@ -430,7 +453,7 @@ export default function TeamsPage() {
                       courtId: event.target.value,
                     }))
                   }}
-                  className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
+                  className="mt-1.5 w-full bg-transparent text-white font-bold outline-none focus:text-[#c3f400] transition-colors duration-200"
                 >
                   {selectableCourts.length === 0 && (
                     <option value="">
@@ -445,8 +468,8 @@ export default function TeamsPage() {
                 </AppSelect>
               </label>
 
-              <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
-                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Date</span>
+              <label className="group bg-white/5 rounded-[var(--radius-md)] px-4 py-3 border-l-2 border-transparent focus-within:border-[#c3f400] transition-colors duration-200">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 group-focus-within:text-[#c3f400] transition-colors duration-200">Date</span>
                 <input
                   type="date"
                   value={createForm.date}
@@ -457,12 +480,12 @@ export default function TeamsPage() {
                       date: event.target.value,
                     }))
                   }}
-                  className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
+                  className="mt-1.5 w-full bg-transparent text-white font-bold outline-none focus:text-[#c3f400] transition-colors duration-200"
                 />
               </label>
 
-              <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
-                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Needed Players</span>
+              <label className="group bg-white/5 rounded-[var(--radius-md)] px-4 py-3 border-l-2 border-transparent focus-within:border-[#c3f400] transition-colors duration-200">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 group-focus-within:text-[#c3f400] transition-colors duration-200">Needed Players</span>
                 <input
                   type="number"
                   min={1}
@@ -474,12 +497,12 @@ export default function TeamsPage() {
                       neededPlayers: Number(event.target.value),
                     }))
                   }}
-                  className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
+                  className="mt-1.5 w-full bg-transparent text-white font-bold outline-none focus:text-[#c3f400] transition-colors duration-200"
                 />
               </label>
 
-              <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
-                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Start Hour</span>
+              <label className="group bg-white/5 rounded-[var(--radius-md)] px-4 py-3 border-l-2 border-transparent focus-within:border-[#c3f400] transition-colors duration-200">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 group-focus-within:text-[#c3f400] transition-colors duration-200">Start Hour</span>
                 <AppSelect
                   value={createForm.startHour}
                   onChange={(event) => {
@@ -488,7 +511,7 @@ export default function TeamsPage() {
                       startHour: Number(event.target.value),
                     }))
                   }}
-                  className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
+                  className="mt-1.5 w-full bg-transparent text-white font-bold outline-none focus:text-[#c3f400] transition-colors duration-200"
                 >
                   {startHourOptions.map((hour) => (
                     <option key={hour} value={hour}>
@@ -498,8 +521,8 @@ export default function TeamsPage() {
                 </AppSelect>
               </label>
 
-              <label className="group bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3">
-                <span className="text-[10px] font-lexend font-bold uppercase tracking-[0.18em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Duration</span>
+              <label className="group bg-white/5 rounded-[var(--radius-md)] px-4 py-3 border-l-2 border-transparent focus-within:border-[#c3f400] transition-colors duration-200">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 group-focus-within:text-[#c3f400] transition-colors duration-200">Duration</span>
                 <AppSelect
                   value={createForm.durationHours}
                   onChange={(event) => {
@@ -508,7 +531,7 @@ export default function TeamsPage() {
                       durationHours: Number(event.target.value),
                     }))
                   }}
-                  className="mt-1.5 w-full bg-transparent text-primary font-bold outline-none focus:text-primary-container transition-colors duration-200"
+                  className="mt-1.5 w-full bg-transparent text-white font-bold outline-none focus:text-[#c3f400] transition-colors duration-200"
                 >
                   {durationOptions.map((duration) => (
                     <option key={duration} value={duration}>
@@ -519,56 +542,61 @@ export default function TeamsPage() {
               </label>
             </div>
 
-            <div className="bg-surface-container-high rounded-[var(--radius-md)] px-4 py-3 text-sm text-primary/80">
+            <div className="bg-white/5 rounded-[var(--radius-md)] px-5 py-4 text-sm text-white/70">
               <p>
-                Team size will be <strong>{1 + createForm.neededPlayers}</strong> players including you ({activeUserName}).
+                Team size will be <strong className="text-[#c3f400]">{1 + createForm.neededPlayers}</strong> players including you ({activeUserName}).
               </p>
             </div>
 
             <button
               type="submit"
               disabled={!createForm.courtId}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-full bg-secondary-container text-on-secondary-container font-bold hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_oklch(var(--color-secondary-container)/0.45)] active:scale-95 transition-[transform,box-shadow] duration-200"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#c3f400] text-[#0a1631] font-black uppercase tracking-wider text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgba(195,244,0,0.4)] active:scale-95 transition-all duration-200"
             >
               Publish Team Post
             </button>
           </form>
         )}
 
-        <section className={`bg-surface-container-lowest rounded-[var(--radius-lg)] p-4 md:p-5 shadow-ambient space-y-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '180ms' }}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <h2 className="text-lg md:text-xl font-bold text-primary">Teams Feed</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:w-auto">
-              <AppSelect
-                value={selectedSportFilter}
-                onChange={(event) => setSelectedSportFilter(event.target.value as 'All' | CourtSport)}
-                className="bg-surface-container-high rounded-full px-4 py-2.5 text-sm font-semibold text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:text-primary-container active:scale-[0.97] transition-[transform,box-shadow,color] duration-200"
-              >
-                <option value="All">All Sports</option>
-                {availableSports.map((sport) => (
-                  <option key={sport} value={sport}>
-                    {sport}
-                  </option>
-                ))}
-              </AppSelect>
-
-              <input
-                type="date"
-                value={selectedDateFilter}
-                onChange={(event) => setSelectedDateFilter(event.target.value)}
-                className="bg-surface-container-high rounded-full px-4 py-2.5 text-sm font-semibold text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:text-primary-container active:scale-[0.97] transition-[transform,box-shadow,color] duration-200"
-              />
-            </div>
+        {/* Filter bar */}
+        <div className={`flex flex-col md:flex-row md:items-end md:justify-between gap-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '180ms' }}>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/40 mb-1">Browse</p>
+            <h2 className="text-3xl md:text-3xl font-black text-primary tracking-tight">Teams Feed</h2>
           </div>
 
+          <div className="flex flex-col sm:flex-row gap-3">
+            <AppSelect
+              value={selectedSportFilter}
+              onChange={(event) => setSelectedSportFilter(event.target.value as 'All' | CourtSport)}
+              className="bg-primary text-white px-5 py-3 rounded-full text-sm font-black uppercase tracking-wider outline-none focus:ring-2 focus:ring-[#c3f400] transition-all duration-200"
+            >
+              <option value="All">All Sports</option>
+              {availableSports.map((sport) => (
+                <option key={sport} value={sport}>
+                  {sport}
+                </option>
+              ))}
+            </AppSelect>
+
+            <input
+              type="date"
+              value={selectedDateFilter}
+              onChange={(event) => setSelectedDateFilter(event.target.value)}
+              className="bg-surface-container-high px-5 py-3 rounded-full text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-[#c3f400] transition-all duration-200"
+            />
+          </div>
+        </div>
+
+        {/* Posts list */}
+        <div className="space-y-4">
           {loading ? (
             <SkeletonStat />
           ) : filteredPosts.length === 0 ? (
-            <div className="rounded-[var(--radius-md)] bg-surface-container-high px-4 py-6 text-center animate-field-group-in">
-              <Users className="w-10 h-10 text-primary/30 mx-auto animate-float-gentle" />
-              <p className="text-lg font-bold text-primary">No teams found</p>
-              <p className="text-sm text-primary/70 mt-1">Try another sport/date filter or create a new post.</p>
+            <div className="bg-surface-container-high rounded-[var(--radius-md)] px-8 py-6 text-center">
+              <Users className="w-16 h-16 text-primary/20 mx-auto mb-4" />
+              <p className="text-2xl font-black text-primary">No teams found</p>
+              <p className="text-sm text-primary/60 mt-2">Try another sport/date filter or create a new post.</p>
             </div>
           ) : (
             filteredPosts.map((post, index) => {
@@ -582,79 +610,83 @@ export default function TeamsPage() {
             const pendingRequestCount = post.requestedUserIds.length
 
             return (
-              <article key={post.id} className="group rounded-[var(--radius-md)] bg-surface-container-high p-4 md:p-5 animate-soft-rise hover:-translate-y-1 hover:bg-surface-container-lowest hover:shadow-[0_18px_40px_-28px_rgba(0,17,58,0.45)] transition-[transform,box-shadow,background-color] duration-300" style={{ animationDelay: `${index * 60}ms` }}>
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  <div className="space-y-2 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="animate-[chip-select_0.25s_cubic-bezier(0.22,1,0.36,1)_both] inline-flex px-2.5 py-1 rounded-full bg-tertiary-fixed text-primary text-[10px] font-lexend font-bold uppercase tracking-widest">
+              <article key={post.id} className={`group relative bg-surface-container-lowest rounded-[var(--radius-md)] border-l-4 ${post.status === 'full' ? 'border-primary' : 'border-[#c3f400]'} p-4 md:p-5 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_48px_-20px_rgba(0,17,58,0.35)] ${mounted ? 'animate-soft-rise' : 'opacity-0'}`} style={{ animationDelay: `${200 + index * 80}ms` }}>
+                {/* Status indicator */}
+                <div className={`absolute top-0 right-0 px-4 py-1.5 rounded-bl-[var(--radius-md)] text-[10px] font-black uppercase tracking-[0.2em] ${post.status === 'full' ? 'bg-primary text-white' : 'bg-[#c3f400] text-[#0a1631]'}`}>
+                  {post.status === 'full' ? 'Full' : 'Open'}
+                </div>
+
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                  <div className="space-y-3 min-w-0 pr-16 lg:pr-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="inline-flex px-3 py-1.5 rounded-full bg-primary text-white text-xs font-black uppercase tracking-widest">
                         {stringValue(post.sport)}
                       </span>
-                      <span
-                        className={`animate-badge-pop inline-flex px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-widest ${
-                          post.status === 'full' ? 'bg-primary text-white' : 'bg-surface-container-lowest text-primary'
-                        }`}
-                      >
-                        {post.status === 'full' ? 'Full' : 'Open'}
-                      </span>
+                      {pendingRequestCount > 0 && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary/50">
+                          {pendingRequestCount} pending request{pendingRequestCount === 1 ? '' : 's'}
+                        </span>
+                      )}
                     </div>
 
-                    <h3 className="text-lg md:text-xl font-black text-primary leading-tight group-hover:translate-x-0.5 transition-transform duration-300">{post.courtTitle}</h3>
+                    <h3 className="text-xl md:text-2xl font-black text-primary leading-tight group-hover:translate-x-1 transition-transform duration-300">{post.courtTitle}</h3>
 
-                    <p className="text-sm text-primary/70 inline-flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4" />
+                    <p className="text-sm text-primary/60 inline-flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 flex-none" />
                       {post.courtLocation}
                     </p>
 
-                    <div className="flex flex-wrap gap-2 text-xs text-primary/75">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-lowest px-2.5 py-1">
+                    <div className="flex flex-wrap gap-3 text-xs text-primary/70">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container-high px-3 py-1.5 font-semibold">
                         <CalendarDays className="w-3.5 h-3.5" /> {post.date}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-lowest px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container-high px-3 py-1.5 font-semibold">
                         <Clock3 className="w-3.5 h-3.5" /> {formatHour(post.startHour)} - {formatHour(post.endHour)}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-lowest px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container-high px-3 py-1.5 font-semibold">
                         <Users className="w-3.5 h-3.5" /> {joinedPlayers}/{totalPlayers} players
                       </span>
                     </div>
 
-                    <p className="text-sm text-primary/75">
-                      Created by <strong>{getUserNameById(post.createdByUserId)}</strong>.
+                    <p className="text-sm text-primary/60">
+                      Created by <strong className="text-primary">{getUserNameById(post.createdByUserId)}</strong>
                     </p>
-
-                    {pendingRequestCount > 0 && (
-                      <p className="text-xs text-primary/65">
-                        {pendingRequestCount} join request{pendingRequestCount === 1 ? '' : 's'} waiting for approval.
-                      </p>
-                    )}
                   </div>
 
-                  <div className="min-w-[170px] space-y-2">
-                    <p className="text-xs font-lexend font-bold uppercase tracking-[0.18em] text-primary/50">
-                      {spotsLeft} spot{spotsLeft === 1 ? '' : 's'} left
-                    </p>
+                  <div className="lg:w-[200px] space-y-2 flex flex-col">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-[#c3f400]">{spotsLeft}</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-primary/40">
+                        spot{spotsLeft === 1 ? '' : 's'} left
+                      </span>
+                    </div>
 
                     <Link
                       href={`/teams/${post.id}`}
-                      className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-surface-container-lowest text-primary font-bold hover:-translate-y-0.5 hover:bg-tertiary-fixed hover:shadow-[0_4px_14px_-4px_rgba(195,244,0,0.25)] active:scale-95 transition-[transform,background-color,box-shadow] duration-200"
+                      className="w-full inline-flex items-center justify-center px-4 py-3 rounded-full bg-surface-container-high text-primary font-bold text-sm hover:bg-[#c3f400] hover:text-[#0a1631] active:scale-95 transition-all duration-200"
                     >
                       View Details
                     </Link>
 
                     {alreadyJoined && (
-                      <p className="text-sm font-semibold text-primary">
+                      <p className="text-sm font-black text-primary text-center py-1">
                         {isCreator ? 'You are the creator' : 'You already joined'}
                       </p>
                     )}
 
                     {hasPendingRequest && !alreadyJoined && (
-                      <p className="text-sm font-semibold text-primary">Request pending creator approval</p>
+                      <p className="text-sm font-black text-primary/60 text-center py-1">Request pending</p>
                     )}
 
                     <button
                       type="button"
                       disabled={!canJoin}
                       onClick={() => handleJoinTeam(post.id)}
-                      className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-primary-container text-surface-container-lowest font-bold disabled:opacity-45 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-4px_oklch(var(--color-primary-container)/0.45)] active:scale-95 transition-[transform,box-shadow] duration-200"
+                      className={`w-full inline-flex items-center justify-center px-4 py-3 rounded-full font-black text-sm uppercase tracking-wider transition-all duration-200 active:scale-95 ${
+                        canJoin
+                          ? 'bg-[#0a1631] text-white hover:-translate-y-1 hover:shadow-[0_12px_24px_-8px_rgba(10,22,49,0.5)]'
+                          : 'bg-surface-container-high text-primary/40 cursor-not-allowed'
+                      }`}
                     >
                       {post.status === 'full' ? 'Team Full' : hasPendingRequest ? 'Request Sent' : 'Request to Join'}
                     </button>
@@ -664,7 +696,7 @@ export default function TeamsPage() {
             )
             })
           )}
-        </section>
+        </div>
       </section>
 
       <FloatingNav />

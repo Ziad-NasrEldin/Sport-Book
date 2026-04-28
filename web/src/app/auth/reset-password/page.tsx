@@ -47,54 +47,57 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5">
-      <h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight text-primary">Reset Password</h1>
-      <p className="mt-2 text-sm md:text-base text-primary/60">
+    <div className="w-full max-w-md bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] border border-primary/5 backdrop-blur-sm animate-soft-rise">
+      <h1 className="text-4xl md:text-5xl font-display font-bold uppercase tracking-tight text-primary leading-none">Reset Password</h1>
+      <p className="mt-3 text-sm md:text-base font-sans font-medium text-primary/70">
         Choose a new password for your SportBook account.
       </p>
 
       {success ? (
-        <div className="mt-6 rounded-[var(--radius-default)] border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-800 flex items-start gap-2">
-          <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-          <div>
-            <p>Your password has been updated successfully.</p>
-            <Link href="/auth/sign-in" className="mt-2 inline-flex font-bold text-emerald-900 underline underline-offset-2">
-              Continue to sign in
-            </Link>
+        <div className="mt-8 rounded-[1.5rem] border-2 border-emerald-500/20 bg-emerald-500/10 p-5 text-sm font-medium text-emerald-800 flex flex-col gap-4 shadow-sm animate-soft-rise">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-600" />
+            <p className="pt-0.5 leading-relaxed">Your password has been updated successfully.</p>
           </div>
+          <Link 
+            href="/auth/sign-in" 
+            className="flex items-center justify-center h-12 w-full bg-emerald-600 rounded-full text-white font-sans font-bold uppercase tracking-widest text-xs hover:bg-emerald-700 transition-colors shadow-sm"
+          >
+            Continue to Sign In
+          </Link>
         </div>
       ) : (
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <label className="block space-y-1.5">
-            <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">New Password</span>
+        <form className="mt-8 space-y-5 animate-soft-rise" onSubmit={handleSubmit}>
+          <label className="block space-y-2 group">
+            <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">New Password</span>
             <div className="relative">
-              <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+              <LockKeyhole className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-primary/45" />
               <input
                 type="password"
                 name="password"
                 minLength={8}
                 required
-                className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                className="w-full h-14 pl-12 pr-4 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium"
               />
             </div>
           </label>
 
-          <label className="block space-y-1.5">
-            <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">Confirm Password</span>
+          <label className="block space-y-2 group">
+            <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Confirm Password</span>
             <div className="relative">
-              <LockKeyhole className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/45" />
+              <LockKeyhole className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-primary/45" />
               <input
                 type="password"
                 name="confirmPassword"
                 minLength={8}
                 required
-                className="w-full h-12 pl-10 pr-4 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:border-primary-container"
+                className="w-full h-14 pl-12 pr-4 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium"
               />
             </div>
           </label>
 
           {error ? (
-            <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+            <div className="bg-red-50 text-red-600 text-sm font-medium px-5 py-3 rounded-[1rem] animate-[shake_0.5s_ease-in-out]">
               {error}
             </div>
           ) : null}
@@ -102,12 +105,12 @@ function ResetPasswordContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 rounded-[var(--radius-full)] bg-secondary-container text-white font-extrabold tracking-wide hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="mt-8 w-full h-14 rounded-full bg-primary text-tertiary-fixed font-sans font-bold uppercase tracking-[0.1em] text-sm transition-all duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_8px_20px_-8px_rgba(0,17,58,0.2)]"
           >
             {loading ? (
               <>
                 <LoadingSpinner size="sm" />
-                Updating password...
+                Updating...
               </>
             ) : (
               'Reset Password'
@@ -122,20 +125,27 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <main className="w-full min-h-screen bg-surface relative overflow-hidden">
-      <section className="px-5 py-8 md:px-10 lg:px-14">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-24 -left-20 h-72 w-72 rounded-full bg-primary-container/12 blur-[110px]" />
+        <div className="absolute bottom-0 -right-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-tertiary-container/8 blur-[140px] animate-[float-blob_12s_ease-in-out_infinite_4s]" />
+      </div>
+
+      <header className="absolute top-0 left-0 w-full z-40 px-5 pt-8 md:px-10 lg:px-14 md:pt-12 flex items-center">
         <Link
           href="/auth/sign-in"
-          className="inline-flex items-center gap-2 text-primary/75 hover:text-primary font-bold transition-colors"
+          className="w-12 h-12 flex items-center justify-center rounded-[1.25rem] bg-white shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:bg-surface-container-low hover:scale-95 transition-all duration-200"
+          aria-label="Go back to Sign In"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Sign In
+          <ArrowLeft className="w-6 h-6 text-primary stroke-[2.5]" />
         </Link>
-      </section>
+      </header>
 
-      <section className="px-5 pb-12 md:px-10 lg:px-14">
+      <section className="px-5 pt-32 pb-12 md:px-10 lg:px-14 md:pt-40 z-10 relative flex justify-center">
         <Suspense
           fallback={
-            <div className="w-full max-w-md mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5">
-              <div className="inline-flex items-center gap-2 text-sm text-primary/70">
+            <div className="w-full max-w-md bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] border border-primary/5">
+              <div className="inline-flex items-center gap-3 font-sans font-medium text-sm text-primary/70">
                 <LoadingSpinner size="sm" />
                 Loading reset form...
               </div>

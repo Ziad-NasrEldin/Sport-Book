@@ -35,54 +35,59 @@ function ProfileBookingHistoryPageContent() {
       router.back()
       return
     }
-
     router.push('/profile/bookings')
   }
 
   if (error) {
     return (
-      <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem] flex items-center justify-center">
+      <main className="w-full min-h-screen bg-surface-container-low pb-32 font-sans flex items-center justify-center">
         <APIErrorFallback error={error as any} onRetry={refetch} />
       </main>
     )
   }
 
   return (
-    <main className="w-full min-h-screen bg-surface pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-[11rem]">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary-container/12 blur-[90px] animate-float-blob" />
-        <div className="absolute bottom-10 -right-10 h-72 w-72 rounded-full bg-surface-container-medium/40 blur-[110px] animate-float-blob animation-delay-350" />
-      </div>
+    <main className="w-full min-h-screen bg-surface-container-low pb-32 font-sans">
+      {/* HERO */}
+      <section className="relative w-full h-[35vh] md:h-[42vh] flex flex-col justify-end overflow-hidden rounded-b-[3rem] md:rounded-b-[4rem]">
+        <div className="absolute inset-0 bg-primary" />
+        <div 
+          className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none" 
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} 
+        />
 
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl px-5 pt-6 pb-4 md:px-10 lg:px-14 md:pt-8 md:pb-5">
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            aria-label="Go back"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-container-low hover:scale-105 active:scale-95 transition-all duration-200"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary stroke-[2.5]" />
-          </button>
-          <div className="animate-soft-drop">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-primary">Booking History</h1>
-            <p className="text-sm md:text-base text-primary/60 animate-fade-in animation-delay-150">All previous sessions in one place</p>
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 md:px-8 pb-8 md:pb-12">
+          <div className="flex items-end gap-4 md:gap-5">
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className="w-12 h-12 rounded-[1rem] bg-tertiary-fixed text-primary flex items-center justify-center flex-shrink-0 hover:bg-white transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div className="text-white">
+              <h1 className="font-display text-4xl md:text-6xl uppercase font-bold tracking-tighter leading-[0.85]">Booking History</h1>
+              <p className="text-sm md:text-base font-sans font-medium text-white/70 mt-2">All previous sessions in one place</p>
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <section className="px-5 md:px-10 lg:px-14 md:max-w-5xl md:mx-auto space-y-3 md:space-y-4" ref={cardsReveal.ref}>
+      <section className="relative z-10 px-4 md:px-8 pt-10 md:pt-16 md:max-w-5xl md:mx-auto flex flex-col gap-4 md:gap-5" ref={cardsReveal.ref}>
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-surface-container-lowest rounded-[var(--radius-md)] p-3.5 md:p-4 shadow-ambient animate-pulse h-32" />
+            <div key={i} className="bg-surface-container-lowest rounded-[2.5rem] p-6 md:p-8 animate-pulse h-40 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)]" />
           ))
         ) : !Array.isArray(bookings) || bookings.length === 0 ? (
-          <div className="text-center py-16 animate-fade-in">
-            <div className="inline-block mb-3 animate-empty-bob">
-              <CalendarClock className="w-10 h-10 text-primary/20 mx-auto" />
+          <div className="text-center py-20 animate-fade-in">
+            <div className="inline-block mb-4 animate-empty-bob">
+              <div className="w-16 h-16 rounded-[1rem] bg-primary/5 flex items-center justify-center mx-auto">
+                <CalendarClock className="w-8 h-8 text-primary/20" />
+              </div>
             </div>
-            <p className="text-primary/60 text-lg font-semibold">No booking history yet</p>
-            <p className="text-primary/40 text-sm mt-2">Your past bookings will appear here</p>
+            <p className="font-display text-2xl uppercase font-bold text-primary">No booking history yet</p>
+            <p className="text-primary/50 text-sm mt-2 font-sans">Your past bookings will appear here</p>
           </div>
         ) : (
           bookings.map((booking: any, i: number) => {
@@ -91,42 +96,40 @@ function ProfileBookingHistoryPageContent() {
             return (
               <article
                 key={booking.id}
-                className="bg-surface-container-lowest rounded-[var(--radius-md)] p-3.5 md:p-4 shadow-ambient h-[min(25svh,11rem)] max-h-[25svh] card-lift"
+                className="bg-surface-container-lowest rounded-[2.5rem] p-6 md:p-8 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)]"
                 style={{
                   animation: cardsReveal.inView ? `card-stagger 0.45s cubic-bezier(0.22, 1, 0.36, 1) both` : 'none',
                   animationDelay: cardsReveal.inView ? `${i * 80}ms` : '0ms',
                 }}
               >
-                <div className="h-full flex items-center justify-between gap-3 min-w-0">
-                  <div className="flex-1 min-w-0 h-full flex flex-col justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <h3 className="text-sm md:text-base font-bold text-primary truncate">{booking.courtName || booking.facilityName || 'Court'}</h3>
-                        <span
-                          className={`text-[10px] font-lexend font-bold uppercase tracking-wider px-2.5 py-1 rounded-full animate-badge-pop ${statusInfo.className}`}
-                          style={{ animationDelay: `${i * 80 + 200}ms` }}
-                        >
-                          {statusInfo.label}
-                        </span>
-                      </div>
-                      <p className="text-xs md:text-sm text-primary/65 truncate">{stringValue(booking.courtDetails || booking.court)}</p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="font-display text-xl md:text-2xl uppercase font-bold text-primary tracking-tight truncate">{booking.courtName || booking.facilityName || 'Court'}</h3>
+                      <span
+                        className={`text-[10px] font-sans font-bold uppercase tracking-wider px-3 py-1.5 rounded-full animate-badge-pop ${statusInfo.className}`}
+                        style={{ animationDelay: `${i * 80 + 200}ms` }}
+                      >
+                        {statusInfo.label}
+                      </span>
                     </div>
+                    <p className="text-sm text-primary/65 font-sans truncate">{stringValue(booking.courtDetails || booking.court)}</p>
 
-                    <div className="mt-2 flex flex-wrap gap-2 text-[10px] md:text-xs text-primary/70">
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs font-sans text-primary/70">
                       {booking.date && (
-                        <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low">
                           <CalendarClock className="w-3.5 h-3.5" />
                           {booking.date}
                         </span>
                       )}
                       {booking.time && (
-                        <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low">
                           <Clock3 className="w-3.5 h-3.5" />
                           {booking.time}
                         </span>
                       )}
                       {booking.courtId && (
-                        <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low">
                           <MapPin className="w-3.5 h-3.5" />
                           {booking.courtId}
                         </span>
@@ -134,14 +137,14 @@ function ProfileBookingHistoryPageContent() {
                     </div>
                   </div>
 
-                  <div className="text-right h-full flex flex-col items-end justify-between shrink-0">
-                    <p className="text-base md:text-lg font-black text-primary leading-none">{booking.amount || booking.total || ''}</p>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <p className="font-display text-2xl md:text-3xl font-bold text-primary tracking-tight">{booking.amount || booking.total || ''}</p>
                     {booking.courtId && (
                       <button
                         onClick={() => router.push(`/book?courtId=${booking.courtId}`)}
-                        className="inline-flex items-center gap-1 text-xs md:text-sm font-bold text-primary-container hover:text-primary transition-colors group/rebook"
+                        className="inline-flex items-center gap-1 px-5 py-2.5 rounded-[2rem] bg-tertiary-fixed text-primary font-sans font-bold text-xs uppercase tracking-widest shadow-[0_4px_0_0_#00113a] hover:shadow-[0_2px_0_0_#00113a] hover:translate-y-[2px] transition-all active:shadow-none active:translate-y-[4px]"
                       >
-                        Rebook <Repeat2 className="w-4 h-4 transition-transform duration-200 group-hover/rebook:rotate-[-360deg]" />
+                        Rebook <Repeat2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>

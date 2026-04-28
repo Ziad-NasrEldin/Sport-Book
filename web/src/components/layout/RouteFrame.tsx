@@ -18,10 +18,8 @@ export function RouteFrame({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen md:bg-surface-container-low md:px-6 md:py-8 lg:px-10 lg:py-10">
-      <div className="w-full max-w-[1200px] mx-auto min-h-screen bg-surface relative md:rounded-[2rem] md:shadow-ambient">
-        {children}
-      </div>
+    <div className="min-h-screen w-full">
+      {children}
     </div>
   )
 }

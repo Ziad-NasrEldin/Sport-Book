@@ -233,11 +233,10 @@ export default function SendRequestPage() {
   return (
     <main className="w-full min-h-screen bg-surface relative overflow-hidden">
       <style>{`
-        @keyframes check-circle {
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes check-draw {
-          to { stroke-dashoffset: 0; }
+        @keyframes float-blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -25px) scale(1.05); }
+          66% { transform: translate(-20px, 15px) scale(0.95); }
         }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -246,109 +245,78 @@ export default function SendRequestPage() {
           60% { transform: translateX(-4px); }
           80% { transform: translateX(4px); }
         }
-        @keyframes slide-in-down {
-          from { opacity: 0; transform: translateY(-12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes float-blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -25px) scale(1.05); }
-          66% { transform: translate(-20px, 15px) scale(0.95); }
-        }
-        @keyframes float-blob-slow {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-25px, 20px) scale(1.03); }
-          66% { transform: translate(15px, -30px) scale(0.97); }
-        }
-        @keyframes field-group-in {
-          from { opacity: 0; transform: translateY(12px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes badge-pop {
-          0% { transform: scale(0.8); opacity: 0; }
-          50% { transform: scale(1.08); }
-          100% { transform: scale(1); opacity: 1; }
-        }
       `}</style>
-
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 -left-20 h-72 w-72 rounded-full bg-primary-container/12 blur-[110px] animate-[float-blob_8s_ease-in-out_infinite]" />
-        <div className="absolute bottom-0 -right-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px] animate-[float-blob-slow_10s_ease-in-out_infinite]" />
+        <div className="absolute -top-24 -left-20 h-72 w-72 rounded-full bg-primary-container/12 blur-[110px]" />
+        <div className="absolute bottom-0 -right-16 h-80 w-80 rounded-full bg-secondary-container/15 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-tertiary-container/8 blur-[140px] animate-[float-blob_12s_ease-in-out_infinite_4s]" />
       </div>
 
-      <section className="px-5 py-8 md:px-10 lg:px-14">
+      <header className="absolute top-0 left-0 w-full z-40 px-5 pt-8 md:px-10 lg:px-14 md:pt-12 flex items-center">
         <Link
           href="/auth/sign-in"
-          className={`inline-flex items-center gap-2 text-primary/75 hover:text-primary font-bold transition-all duration-200 group ${entranceTransition}`}
-          style={{ transitionDelay: mounted ? '0ms' : '0ms' }}
+          className="w-12 h-12 flex items-center justify-center rounded-[1.25rem] bg-white shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:bg-surface-container-low hover:scale-95 transition-all duration-200"
+          aria-label="Go back to Sign In"
         >
-          <span className={baseEntrance} style={{ transitionDelay: '0ms' }}>
-            <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-          </span>
-          <span className={`${baseEntrance} ${entranceTransition}`} style={{ transitionDelay: '0ms' }}>
-            Back to Sign In
-          </span>
+          <ArrowLeft className="w-6 h-6 text-primary stroke-[2.5]" />
         </Link>
-      </section>
+      </header>
 
-      <section className="px-5 pb-12 md:px-10 lg:px-14">
+      <section className="px-5 pt-32 pb-12 md:px-10 lg:px-14 md:pt-40 z-10 relative flex justify-center">
         <div
-          className={`w-full max-w-2xl mx-auto bg-surface-container-lowest rounded-[var(--radius-lg)] p-6 md:p-8 shadow-ambient border border-primary/5 ${entranceTransition}`}
-          style={{ transitionDelay: '80ms' }}
+          className="w-full max-w-2xl bg-surface-container-lowest rounded-[2.5rem] p-8 md:p-10 shadow-[0_8px_40px_-12px_rgba(0,17,58,0.12)] border border-primary/5 backdrop-blur-sm animate-soft-rise"
         >
-          <div className={`mt-1 ${entranceTransition}`} style={{ transitionDelay: '200ms' }}>
-            <h1 className={`text-3xl md:text-4xl font-black tracking-tight text-primary ${baseEntrance} ${entranceTransition}`} style={{ transitionDelay: '200ms' }}>
-              Send a Request
-            </h1>
-            <p className={`mt-2 text-sm md:text-base text-primary/60 ${baseEntrance} ${entranceTransition}`} style={{ transitionDelay: '200ms' }}>
-              Request access as a coach or facility partner. Our team will review your submission.
-            </p>
-          </div>
+          <h1 className="text-4xl md:text-5xl font-display font-bold uppercase tracking-tight text-primary leading-none">
+            Send a Request
+          </h1>
+          <p className="mt-3 text-sm md:text-base font-sans font-medium text-primary/70">
+            Request access as a coach or facility partner. Our team will review your submission.
+          </p>
 
           {!sessionLoading && !user ? (
-            <div className="mt-5 rounded-[var(--radius-default)] border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-900 animate-[slide-in-down_0.3s_cubic-bezier(0.22,1,0.36,1)]">
-              Sign in to submit and track a role-upgrade request.
+            <div className="mt-8 rounded-[1.5rem] border-2 border-amber-500/20 bg-amber-500/10 p-5 text-sm font-medium text-amber-800 flex items-start gap-4 shadow-sm animate-soft-rise">
+              <p className="leading-relaxed">Sign in to submit and track a role-upgrade request.</p>
             </div>
           ) : null}
 
           {hasPendingRequest ? (
-            <div className="mt-5 rounded-[var(--radius-default)] border border-amber-500/25 bg-amber-500/10 p-3 text-sm text-amber-900 animate-[slide-in-down_0.3s_cubic-bezier(0.22,1,0.36,1)]">
-              You already have a pending role upgrade request. Our team will review it before you can submit another.
+            <div className="mt-8 rounded-[1.5rem] border-2 border-amber-500/20 bg-amber-500/10 p-5 text-sm font-medium text-amber-800 flex items-start gap-4 shadow-sm animate-soft-rise">
+              <p className="leading-relaxed">You already have a pending role upgrade request. Our team will review it before you can submit another.</p>
             </div>
           ) : null}
 
           {isSubmitted ? (
-            <div className="mt-5 rounded-[var(--radius-default)] border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-800 flex items-start gap-3">
-              <AnimatedCheckmark />
-              <div>
-                <p className="font-bold">Request submitted successfully</p>
-                <p className="mt-0.5 text-emerald-700/80">We'll review your details and get back to you shortly.</p>
+            <div className="mt-8 rounded-[1.5rem] border-2 border-emerald-500/20 bg-emerald-500/10 p-5 text-sm font-medium text-emerald-800 flex flex-col gap-4 shadow-sm animate-soft-rise">
+              <div className="flex items-center gap-3">
+                 <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-600" />
+                 <p className="pt-0.5 leading-relaxed font-bold">Request submitted successfully</p>
               </div>
+              <p className="text-emerald-700/80">We'll review your details and get back to you shortly.</p>
             </div>
           ) : null}
 
           {loadingRequests ? (
-            <div className="mt-5 inline-flex items-center gap-2 text-sm text-primary/60">
+            <div className="mt-8 inline-flex items-center gap-2 font-sans font-medium text-sm text-primary/70">
               <LoadingSpinner size="sm" />
               Loading your submitted requests...
             </div>
           ) : submittedRequests.length > 0 ? (
-            <div className="mt-5 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low p-4">
-              <p className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55">
+            <div className="mt-8 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low p-6 shadow-sm">
+              <p className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60">
                 Your Submitted Requests
               </p>
-              <div className="mt-3 space-y-2.5">
+              <div className="mt-4 space-y-3">
                 {submittedRequests.slice(0, 3).map((request) => (
-                  <article key={request.id} className="rounded-[var(--radius-default)] bg-surface-container-lowest px-3 py-2.5 flex items-center justify-between gap-3 hover:shadow-ambient hover:-translate-y-px transition-all duration-200">
+                  <article key={request.id} className="rounded-[1.25rem] bg-white px-5 py-4 flex items-center justify-between gap-4 shadow-[0_4px_20px_-8px_rgba(0,17,58,0.08)] hover:scale-[1.02] transition-all duration-200">
                     <div>
                       <p className="text-sm font-bold text-primary">
                         {request.requestedRole === 'coach' ? 'Coach' : 'Facility'} request
                       </p>
-                      <p className="text-xs text-primary/60 mt-1">
+                      <p className="text-xs font-medium text-primary/60 mt-1">
                         Submitted {new Date(request.submittedAt).toLocaleString()}
                       </p>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-lexend font-bold uppercase tracking-[0.14em] animate-badge-pop ${getStatusClasses(request.status)}`}>
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-sans font-bold uppercase tracking-[0.1em] ${getStatusClasses(request.status)}`}>
                       {formatStatusLabel(request.status)}
                     </span>
                   </article>
@@ -357,40 +325,40 @@ export default function SendRequestPage() {
             </div>
           ) : null}
 
-          <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
-            <div className={`${entranceTransition}`} style={{ transitionDelay: '300ms' }}>
-              <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 block mb-1.5">
+          <form className="mt-8 space-y-6 animate-soft-rise" onSubmit={handleSubmit}>
+            <div className="space-y-3">
+              <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 block">
                 I Want To Apply As
               </span>
-              <div className="relative flex bg-surface-container-low p-1 border border-primary/5 rounded-[var(--radius-default)]">
+              <div className="relative flex bg-surface-container-low p-1.5 rounded-[1.5rem] border-2 border-primary/5 shadow-inner">
                 <div
-                  className="absolute top-1 bottom-1 w-[calc(50%-8px)] rounded-[var(--radius-default)] bg-secondary-container/15 border border-secondary-container/20 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                  style={{ left: requestedRole === 'coach' ? '4px' : 'calc(50% - 8px)' }}
+                  className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-[1.25rem] bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style={{ left: requestedRole === 'coach' ? '6px' : 'calc(50% - 0px)' }}
                 />
                 <button
                   type="button"
                   onClick={() => setRequestedRole('coach')}
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 rounded-[var(--radius-default)] transition-all duration-200 font-bold text-sm ${requestedRole === 'coach' ? 'text-secondary-container' : 'text-primary/50 hover:text-primary/70'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-12 rounded-[1.25rem] transition-all duration-200 font-sans font-bold text-sm ${requestedRole === 'coach' ? 'text-primary' : 'text-primary/50 hover:text-primary/80'}`}
                 >
-                  <Dumbbell className={`w-4 h-4 transition-transform duration-300 ${requestedRole === 'coach' ? 'scale-100' : 'scale-85'}`} style={{ transform: requestedRole === 'coach' ? 'scale(1)' : 'scale(0.85)' }} />
+                  <Dumbbell className={`w-4 h-4 transition-transform duration-300 ${requestedRole === 'coach' ? 'scale-100' : 'scale-85'}`} />
                   Coach
                 </button>
                 <button
                   type="button"
                   onClick={() => setRequestedRole('facility')}
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 rounded-[var(--radius-default)] transition-all duration-200 font-bold text-sm ${requestedRole === 'facility' ? 'text-secondary-container' : 'text-primary/50 hover:text-primary/70'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-12 rounded-[1.25rem] transition-all duration-200 font-sans font-bold text-sm ${requestedRole === 'facility' ? 'text-primary' : 'text-primary/50 hover:text-primary/80'}`}
                 >
-                  <Building2 className={`w-4 h-4 transition-transform duration-300`} style={{ transform: requestedRole === 'facility' ? 'scale(1)' : 'scale(0.85)' }} />
+                  <Building2 className={`w-4 h-4 transition-transform duration-300`} />
                   Facility
                 </button>
               </div>
             </div>
 
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${baseEntrance} ${entranceTransition}`} style={{ transitionDelay: '350ms' }}>
-              <label className="block space-y-1.5 group">
-                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Full Name</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <label className="block space-y-2 group">
+                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Full Name</span>
                 <input
                   type="text"
                   required
@@ -398,12 +366,12 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('fullName', event.target.value)}
                   placeholder="Your full name"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
+                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
                 />
               </label>
 
-              <label className="block space-y-1.5 group">
-                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Email</span>
+              <label className="block space-y-2 group">
+                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Email</span>
                 <input
                   type="email"
                   required
@@ -411,12 +379,12 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('email', event.target.value)}
                   placeholder="name@example.com"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
+                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
                 />
               </label>
 
-              <label className="block space-y-1.5 group">
-                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Phone Number</span>
+              <label className="block space-y-2 group">
+                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Phone Number</span>
                 <input
                   type="tel"
                   required
@@ -424,12 +392,12 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('phone', event.target.value)}
                   placeholder="+20 10 0000 0000"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
+                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
                 />
               </label>
 
-              <label className="block space-y-1.5 group">
-                <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">City</span>
+              <label className="block space-y-2 group">
+                <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">City</span>
                 <input
                   type="text"
                   required
@@ -437,15 +405,15 @@ export default function SendRequestPage() {
                   onChange={(event) => updateField('city', event.target.value)}
                   placeholder="Cairo"
                   disabled={!user || sessionLoading || submitting || hasPendingRequest}
-                  className="w-full h-12 px-3 rounded-[var(--radius-default)] border border-primary/10 bg-surface-container-low text-primary outline-none focus:shadow-[0_0_0_3px_oklch(var(--color-primary-container)/0.12)] focus:bg-surface-container-lowest focus:border-primary-container transition-all duration-200 disabled:opacity-60"
+                  className="w-full h-14 px-5 rounded-[1.5rem] border-2 border-primary/5 bg-surface-container-low text-primary outline-none focus:border-primary/20 focus:bg-white transition-all duration-200 font-medium disabled:opacity-60"
                 />
               </label>
             </div>
 
             {requestedRole === 'coach' ? (
-              <div key="coach" className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-[field-group-in_0.35s_cubic-bezier(0.22,1,0.36,1)_both]">
-                <label className="block space-y-1.5 group">
-                  <span className="text-[11px] font-lexend font-bold uppercase tracking-[0.14em] text-primary/55 group-focus-within:text-secondary-container transition-colors duration-200">Sport Specialization</span>
+              <div key="coach" className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-[shake_0.1s_ease-in-out]">
+                <label className="block space-y-2 group">
+                  <span className="text-xs font-sans font-bold uppercase tracking-[0.14em] text-primary/60 ml-2 group-focus-within:text-primary transition-colors duration-200">Sport Specialization</span>
                   <input
                     type="text"
                     required
