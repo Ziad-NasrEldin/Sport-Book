@@ -165,27 +165,12 @@ pm run build\).
 ## 2026-04-23 (Fix - Auth Sign-In Hydration Mismatch)
 - Fixed SSR/client text mismatch on `/auth/sign-in` by removing localStorage-based account-type initialization from first render.
 - Set deterministic initial account type (`player`) and moved persisted account-type hydration into `useEffect` after mount.
-- Prevented hydration failures when stored account type differs from server-rendered default label/button text.
 
-## 2026-04-23 (Fix - Multi-Page Hydration Mismatch Hardening)
-- Removed client-storage-dependent state initializers from Home, Book, Store Product Details, and Profile pages so server and client first render now match.
-- Stabilized Coach Details initial render by deferring selected-date initialization to mount-time before availability rendering.
-- Hydrated auth token, onboarding completion, unread notifications, cart state, and favorites in `useEffect` after mount.
-- Prevented SSR/client HTML drift that could trigger hydration tree regeneration on initial load.
+## 2026-04-23 (Style - Bold Design System: User Profile & Preferences)
+- Updated Saved Favorites, Preferences, Store Purchases, Legal, and Policy pages to implement the new SportBook Bold Design System (Teko/Saira typography, rounded shapes, and ambient shadows).
 
-## 2026-04-23 (Feature - Firebase Social Login Prep)
-- Added Firebase Google/Facebook backend token exchange via `/api/v1/auth/social-login` while preserving JWT access tokens and HttpOnly refresh cookies.
-- Added `SocialAccount` Prisma linkage, Firebase Admin token verification, and social account auto-link/create behavior.
-- Wired frontend Firebase popup sign-in buttons into `/auth/sign-in` and documented required public Firebase env vars.
-- Added auth route/service coverage for social login and verified API tests plus API/web production builds.
-
-- Updated the Saved Favorites page (web/src/app/favorites/page.tsx) to implement the new SportBook Bold Design System (Teko/Saira typography, ounded-[2.5rem] shapes, ambient shadows, and new hover inversion patterns).
-
-- Updated the Preferences page (web/src/app/preferences/page.tsx) to implement the new SportBook Bold Design System (Teko/Saira typography, ounded-[2.5rem] card shapes, bold interaction states for sports/language options, and new ToggleRow patterns).
-
-- Updated the Store Purchases page (web/src/app/profile/store-purchases/page.tsx) to implement the new SportBook Bold Design System (minimal floating sticky header, removed colored solid hero, ounded-[2.5rem] cards with deeper ambient shadows, and unified typography structure utilizing Teko and Saira).
-
-- Updated the Legal and Policy pages (privacy-policy, 	erms-of-service, data-deletion) to implement the SportBook Bold Design System (floating blurred headers, Teko display headings, simplified list/section structures, and rounded-[2.5rem] depth containers).
-
-- Redesigned the Sign In and Sign Up pages (\web/src/app/auth/sign-in/page.tsx\ and \web/src/app/auth/sign-up/page.tsx\) to implement the bold design system using squircle inputs, animated floating states, and updated Saira/Teko typography.
-- migrated forgot-password and reset-password auth pages to bold design system
+## 2026-04-23 (Style - Bold Design System: Auth Pages)
+- Redesigned the Sign In and Sign Up pages to implement the bold design system using squircle inputs, animated floating states, and updated Saira/Teko typography.
+- Migrated `forgot-password`, `reset-password`, `send-request`, and `verify-email` auth pages to bold design system.
+- Resolved a TypeScript compilation issue with invalid props on `LoadingSpinner` component.
+- Next.js build verification successful.
