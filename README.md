@@ -1,13 +1,10 @@
 # SportBook
 
 <p align="center">
-  <img src="admin-dashboard-final3.png" alt="SportBook admin dashboard" width="900">
+  <img src="profile-wallet-topup.png" alt="SportBook wallet top-up" width="900">
 </p>
 <p align="center">
-  <img src="profile-bookings.png" alt="SportBook profile bookings" width="900">
-</p>
-<p align="center">
-  <img src="signup-page.png" alt="SportBook signup" width="900">
+  <img src="profile-account-details.png" alt="SportBook account details" width="900">
 </p>
 
 Book courts, coaches, and teams from one sports marketplace — players play, operators run facilities, coaches sell sessions.
