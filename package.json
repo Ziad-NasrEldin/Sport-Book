@@ -29,5 +29,12 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "overrides": {
+    "shell-quote": "1.8.4",
+    "vitest": "3.2.6",
+    "fast-jwt": "6.2.4",
+    "tar": "7.5.19",
+    "websocket-driver": "0.7.5"
   }
 }
